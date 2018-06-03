@@ -832,7 +832,7 @@ new_scripts = [
 			(call_script, "script_pti_array_get", "$pti_individuals_array", ":individual"),
 			(val_and, reg0, ":clear_mask"),
 			(val_or, reg0, ":value"),
-			(call_script, "script_pti_array_get", "$pti_individuals_array", ":individual", ":value"),
+			(call_script, "script_pti_array_set", "$pti_individuals_array", ":individual", reg0),
 		(else_try),
 			(assign, reg0, ":value"),
 			(assign, reg1, ":bitmask"),

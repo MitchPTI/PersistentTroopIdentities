@@ -1,4 +1,5 @@
 from header_operations import call_script
+from collections import OrderedDict
 
 def mask(bits):
 	return (2 ** bits) - 1
@@ -40,6 +41,7 @@ class Individual:
 		# Sort the attributes by size (decreasing)
 		attribute_sizes = list(attribute_sizes.iteritems())
 		attribute_sizes.sort(key=lambda pair: pair[1], reverse=True)
+		attribute_sizes.sort(key=lambda pair: pair[0], reverse=True)
 		
 		slots = []
 		# For each attribute, find the first eligible slot it can fit into and add it to the given slot
@@ -110,12 +112,12 @@ for (start_index, object_slots) in [troop_slots, array_slots, faction_slots, par
 
 pti_array_slots_start = max([locals()["pti_" + slot] for slot in array_slots[1]]) + 1
 
-faction_naming_regions = {
-	"fac_kingdom_1": ["teutonic", "german", "french", "dutch"] # Swadia
-	, "fac_kingdom_2": ["russian", "lithuanian", "polish", "czechandslovak", "ukrainian", "finnish"] # Vaegirs
-	, "fac_kingdom_3": ["turkish", "mongolian", "persian", "kazakh"] # Khergits
-	, "fac_kingdom_4": ["scandinavian", "norwegian", "danish", "finnish"] # Nords
-	, "fac_kingdom_5": ["italian", "swiss", "french"] # Rhodok
-	, "fac_kingdom_6": ["persian", "arabic", "egyptian"] # Sarranids
-	, "default": ["english"]
-}
+faction_naming_regions = OrderedDict([
+	("fac_kingdom_1", ["teutonic", "german", "french", "dutch"]) # Swadia
+	, ("fac_kingdom_2", ["russian", "lithuanian", "polish", "czechandslovak", "ukrainian", "finnish"]) # Vaegirs
+	, ("fac_kingdom_3", ["turkish", "mongolian", "persian", "kazakh"]) # Khergits
+	, ("fac_kingdom_4", ["scandinavian", "norwegian", "danish", "finnish"]) # Nords
+	, ("fac_kingdom_5", ["italian", "swiss", "french"]) # Rhodok
+	, ("fac_kingdom_6", ["persian", "arabic", "egyptian"]) # Sarranids
+	, ("default", ["english"])
+])
