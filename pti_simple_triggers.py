@@ -50,16 +50,18 @@ simple_triggers = [
 		(try_begin),
 			(key_clicked, key_t),
 			
-			## TEST INDIVIDUAL CREATION
+			## CHECK PARTY MEMBERS
 			
-			(try_for_range, ":unused", 0, 25),
-				(store_random_in_range, ":troop_id", soldiers_begin, soldiers_end),
-				(str_store_troop_name, s2, ":troop_id"),
-				(display_message, "@Creating {s2}"),
+			(display_message, "@Party members:"),
+			
+			(call_script, "script_pti_party_get_num_individuals", "p_main_party"),
+			(assign, ":size", reg0),
+			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+			(try_for_range, ":unused", 0, ":size"),
+				(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+				(display_message, "@{s1} ({s0})"),
 				
-				(call_script, "script_pti_create_individual_of_type", ":troop_id"),
-				(call_script, "script_pti_individual_get_type_and_name", reg0),
-				(display_message, "@Created {s0} {s1}"),
+				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
 			(try_end),
 		(try_end),
 	])

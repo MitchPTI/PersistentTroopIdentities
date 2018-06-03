@@ -762,7 +762,7 @@ new_scripts = [
 		(gt, ":value_1", ":value_2"),
 	]),
 	
-	## INDIVIDUAL CREATION SCRIPTS
+	## INDIVIDUAL CREATION AND ADDITION TO PARTY SCRIPTS
 	
 	# script_pti_create_individual
 	("pti_create_individual",
@@ -791,6 +791,34 @@ new_scripts = [
 		Individual.set(":individual", "name", ":name"),
 		
 		(assign, reg0, ":individual"),
+	]),
+	
+	# script_pti_add_individual_to_party
+	("pti_add_individual_to_party",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":party", 2),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(call_script, "script_pti_linked_list_append", ":list", ":individual"),
+		Individual.get(":individual", "troop_type"),
+		(party_add_members, ":party", reg0, 1),
+	]),
+	
+	# script_pti_recruit_troops_from_center
+	("pti_recruit_troops_from_center",
+	[
+		(store_script_param, ":dest_party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":center", 3),
+		(store_script_param, ":number", 4),
+		
+		(try_for_range, ":unused", 0, ":number"),
+			(call_script, "script_pti_create_individual_of_type", ":troop_id"),
+			(assign, ":individual", reg0),
+			Individual.set(":individual", "home", ":center"),
+			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+		(try_end),
 	]),
 	
 	## INDIVIDUAL ATTRIBUTE GETTING AND SETTING
@@ -841,6 +869,15 @@ new_scripts = [
 	]),
 	
 	## INDIVIDUAL ITERATION AND COUNTING SCRIPTS
+	
+	# script_pti_party_get_num_individuals
+	("pti_party_get_num_individuals",
+	[
+		(store_script_param, ":party", 1),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(party_get_slot, reg0, ":list", pti_slot_array_size),
+	]),
 	
 	# script_pti_get_first_individual
 	("pti_get_first_individual",
@@ -985,23 +1022,6 @@ new_scripts = [
 		
 		(assign, reg0, ":names_begin"),
 		(assign, reg1, ":names_end"),
-	]),
-	
-	# script_pti_hire_troops_from_fief
-	("pti_hire_troops_from_fief",
-	[
-		(store_script_param, ":party", 1),
-		(store_script_param, ":troop_id", 2),
-		(store_script_param, ":num_troops", 3),
-		(store_script_param, ":fief", 4),
-		
-		(party_add_members, ":party", ":troop_id", ":num_troops"),
-		(try_for_range, ":individual", 0, ":num_troops"),
-			(call_script, "script_pti_create_individual_of_type", ":troop_id"),
-			(assign, ":individual", reg0),
-			
-			Individual.set(":individual", "home", ":fief"),
-		(try_end),
 	]),
 	
 	# script_pti_individual_get_type_and_name
@@ -1166,8 +1186,14 @@ new_scripts = [
 ]
 
 def merge(scripts):
-	for i, operation in enumerate(scripts["village_recruit_volunteers_recruit"].operations):
-		if operation[0] == party_add_members:
-			scripts["village_recruit_volunteers_recruit"].operations[i] = (call_script, "script_pti_hire_troops_from_fief", operation[1], operation[2], operation[3], "$current_town")
-	
 	scripts.extend(new_scripts)
+	
+	try:
+		add_troops_op = [operation for operation in scripts["village_recruit_volunteers_recruit"].operations if operation[0] == party_add_members][0]
+	except IndexError:
+		raise ValueError("Could not find party_add_members operation in script_village_recruit_volunteers_recruit")
+	
+	index = scripts["village_recruit_volunteers_recruit"].operations.index(add_troops_op)
+	volunteer_troop = add_troops_op[2]
+	volunteer_amount = add_troops_op[3]
+	scripts["village_recruit_volunteers_recruit"].operations[index] = (call_script, "script_pti_recruit_troops_from_center", "p_main_party", volunteer_troop, "$current_town", volunteer_amount)
