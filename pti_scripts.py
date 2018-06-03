@@ -762,6 +762,37 @@ new_scripts = [
 		(gt, ":value_1", ":value_2"),
 	]),
 	
+	## INDIVIDUAL CREATION SCRIPTS
+	
+	# script_pti_create_individual
+	("pti_create_individual",
+	[
+		(party_get_slot, ":size", "$pti_individuals_array", pti_slot_array_size),
+		(val_add, ":size", Individual.num_attribute_slots),
+		(party_set_slot, "$pti_individuals_array", pti_slot_array_size, ":size"),
+	]),
+	
+	# script_pti_create_individual_of_type
+	("pti_create_individual_of_type",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(call_script, "script_pti_create_individual"),
+		(assign, ":individual", reg0),
+		
+		Individual.set(":individual", "troop_type", ":troop_id"),
+		
+		(call_script, "script_pti_troop_get_name_range", ":troop_id"),
+		(assign, ":names_begin", reg0),
+		(assign, ":names_end", reg1),
+		
+		(store_random_in_range, ":name", ":names_begin", ":names_end"),
+		(val_sub, ":name", ":names_begin"),
+		Individual.set(":individual", "name", ":name"),
+		
+		(assign, reg0, ":individual"),
+	]),
+	
 	## INDIVIDUAL ATTRIBUTE GETTING AND SETTING
 	
 	# script_pti_individual_get_attribute
@@ -954,35 +985,6 @@ new_scripts = [
 		
 		(assign, reg0, ":names_begin"),
 		(assign, reg1, ":names_end"),
-	]),
-	
-	# script_pti_create_individual
-	("pti_create_individual",
-	[
-		(party_get_slot, ":size", "$pti_individuals_array", pti_slot_array_size),
-		(val_add, ":size", Individual.num_attribute_slots),
-		(party_set_slot, "$pti_individuals_array", pti_slot_array_size, ":size"),
-	]),
-	
-	# script_pti_create_individual_of_type
-	("pti_create_individual_of_type",
-	[
-		(store_script_param, ":troop_id", 1),
-		
-		(call_script, "script_pti_create_individual"),
-		(assign, ":individual", reg0),
-		
-		Individual.set(":individual", "troop_type", ":troop_id"),
-		
-		(call_script, "script_pti_troop_get_name_range", ":troop_id"),
-		(assign, ":names_begin", reg0),
-		(assign, ":names_end", reg1),
-		
-		(store_random_in_range, ":name", ":names_begin", ":names_end"),
-		(val_sub, ":name", ":names_begin"),
-		Individual.set(":individual", "name", ":name"),
-		
-		(assign, reg0, ":individual"),
 	]),
 	
 	# script_pti_hire_troops_from_fief
