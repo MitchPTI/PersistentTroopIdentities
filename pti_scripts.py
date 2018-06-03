@@ -767,8 +767,8 @@ new_scripts = [
 	# script_pti_create_individual
 	("pti_create_individual",
 	[
-		(party_get_slot, ":size", "$pti_individuals_array", pti_slot_array_size),
-		(val_add, ":size", Individual.num_attribute_slots),
+		(party_get_slot, reg0, "$pti_individuals_array", pti_slot_array_size),
+		(store_add, ":size", reg0, Individual.num_attribute_slots),
 		(party_set_slot, "$pti_individuals_array", pti_slot_array_size, ":size"),
 	]),
 	
