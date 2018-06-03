@@ -79,6 +79,7 @@ Individual.set_attribute_sizes({
 	"troop_type": 14
 	, "home": 14
 	, "name": 12
+	, "day_joined": 14
 })
 
 troop_slots = (200, [

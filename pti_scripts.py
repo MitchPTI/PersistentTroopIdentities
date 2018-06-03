@@ -790,6 +790,9 @@ new_scripts = [
 		(val_sub, ":name", ":names_begin"),
 		Individual.set(":individual", "name", ":name"),
 		
+		(store_current_day, ":curr_day"),
+		Individual.set(":individual", "day_joined", ":curr_day"),
+		
 		(assign, reg0, ":individual"),
 	]),
 	
@@ -1042,6 +1045,17 @@ new_scripts = [
 		
 		(assign, reg0, ":troop_id"),
 		(assign, reg1, ":name"),
+	]),
+	
+	# script_pti_individual_get_days_of_service
+	("pti_individual_get_days_of_service",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "day_joined"),
+		(assign, ":day_joined", reg0),
+		(store_current_day, reg0),
+		(val_sub, reg0, ":day_joined"),
 	]),
 	
 	## NEW PARTY SCREEN SCRIPTS ##

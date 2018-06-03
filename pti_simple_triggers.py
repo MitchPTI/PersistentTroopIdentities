@@ -58,8 +58,12 @@ simple_triggers = [
 			(assign, ":size", reg0),
 			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
 			(try_for_range, ":unused", 0, ":size"),
+				Individual.get("$pti_current_individual", "home"),
+				(assign, ":home", reg0),
 				(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-				(display_message, "@{s1} ({s0})"),
+				(str_store_party_name, s2, ":home"),
+				(call_script, "script_pti_individual_get_days_of_service", "$pti_current_individual"),
+				(display_message, "@{s1} is a {s0} from {s2} who has been in service for {reg0} days"),
 				
 				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
 			(try_end),
