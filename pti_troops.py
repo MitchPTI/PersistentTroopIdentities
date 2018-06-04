@@ -18,4 +18,5 @@ troops = [
 	, blank_troop("pti_nps_overlay_highlights_on_mouseover")
 	, blank_troop("pti_nps_stack_object_text_overlays")
 	, blank_troop("pti_nps_overlay_is_stack_button")
+	, blank_troop("pti_nps_presentation_troop", flags=tf_guarantee_all)
 ]

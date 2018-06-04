@@ -33,6 +33,69 @@ def set_names_operations(factions):
 	
 	return operations
 
+def individual_get_item(equipment_type="base"):
+	weapons_attribute = "{}_weapons".format(equipment_type)
+	armour_attribute = "{}_armour".format(equipment_type)
+	return ("pti_individual_get_{}_item".format(equipment_type),
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":slot", 2),
+		
+		(try_begin),
+			(lt, ":slot", ek_head),
+			
+			(store_mul, ":bitshift", ITEM_BITS, ":slot"),
+			(val_add, ":bitshift", Individual.attribute_bitshifts[weapons_attribute]),
+			(call_script, "script_pti_individual_get_attribute", ":individual", Individual.attribute_offsets[weapons_attribute], ":bitshift", mask(ITEM_BITS)),
+		(else_try),
+			(lt, ":slot", ek_horse),
+			
+			(store_sub, ":bitshift", ":slot", ek_head),
+			(val_mul, ":bitshift", ITEM_BITS),
+			(val_add, ":bitshift", Individual.attribute_bitshifts[armour_attribute]),
+			(call_script, "script_pti_individual_get_attribute", ":individual", Individual.attribute_offsets[armour_attribute], ":bitshift", mask(ITEM_BITS)),
+		(else_try),
+			(eq, ":slot", ek_horse),
+			
+			Individual.get(":individual", "{}_horse".format(equipment_type)),
+		(try_end),
+	])
+
+def individual_set_item(equipment_type="base"):
+	weapons_attribute = "{}_weapons".format(equipment_type)
+	armour_attribute = "{}_armour".format(equipment_type)
+	return ("pti_individual_set_{}_item".format(equipment_type),
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":slot", 2),
+		(store_script_param, ":item", 3),
+		
+		(try_begin),
+			(lt, ":slot", ek_head),
+			
+			(store_mul, ":bitshift", ITEM_BITS, ":slot"),
+			(val_add, ":bitshift", Individual.attribute_bitshifts[weapons_attribute]),
+			(assign, ":mask", mask(ITEM_BITS)),
+			(val_lshift, ":mask", ":bitshift"),
+			(store_sub, ":clear_mask", mask(63), ":mask"),
+			(call_script, "script_pti_individual_set_attribute", ":individual", Individual.attribute_offsets[weapons_attribute], ":bitshift", mask(ITEM_BITS), ":clear_mask", ":item"),
+		(else_try),
+			(lt, ":slot", ek_horse),
+			
+			(store_sub, ":bitshift", ":slot", ek_head),
+			(val_mul, ":bitshift", ITEM_BITS),
+			(val_add, ":bitshift", Individual.attribute_bitshifts[armour_attribute]),
+			(assign, ":mask", mask(ITEM_BITS)),
+			(val_lshift, ":mask", ":bitshift"),
+			(store_sub, ":clear_mask", mask(63), ":mask"),
+			(call_script, "script_pti_individual_set_attribute", ":individual", Individual.attribute_offsets[armour_attribute], ":bitshift", mask(ITEM_BITS), ":clear_mask", ":item"),
+		(else_try),
+			(eq, ":slot", ek_horse),
+			
+			Individual.set(":individual", "{}_horse".format(equipment_type), ":item"),
+		(try_end),
+	])
+
 new_scripts = [
 	
 	# script_pti_initialise
@@ -988,6 +1051,557 @@ new_scripts = [
 		Individual.get(":individual", "troop_type"),
 		(this_or_next|eq, reg0, "$pti_nps_selected_troop_id"),
 		(le, "$pti_nps_selected_troop_id", 0),
+	]),
+	
+	## ITEM SCRIPTS
+	
+	# script_pti_item_get_capabilities
+	("pti_item_get_capabilities",
+	[
+		(store_script_param, ":item", 1),
+		
+		(assign, ":result", 0),
+		(assign, ":capability", 1),
+		
+		(try_for_range, ":unused", 0, 56),
+			(try_begin),
+				(item_has_capability, ":item", ":capability"),
+				
+				(val_or, ":result", ":capability"),
+			(try_end),
+			
+			(val_lshift, ":capability", 1),
+		(try_end),
+		
+		(assign, reg0, ":result"),
+	]),
+	
+	# script_pti_item_get_value
+	("pti_item_get_value",
+	[
+		(store_script_param, ":item", 1),
+		
+		## POTENTIALLY UPDATE LATER
+		(store_item_value, reg0, ":item"),
+	]),
+	
+	# script_dplmc_copy_inventory
+	("dplmc_copy_inventory",
+	[
+	(store_script_param_1, ":source"),
+	(store_script_param_2, ":target"),
+
+	(troop_clear_inventory, ":target"),
+	(troop_get_inventory_capacity, ":inv_cap", ":source"),
+	(try_for_range, ":i_slot", 0, ":inv_cap"),
+		(troop_get_inventory_slot, ":item", ":source", ":i_slot"),
+		(troop_set_inventory_slot, ":target", ":i_slot", ":item"),
+		(troop_get_inventory_slot_modifier, ":imod", ":source", ":i_slot"),
+		(troop_set_inventory_slot_modifier, ":target", ":i_slot", ":imod"),
+		(troop_inventory_slot_get_item_amount, ":amount", ":source", ":i_slot"),
+		(gt, ":amount", 0),
+		
+		(troop_inventory_slot_set_item_amount, ":target", ":i_slot", ":amount"),
+	(try_end),
+	]),
+	
+	# script_pti_troop_get_random_item_of_type
+	("pti_troop_get_random_item_of_type",
+	[
+		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":item_type", 2),
+		
+		(troop_sort_inventory, ":troop_id"),
+		
+		(assign, ":max_slot", 0),
+		(assign, ":type_count", 0),
+		(assign, ":end_cond", max_inventory_items),
+		(try_for_range, ":slot", 0, max_inventory_items),
+			(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
+			(gt, ":item", 0),
+			
+			(assign, ":max_slot", ":slot"),
+			
+			(try_begin),
+				(item_get_type, ":curr_type", ":item"),
+				(eq, ":curr_type", ":item_type"),
+				
+				(val_add, ":type_count", 1),
+			(try_end),
+			
+		(else_try),
+			(assign, ":end_cond", 0),
+		(try_end),
+		
+		(try_begin),
+			(gt, ":type_count", 0),
+			
+			(store_random_in_range, ":item_num", 0, ":type_count"),
+			(assign, ":type_count", 0),
+			(assign, ":end_cond", ":max_slot"),
+			(try_for_range, ":slot", 0, ":end_cond"),
+				(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
+				(gt, ":item", 0),
+				
+				(item_get_type, ":curr_type", ":item"),
+				(eq, ":curr_type", ":item_type"),
+				
+				(try_begin),
+					(eq, ":type_count", ":item_num"),
+					
+					(assign, ":end_cond", 0),
+				(try_end),
+				
+				(val_add, ":type_count", 1),
+			(try_end),
+			
+			(assign, reg0, ":item"),
+		(else_try),
+			(assign, reg0, -1),
+		(try_end),
+	]),
+	
+	# script_pti_troop_get_random_item_of_type_between
+	("pti_troop_get_random_item_of_type_between",
+	[
+		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":types_begin", 2),
+		(store_script_param, ":types_end", 3),
+		
+		(troop_sort_inventory, ":troop_id"),
+		
+		(assign, ":max_slot", 0),
+		(assign, ":type_count", 0),
+		(assign, ":end_cond", max_inventory_items),
+		(try_for_range, ":slot", 0, max_inventory_items),
+			(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
+			(gt, ":item", 0),
+			
+			(assign, ":max_slot", ":slot"),
+			
+			(try_begin),
+				(item_get_type, ":curr_type", ":item"),
+				(is_between, ":curr_type", ":types_begin", ":types_end"),
+				
+				(val_add, ":type_count", 1),
+			(try_end),
+			
+		(else_try),
+			(assign, ":end_cond", 0),
+		(try_end),
+		
+		(val_add, ":max_slot", 1),
+		
+		(try_begin),
+			(gt, ":type_count", 0),
+			
+			(store_random_in_range, ":item_num", 0, ":type_count"),
+			(assign, ":type_count", 0),
+			(assign, ":end_cond", ":max_slot"),
+			(try_for_range, ":slot", 0, ":end_cond"),
+				(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
+				(gt, ":item", 0),
+				
+				(item_get_type, ":curr_type", ":item"),
+				(is_between, ":curr_type", ":types_begin", ":types_end"),
+				
+				(try_begin),
+					(eq, ":type_count", ":item_num"),
+					
+					(assign, ":end_cond", 0),
+				(try_end),
+				
+				(val_add, ":type_count", 1),
+			(try_end),
+			
+			(assign, reg0, ":item"),
+		(else_try),
+			(assign, reg0, -1),
+		(try_end),
+	]),
+	
+	## INDIVIDUAL EQUIPMENT SCRIPTS
+	
+	# script_cf_pti_troop_can_use_item
+	("cf_pti_troop_can_use_item",
+	[
+		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":item", 2),
+		
+		(item_get_type, ":item_type", ":item"),
+		(item_get_difficulty, ":requirement", ":item"),
+		
+		# Get relevant stat
+		(try_begin),
+			(eq, ":item_type", itp_type_horse),
+			(store_skill_level, ":stat", skl_riding, ":troop_id"),
+		(else_try),
+			(eq, ":item_type", itp_type_shield),
+			(store_skill_level, ":stat", skl_shield, ":troop_id"),
+		(else_try),
+			(eq, ":item_type", itp_type_bow),
+			(store_skill_level, ":stat", skl_power_draw, ":troop_id"),
+		(else_try),
+			(eq, ":item_type", itp_type_thrown),
+			(store_skill_level, ":stat", skl_power_throw, ":troop_id"),
+		(else_try),
+			(store_attribute_level, ":stat", ":troop_id", ca_strength),
+		(try_end),
+		
+		# Compare
+		(ge, ":stat", ":requirement"),
+	]),
+	
+	# script_pti_individual_get_base_item
+	individual_get_item("base"),
+	
+	# script_pti_individual_get_looted_item
+	individual_get_item("looted"),
+	
+	# script_pti_individual_set_base_item
+	individual_set_item("base"),
+	
+	# script_pti_individual_set_looted_item
+	individual_set_item("looted"),
+	
+	# script_pti_individual_generate_base_equipment
+	("pti_individual_generate_base_equipment",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(call_script, "script_dplmc_copy_inventory", ":troop_id", "trp_temp_troop"),
+		
+		# Clear current base armour first (important when upgrading)
+		Individual.set(":individual", "base_armour", 0),
+		Individual.set(":individual", "base_weapons", 0),
+		Individual.set(":individual", "base_horse", 0),
+		
+		# Generate armour
+		(try_for_range, ":armour_type", itp_type_head_armor, itp_type_pistol),
+			(store_add, ":slot", ":armour_type", ek_head - itp_type_head_armor),
+			
+			(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", ":armour_type"),
+			(gt, reg0, 0),
+			
+			(call_script, "script_pti_individual_set_base_item", ":individual", ":slot", reg0),
+		(try_end),
+		
+		(assign, ":next_weapon_slot", ek_item_0),
+		
+		# Generate ranged weapon if applicable
+		(try_begin),
+			(store_random_in_range, ":rand", 0, 2),
+			(this_or_next|troop_is_guarantee_ranged, ":troop_id"),
+			(eq, ":rand", 1),	# If not guaranteed ranged, 50% chance
+			
+			## CONSIDER WORKING IN WAY TO INCLUDE GUNS
+			# Get the ranged weapon (if there is one)
+			(call_script, "script_pti_troop_get_random_item_of_type_between", "trp_temp_troop", itp_type_bow, itp_type_goods),
+			(assign, ":weapon", reg0),
+			(gt, ":weapon", 0),
+			
+			(call_script, "script_pti_individual_set_base_item", ":individual", ":next_weapon_slot", ":weapon"),
+			(val_add, ":next_weapon_slot", 1),
+			
+			# Get the appropriate missiles if applicable
+			(item_get_type, ":weapon_type", ":weapon"),
+			(try_begin),
+				(eq, ":weapon_type", itp_type_bow),
+				
+				(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", itp_type_arrows),
+				(gt, reg0, 0),
+				
+				(call_script, "script_pti_individual_set_base_item", ":individual", ":next_weapon_slot", reg0),
+				(val_add, ":next_weapon_slot", 1),
+			(else_try),
+				(eq, ":weapon_type", itp_type_crossbow),
+				
+				(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", itp_type_bolts),
+				(gt, reg0, 0),
+				
+				(call_script, "script_pti_individual_set_base_item", ":individual", ":next_weapon_slot", reg0),
+				(val_add, ":next_weapon_slot", 1),
+			(try_end),
+		(try_end),
+		
+		# Generate shield if applicable
+		(try_begin),
+			(store_random_in_range, ":rand", 0, 2),
+			## TODO: FIND WAY TO CHECK IF GUARANTEED SHIELD
+			#(this_or_next|troop_is_guarantee_shield, ":troop_id"),
+			#(eq, ":rand", 1),	# If not guaranteed shield, 50% chance
+			
+			(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", itp_type_shield),
+				(gt, reg0, 0),
+				
+				(call_script, "script_pti_individual_set_base_item", ":individual", ":next_weapon_slot", reg0),
+				(val_add, ":next_weapon_slot", 1),
+		(try_end),
+		
+		# Generate melee weapons
+		(store_sub, ":upper_bound", ek_head - ek_item_0 + 1, ":next_weapon_slot"),
+		(store_random_in_range, ":num_weapons", 1, ":upper_bound"),
+		(try_for_range, ":unused", 0, ":num_weapons"),
+			(call_script, "script_pti_troop_get_random_item_of_type_between", "trp_temp_troop", itp_type_one_handed_wpn, itp_type_arrows),
+			(assign, ":weapon", reg0),
+			(gt, ":weapon", 0),
+			
+			(call_script, "script_pti_individual_set_base_item", ":individual", ":next_weapon_slot", ":weapon"),
+			(val_add, ":next_weapon_slot", 1),
+			(store_item_kind_count, ":item_count", ":weapon", "trp_temp_troop"),
+			(troop_remove_items, "trp_temp_troop", ":weapon", ":item_count"),
+		(try_end),
+	]),
+	
+	# script_pti_equip_agent_as_individual
+	("pti_equip_agent_as_individual",
+	[
+		(store_script_param, ":agent", 1),
+		(store_script_param, ":individual", 2),
+		
+		Individual.get(":individual", "base_armour"),
+		(assign, ":equipment", reg0),
+		(try_for_range, ":slot", ek_head, ek_horse),
+			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+			(agent_equip_item, ":agent", ":item"),
+			(val_rshift, ":equipment", ITEM_BITS),
+		(try_end),
+		
+		Individual.get(":individual", "base_weapons"),
+		(assign, ":equipment", reg0),
+		(try_for_range, ":slot", ek_item_0, ek_head),
+			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+			(agent_equip_item, ":agent", ":item"),
+			(val_rshift, ":equipment", ITEM_BITS),
+		(try_end),
+		
+		## TODO: WORK OUT HOW TO GET AGENT ON HORSE (might have to spawn them in on one in the first place?)
+		#Individual.get(":individual", "base_horse"),
+		#(spawn_horse, reg0),
+	]),
+	
+	# script_pti_equip_troop_as_individual
+	("pti_equip_troop_as_individual",
+	[
+		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":individual", 2),
+		
+		(troop_clear_inventory, ":troop_id"),
+		(try_for_range, ":slot", 0, num_equipment_kinds),
+			(troop_set_inventory_slot, ":troop_id", ":slot", -1),
+		(try_end),
+		
+		Individual.get(":individual", "base_armour"),
+		(assign, ":equipment", reg0),
+		(try_for_range, ":slot", ek_head, ek_horse),
+			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+			(gt, ":item", 0),
+			
+			(troop_add_item, ":troop_id", ":item"),
+			#(troop_set_inventory_slot, ":troop_id", ":slot", ":item"),
+			(val_rshift, ":equipment", ITEM_BITS),
+		(try_end),
+		
+		Individual.get(":individual", "base_weapons"),
+		(assign, ":equipment", reg0),
+		(try_for_range, ":slot", ek_item_0, ek_head),
+			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+			(gt, ":item", 0),
+			
+			(troop_add_item, ":troop_id", ":item"),
+			#(troop_set_inventory_slot, ":troop_id", ":slot", ":item"),
+			(val_rshift, ":equipment", ITEM_BITS),
+		(try_end),
+		
+		(try_begin),
+			Individual.get(":individual", "base_horse"),
+			(gt, reg0, 0),
+			(troop_add_item, ":troop_id", reg0),
+			#(troop_set_inventory_slot, ":troop_id", ek_horse, ":item"),
+		(try_end),
+		
+		(troop_sort_inventory, ":troop_id"),
+		(troop_equip_items, ":troop_id"),
+	]),
+	
+	## INDIVIDUAL LOOTING SCRIPTS
+	
+	# script_cf_pti_individual_can_loot_horse
+	("cf_pti_individual_can_loot_horse",
+	[
+		(store_script_param, ":individual", 1),
+		
+		## POTENTIALLY UPDATE LATER
+		# Individual can loot horses if they currently have a horse
+		(call_script, "script_pti_individual_get_base_item", ":individual", ek_horse),
+		(gt, reg0, 0),
+	]),
+	
+	# script_pti_individual_loot_from_agent
+	("pti_individual_loot_from_agent",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":agent", 2),
+		
+		(try_for_range, ":slot", ek_item_0, ek_head),
+			(call_script, "script_pti_individual_loot_weapon_from_agent", ":individual", ":agent", ":slot"),
+		(try_end),
+		
+		(try_for_range, ":slot", ek_head, ek_horse),
+			(call_script, "script_pti_individual_loot_armour_from_agent", ":individual", ":agent", ":slot"),
+		(try_end),
+		
+		(try_begin),
+			(call_script, "script_cf_pti_individual_can_loot_horse", ":individual"),
+			(call_script, "script_pti_individual_loot_horse_from_agent", ":individual", ":agent"),
+		(try_end),
+	]),
+	
+	# script_pti_individual_loot_armour_from_agent
+	("pti_individual_loot_armour_from_agent",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":agent", 2),
+		(store_script_param, ":slot", 3),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(agent_get_item_slot, ":looted_item", ":agent", ":slot"),
+		(try_begin),
+			(gt, ":looted_item", 0),
+			
+			## UPDATE THIS LATER - LET INDIVIDUALS HOLD FOR LATER OR SHARE LOOTED ITEMS
+			# Only proceed if the individual can use this item
+			(call_script, "script_cf_pti_troop_can_use_item", ":troop_id", ":looted_item"),
+			
+			# Get current piece of looted armour
+			(call_script, "script_pti_individual_get_looted_item", ":individual", ":slot"),
+			(assign, ":curr_item", reg0),
+			
+			# Get values of current and newly looted armour
+			(call_script, "script_pti_item_get_value", ":looted_item"),
+			(assign, ":looted_value"),
+			
+			(assign, ":curr_value", 0),
+			(try_begin),
+				(gt, ":curr_item", 0),
+				
+				(call_script, "script_pti_item_get_value", ":curr_item"),
+				(assign, ":curr_value"),
+			(try_end),
+			
+			# Loot armour if it is of higher value than current armour
+			(gt, ":looted_value", ":curr_value"),
+			
+			(call_script, "script_pti_individual_set_looted_item", ":individual", ":slot", ":looted_item"),
+		(try_end),
+	]),
+	
+	# script_pti_individual_loot_weapon_from_agent
+	("pti_individual_loot_weapon_from_agent",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":agent", 2),
+		(store_script_param, ":slot", 3),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(agent_get_item_slot, ":looted_item", ":agent", ":slot"),
+		(try_begin),
+			(gt, ":looted_item", 0),
+			
+			## UPDATE THIS LATER - LET INDIVIDUALS HOLD FOR LATER OR SHARE LOOTED ITEMS
+			# Only proceed if the individual can use this item
+			(call_script, "script_cf_pti_troop_can_use_item", ":troop_id", ":looted_item"),
+			
+			# Get the item's type and capabilities
+			(item_get_type, ":looted_type", ":looted_item"),
+			(call_script, "script_pti_item_get_capabilities", ":looted_item"),
+			(assign, ":looted_capability", reg0),
+			
+			# Iterate through the individual's base items to find one potentially worth replacing
+			(assign, ":end_cond", ek_head),
+			(try_for_range, ":curr_slot", ek_item_0, ":end_cond"),
+				(call_script, "script_pti_individual_get_base_item", ":individual", ":curr_slot"),
+				(assign, ":curr_base_item", reg0),
+				
+				(gt, ":curr_base_item", 0),
+				
+				# Make sure item is of same type (e.g. one handed, two handed, bow, etc)
+				(item_get_type, ":curr_type", ":curr_base_item"),
+				(eq, ":curr_type", ":looted_type"),
+				
+				# Proceed if newly looted item is of higher value than any already looted item in the same slot
+				(call_script, "script_pti_individual_get_looted_item", ":individual", ":curr_slot"),
+				(assign, ":curr_looted_item", reg0),
+				
+				(call_script, "script_pti_item_get_value", ":looted_item"),
+				(assign, ":looted_value"),
+				
+				(call_script, "script_pti_item_get_value", ":curr_looted_item"),
+				(assign, ":curr_value"),
+				
+				(gt, ":looted_value", ":curr_value"),
+				
+				# Proceed if either the item isn't a melee weapon or it is a melee weapon of the same capabilities (e.g. lance vs spear, sword vs axe, etc)
+				(assign, ":continue", 0),
+				(try_begin),
+					(gt, ":curr_type", itp_type_polearm),
+					
+					(assign, ":continue", 1),
+				(else_try),
+					(call_script, "script_pti_item_get_capabilities", ":curr_base_item"),
+					(eq, reg0, ":looted_capability"),
+					
+					(assign, ":continue", 1),
+				(try_end),
+				
+				(eq, ":continue", 1),
+				
+				# Loot the item and end the loop if all above conditions are met
+				(call_script, "script_pti_individual_set_looted_item", ":individual", ":curr_slot", ":looted_item"),
+				(assign, ":end_cond", 0),
+			(try_end),
+		(try_end),
+	]),
+	
+	# script_pti_individual_loot_horse_from_agent
+	("pti_individual_loot_horse_from_agent",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":agent", 2),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(try_begin),
+			(agent_get_horse, ":horse", ":agent"),
+			(gt, ":horse", 0),
+			
+			(agent_get_item_id, ":horse_id", ":horse"),
+			(call_script, "script_cf_pti_troop_can_use_item", ":troop_id", ":horse"),
+			
+			(assign, ":curr_value", 0),
+			(try_begin),
+				(call_script, "script_pti_individual_get_looted_item", ":individual", ek_horse),
+				(gt, reg0, 0),
+				
+				(call_script, "script_pti_item_get_value", reg0),
+				(assign, ":curr_value", reg0),
+			(try_end),
+			
+			(call_script, "script_pti_item_get_value", ":horse_id"),
+			(assign, ":looted_value", reg0),
+			
+			(gt, ":looted_value", ":curr_value"),
+			
+			(call_script, "script_pti_individual_set_looted_item", ":individual", ek_horse, ":horse_id"),
+		(try_end),
 	]),
 	
 	## MISCELLANEOUS

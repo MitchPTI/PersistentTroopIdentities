@@ -50,4 +50,5 @@ prsnt_dplmc_set_vassal_title = 48
 prsnt_dplmc_auto_sell_options = 49
 prsnt_dplmc_shopping_list_of_food = 50
 prsnt_jrider_character_relation_report = 51
-prsnt_new_party_screen = 52
+prsnt_test_individual_screen = 52
+prsnt_new_party_screen = 53

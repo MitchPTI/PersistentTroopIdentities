@@ -75,11 +75,23 @@ class Individual:
 	def set(cls, individual, attribute, value):
 		return (call_script, "script_pti_individual_set_attribute", individual, cls.attribute_offsets[attribute], cls.attribute_bitshifts[attribute], (2 ** cls.attribute_sizes[attribute]) - 1, ((2 ** 64) - 1) ^ (((2 ** cls.attribute_sizes[attribute]) - 1) << cls.attribute_bitshifts[attribute]), value)
 
+TROOP_BITS = 14
+ITEM_BITS = 14
+PARTY_BITS = 12
+NAME_BITS = 12
+NUM_DAYS_BITS = 14
+
 Individual.set_attribute_sizes({
-	"troop_type": 14
-	, "home": 14
-	, "name": 12
-	, "day_joined": 14
+	"troop_type": TROOP_BITS
+	, "home": PARTY_BITS
+	, "name": NAME_BITS
+	, "day_joined": NUM_DAYS_BITS
+	, "base_weapons": ITEM_BITS * 4
+	, "base_armour": ITEM_BITS * 4
+	, "base_horse": ITEM_BITS
+	, "looted_weapons": ITEM_BITS * 4
+	, "looted_armour": ITEM_BITS * 4
+	, "looted_horse": ITEM_BITS
 })
 
 troop_slots = (200, [

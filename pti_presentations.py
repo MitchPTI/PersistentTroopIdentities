@@ -4,6 +4,7 @@ from header_mission_templates import *
 from ID_meshes import *
 from header_operations import *
 from header_triggers import *
+from header_items import *
 from module_constants import *
 import string
 
@@ -17,7 +18,91 @@ import string
 
 STACK_X_OFFSET = 30
 
+CSTM_INV_SLOT_SIZE = 80
+CSTM_INV_CONT_WIDTH = 3
+CSTM_INV_CONT_HEIGHT = 4
+
+CSTM_INV_POS_X = 40
+CSTM_INV_POS_Y = 50
+
+CSTM_BUTTONS_POS_X = 800
+CSTM_BUTTONS_POS_Y = 685
+CSTM_BUTTONS_SIZE_X = 100
+CSTM_BUTTONS_SIZE_Y = 30
+CSTM_BUTTONS_GAP = 20
+
 presentations = [
+	
+	("test_individual_screen", 0, mesh_load_window,
+	[
+		(ti_on_presentation_load,
+		[
+			## TROOP IMAGE
+			(call_script, "script_pti_individual_generate_base_equipment", "$pti_test_individual"),
+			(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", "$pti_test_individual"),
+			(troop_sort_inventory, "trp_pti_nps_presentation_troop"),
+			(troop_equip_items, "trp_pti_nps_presentation_troop"),
+			(call_script, "script_gpu_create_troop_image", "trp_pti_nps_presentation_troop", -25, 350, 1250),
+			
+			## TROOP INVENTORY
+			(call_script, "script_gpu_create_scrollable_container", CSTM_INV_POS_X, CSTM_INV_POS_Y, CSTM_INV_SLOT_SIZE * CSTM_INV_CONT_WIDTH, CSTM_INV_SLOT_SIZE * CSTM_INV_CONT_HEIGHT),
+			(assign, "$pti_troop_inventory_container", reg1),
+			
+			(set_container_overlay, "$pti_troop_inventory_container"),
+			
+			(try_for_range, ":item_slot", 0, num_equipment_kinds),
+				(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
+				(troop_get_inventory_slot_modifier, ":imod", "trp_pti_nps_presentation_troop", ":item_slot"),
+				(gt, ":item", 0),
+				
+				(troop_add_item, "trp_pti_nps_presentation_troop", ":item", ":imod"),
+				(troop_set_inventory_slot, "trp_pti_nps_presentation_troop", ":item_slot", -1),
+			(try_end),
+			
+			(troop_get_inventory_capacity, ":capacity", "trp_pti_nps_presentation_troop"),
+			(val_sub, ":capacity", num_equipment_kinds),
+			(try_for_range, ":item_index", 0, ":capacity"),
+				(store_add, ":item_slot", ":item_index", num_equipment_kinds),
+				(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
+				
+				(call_script, "script_gpu_get_grid_position", ":item_index", ":capacity", CSTM_INV_CONT_WIDTH, CSTM_INV_SLOT_SIZE, CSTM_INV_SLOT_SIZE),
+				(assign, ":pos_x", reg0),
+				(assign, ":pos_y", reg1),
+				
+				(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", CSTM_INV_SLOT_SIZE * 10, CSTM_INV_SLOT_SIZE * 10),
+				(gt, ":item", 0),
+				
+				(store_add, ":item_x", ":pos_x", CSTM_INV_SLOT_SIZE / 2),
+				(store_add, ":item_y", ":pos_y", CSTM_INV_SLOT_SIZE / 2),
+				(call_script, "script_gpu_create_item_overlay", ":item", ":item_x", ":item_y", CSTM_INV_SLOT_SIZE * 10),
+			(try_end),
+			
+			(set_container_overlay, -1),
+			
+			## EXIT BUTTON
+			(str_store_string, s0, "@Exit"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", CSTM_BUTTONS_POS_X + CSTM_BUTTONS_SIZE_X + CSTM_BUTTONS_GAP, CSTM_BUTTONS_POS_Y),
+			(assign, "$pti_test_individual_screen_exit", reg1),
+			(position_set_x, pos1, CSTM_BUTTONS_SIZE_X),
+			(position_set_y, pos1, CSTM_BUTTONS_SIZE_Y),
+			(overlay_set_size, "$pti_test_individual_screen_exit", pos1),
+			
+			(presentation_set_duration, 999999),
+		]),
+		
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":object"),
+			#(store_trigger_param_2, ":value"),
+			
+			(try_begin),
+				## EXIT BUTTON PRESSED
+				(eq, ":object", "$pti_test_individual_screen_exit"),
+				
+				(presentation_set_duration, 0),
+			(try_end),
+		]),
+	]),
 	
 	("new_party_screen", 0, mesh_party_window_b,
 	[

@@ -942,3 +942,4 @@ trp_pti_nps_stack_button_highlight_overlays = 940
 trp_pti_nps_overlay_highlights_on_mouseover = 941
 trp_pti_nps_stack_object_text_overlays = 942
 trp_pti_nps_overlay_is_stack_button = 943
+trp_pti_nps_presentation_troop = 944

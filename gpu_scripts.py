@@ -106,6 +106,24 @@ scripts = [
 		(overlay_set_size, reg1, pos3),
 	]),
 	
+	# script_gpu_create_item_overlay
+	("gpu_create_item_overlay",
+	[
+		(store_script_param, ":item", 1),
+		(store_script_param, ":pos_x", 2),
+		(store_script_param, ":pos_y", 3),
+		(store_script_param, ":size", 4),
+		
+		(set_fixed_point_multiplier, 1000),
+		(create_mesh_overlay_with_item_id, reg1, ":item"),
+		(position_set_x, pos2, ":pos_x"),
+		(position_set_y, pos2, ":pos_y"),
+		(overlay_set_position, reg1, pos2),
+		(position_set_x, pos3, ":size"),
+		(position_set_y, pos3, ":size"),
+		(overlay_set_size, reg1, pos3),
+	]),
+	
 	("gpu_create_combo_button_overlay",
 	[
 		(store_script_param, ":pos_x", 1),
@@ -164,5 +182,30 @@ scripts = [
 		(overlay_set_size, reg1, pos3),
 		]
 	),
+	
+	# script_gpu_get_grid_position
+	("gpu_get_grid_position",
+	[
+		(store_script_param, ":index", 1),
+		(store_script_param, ":num_items", 2),
+		(store_script_param, ":num_cols", 3),
+		(store_script_param, ":col_width", 4),
+		(store_script_param, ":col_height", 5),
+		
+		(store_mod, ":x", ":index", ":num_cols"),
+		(store_mul, ":pos_x", ":x", ":col_width"),
+		
+		(store_sub, ":row", ":index", ":x"),
+		(val_div, ":row", ":num_cols"),
+		(val_sub, ":num_items", 1),
+		(store_div, ":num_rows", ":num_items", ":num_cols"),
+		(val_add, ":num_rows", 1),
+		(store_sub, ":pos_y", ":num_rows", ":row"),
+		(val_sub, ":pos_y", 1),
+		(val_mul, ":pos_y", ":col_height"),
+		
+		(assign, reg0, ":pos_x"),
+		(assign, reg1, ":pos_y"),
+	]),
 	
 ]
