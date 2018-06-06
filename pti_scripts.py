@@ -16,6 +16,7 @@ from header_troops import *
 from header_music import *
 from header_map_icons import *
 from header_presentations import *
+from header_presentations import *
 from ID_items import *
 from ID_animations import *
 from ID_meshes import *
@@ -1051,6 +1052,129 @@ new_scripts = [
 		Individual.get(":individual", "troop_type"),
 		(this_or_next|eq, reg0, "$pti_nps_selected_troop_id"),
 		(le, "$pti_nps_selected_troop_id", 0),
+	]),
+	
+	## INDIVIDUAL FACE SCRIPTS
+	
+	# script_pti_individual_generate_face_keys
+	("pti_individual_generate_face_keys",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(str_store_troop_face_keys, s0, ":troop_id", 0),
+		(str_store_troop_face_keys, s1, ":troop_id", 1),
+		
+		(str_store_troop_face_keys, s2, "trp_temp_troop"),
+		
+		(face_keys_get_hair, ":hair_begin", s0),
+		(face_keys_get_hair, ":hair_end", s1),
+		(store_random_in_range, ":hair", ":hair_begin", ":hair_end"),
+		Individual.set(":individual", "hair", ":hair"),
+		
+		(face_keys_get_beard, ":beard_begin", s0),
+		(face_keys_get_beard, ":beard_end", s1),
+		(store_random_in_range, ":beard", ":beard_begin", ":beard_end"),
+		Individual.set(":individual", "beard", ":beard"),
+		
+		(face_keys_get_face_texture, ":face_texture_begin", s0),
+		(face_keys_get_face_texture, ":face_texture_end", s1),
+		(store_random_in_range, ":face_texture", ":face_texture_begin", ":face_texture_end"),
+		Individual.set(":individual", "face_texture", ":face_texture"),
+		
+		(face_keys_get_hair_texture, ":hair_texture_begin", s0),
+		(face_keys_get_hair_texture, ":hair_texture_end", s1),
+		(store_random_in_range, ":hair_texture", ":hair_texture_begin", ":hair_texture_end"),
+		Individual.set(":individual", "hair_texture", ":hair_texture"),
+		
+		(face_keys_get_hair_color, ":hair_color_begin", s0),
+		(face_keys_get_hair_color, ":hair_color_end", s1),
+		(store_random_in_range, ":hair_color", ":hair_color_begin", ":hair_color_end"),
+		Individual.set(":individual", "hair_colour", ":hair_color"),
+		
+		## Getting age range from a recruit will always result in young troops that stay young throughout the entire game, might as well get full range of ages
+		## TODO: UPDATE FROM UNIFORM DISTRIBUTION (I think older version of PTI uses gamma?)
+		#(face_keys_get_age, ":age_begin", s0),
+		#(face_keys_get_age, ":age_end", s1),
+		#(store_random_in_range, ":age", ":age_begin", ":age_end"),
+		(store_random_in_range, ":age", 0, 64),
+		Individual.set(":individual", "age", ":age"),
+		
+		## These operations apparently don't work anyway
+		#(face_keys_get_skin_color, ":skin_color_begin", s0),
+		#(face_keys_get_skin_color, ":skin_color_end", s1),
+		#(store_random_in_range, ":skin_color", ":skin_color_begin", ":skin_color_end"),
+		#(face_keys_set_skin_color, s2, ":skin_color"),
+		
+		(try_for_range, ":morph_key", morph_keys_begin, morph_keys_end),
+			(face_keys_get_morph_key, ":morph_key_begin", s0),
+			(face_keys_get_morph_key, ":morph_key_end", s1),
+			(store_random_in_range, ":morph_key", ":morph_key_begin", ":morph_key_end"),
+			
+			(store_mul, ":bitshift", MORPH_KEY_BITS, ":morph_key"),
+			(val_add, ":bitshift", Individual.attribute_bitshifts["morph_keys"]),
+			(assign, ":mask", mask(MORPH_KEY_BITS)),
+			(val_lshift, ":mask", ":bitshift"),
+			(store_sub, ":clear_mask", mask(63), ":mask"),
+			(call_script, "script_pti_individual_set_attribute", ":individual", Individual.attribute_offsets["morph_keys"], ":bitshift", mask(MORPH_KEY_BITS), ":clear_mask", ":morph_key"),
+		(try_end),
+	]),
+	
+	# script_pti_individual_get_face_keys
+	("pti_individual_get_face_keys",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":string_reg", 2),
+		
+		# Start with empty face keys (such as found on temp troop)
+		(str_store_troop_face_keys, ":string_reg", "trp_temp_troop"),
+		
+		Individual.get(":individual", "hair"),
+		(face_keys_set_hair, ":string_reg", reg0),
+		
+		Individual.get(":individual", "beard"),
+		(face_keys_set_beard, ":string_reg", reg0),
+		
+		Individual.get(":individual", "face_texture"),
+		(face_keys_set_face_texture, ":string_reg", reg0),
+		
+		Individual.get(":individual", "hair_texture"),
+		(face_keys_set_hair_texture, ":string_reg", reg0),
+		
+		Individual.get(":individual", "hair_colour"),
+		(face_keys_set_hair_color, ":string_reg", reg0),
+		
+		Individual.get(":individual", "age"),
+		(face_keys_set_age, ":string_reg", reg0),
+		
+		#Individual.get(":individual", "skin_color"),
+		#(face_keys_set_skin_color, s0, reg0),
+		
+		(try_for_range, ":morph_key", morph_keys_begin, morph_keys_end),
+			(store_mul, ":bitshift", MORPH_KEY_BITS, ":morph_key"),
+			(val_add, ":bitshift", Individual.attribute_bitshifts["morph_keys"]),
+			(assign, ":mask", mask(MORPH_KEY_BITS)),
+			(val_lshift, ":mask", ":bitshift"),
+			(call_script, "script_pti_individual_get_attribute", ":individual", Individual.attribute_offsets["morph_keys"], ":bitshift", mask(MORPH_KEY_BITS)),
+			(face_keys_set_morph_key, ":string_reg", reg0),
+		(try_end),
+	]),
+	
+	# script_pti_give_troop_individual_face
+	("pti_give_troop_individual_face",
+	[
+		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":individual", 2),
+		
+		(call_script, "script_pti_individual_get_face_keys", ":individual", s0),
+		(troop_set_face_keys, ":troop_id", s0, 0),
+		(try_begin),
+			(neg|troop_is_hero, ":troop_id"),
+			
+			(troop_set_face_keys, ":troop_id", s0, 1),
+		(try_end),
 	]),
 	
 	## ITEM SCRIPTS

@@ -1,6 +1,9 @@
 from header_operations import call_script
 from collections import OrderedDict
 
+morph_keys_begin = 0
+morph_keys_end = 8
+
 def mask(bits):
 	return (2 ** bits) - 1
 
@@ -80,6 +83,8 @@ ITEM_BITS = 14
 PARTY_BITS = 12
 NAME_BITS = 12
 NUM_DAYS_BITS = 14
+FACE_KEY_BITS = 6
+MORPH_KEY_BITS = 3
 
 Individual.set_attribute_sizes({
 	"troop_type": TROOP_BITS
@@ -92,6 +97,14 @@ Individual.set_attribute_sizes({
 	, "looted_weapons": ITEM_BITS * 4
 	, "looted_armour": ITEM_BITS * 4
 	, "looted_horse": ITEM_BITS
+	, "hair": FACE_KEY_BITS
+	, "beard": FACE_KEY_BITS
+	, "face_texture": FACE_KEY_BITS
+	, "hair_texture": FACE_KEY_BITS
+	, "hair_colour": FACE_KEY_BITS
+	, "age": FACE_KEY_BITS
+	#, "skin": FACE_KEY_BITS
+	, "morph_keys": MORPH_KEY_BITS * (morph_keys_end - morph_keys_begin)
 })
 
 troop_slots = (200, [
