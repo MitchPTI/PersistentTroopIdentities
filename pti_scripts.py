@@ -1176,6 +1176,10 @@ new_scripts = [
 		(store_script_param, ":troop_id", 1),
 		(store_script_param, ":individual", 2),
 		
+		Individual.get(":individual", "troop_type"),
+		(troop_get_type, ":gender", reg0),
+		(troop_set_type, ":troop_id", ":gender"),
+		
 		(call_script, "script_pti_individual_get_face_keys", ":individual", s0),
 		(troop_set_face_keys, ":troop_id", s0, 0),
 		(try_begin),
