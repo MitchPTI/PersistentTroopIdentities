@@ -1147,7 +1147,15 @@ new_scripts = [
 		(face_keys_set_hair_color, ":string_reg", reg0),
 		
 		Individual.get(":individual", "age"),
-		(face_keys_set_age, ":string_reg", reg0),
+		(assign, ":age", reg0),
+		(store_current_day, ":curr_day"),
+		Individual.get(":individual", "day_joined"),
+		(store_sub, ":extra_years", ":curr_day", ":day_joined"),
+		(val_div, ":extra_years", 90),
+		(val_add, ":age", ":extra_years"),
+		(val_max, ":age", 63),
+		
+		(face_keys_set_age, ":string_reg", ":age"),
 		
 		#Individual.get(":individual", "skin_color"),
 		#(face_keys_set_skin_color, s0, reg0),
