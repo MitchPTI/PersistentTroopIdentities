@@ -20,3 +20,12 @@ for gender in ("boy", "girl"):
 		strings.extend([("{}_{}_name_{}".format(faction, gender, i), name.strip()) for i, name in enumerate(sorted(list(faction_names)))])
 		end_string = "{}_{}_names_end".format(faction, gender)
 		strings.append((end_string, "{!}" + end_string))
+
+strings.extend([
+	("pti_name_format_name", "{s1}"),
+	("pti_name_format_troop_type_name", "{s0} {s1}"),
+	("pti_name_format_name_brackets_troop_type", "{s1} ({s0})"),
+	("pti_name_format_name_of_home", "{s1} of {s2}"),
+	("pti_name_format_troop_type_name_of_home", "{s0} {s1} of {s2}"),
+	("pti_name_format_name_of_home_brackets_troop_type", "{s1} of {s2} ({s0})"),
+])
