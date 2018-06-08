@@ -20,3 +20,7 @@ troops = [
 	, blank_troop("pti_nps_overlay_is_stack_button")
 	, blank_troop("pti_nps_presentation_troop", flags=tf_guarantee_all)
 ]
+
+for i in xrange(1000):
+	troop = blank_troop("pti_individual_{}".format(i), flags=tf_guarantee_all|tf_no_capture_alive)
+	troops.append(troop)
