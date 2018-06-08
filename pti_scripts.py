@@ -105,6 +105,7 @@ new_scripts = [
 	[
 		(call_script, "script_pti_linked_list_init"),
 		(party_set_slot, "p_main_party", pti_slot_party_individuals, reg0),
+		(assign, "$pti_individual_name_format", "str_pti_name_format_troop_type_name"),
 	]),
 	
 	## ARRAY SCRIPTS
@@ -1189,6 +1190,54 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	## STATS SCRIPTS
+	
+	# script_pti_troop_reset_stats
+	("pti_troop_reset_stats",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(try_for_range, ":attribute", 0, 4),
+			(store_attribute_level, ":points", ":troop_id", ":attribute"),
+			(val_mul, ":points", -1),
+			(troop_raise_attribute, ":troop_id", ":attribute", ":points"),
+		(try_end),
+		
+		(try_for_range, ":skill", 0, 42),
+			(store_skill_level, ":points", ":skill", ":troop_id"),
+			(val_mul, ":points", -1),
+			(troop_raise_skill, ":troop_id", ":skill", ":points"),
+		(try_end),
+		
+		(try_for_range, ":proficiency", 0, 7),
+			(troop_raise_proficiency_linear, ":troop_id", ":proficiency", -700),
+		(try_end),
+	]),
+	
+	# script_pti_troop_copy_stats
+	("pti_troop_copy_stats",
+	[
+		(store_script_param, ":target", 1),
+		(store_script_param, ":source", 2),
+		
+		(call_script, "script_pti_troop_reset_stats", ":target"),
+		
+		(try_for_range, ":attribute", 0, 4),
+			(store_attribute_level, ":attribute_level", ":source", ":attribute"),
+			(troop_raise_attribute, ":target", ":attribute", ":attribute_level"),
+		(try_end),
+		
+		(try_for_range, ":skill", 0, 42),
+			(store_skill_level, ":skill_level", ":skill", ":source"),
+			(troop_raise_skill, ":target", ":skill", ":skill_level"),
+		(try_end),
+		
+		(try_for_range, ":proficiency", 0, 7),
+			(store_proficiency_level, ":proficiency_level", ":source", ":proficiency"),
+			(troop_raise_proficiency_linear, ":target", ":proficiency", ":proficiency_level"),
+		(try_end),
+	]),
+	
 	## ITEM SCRIPTS
 	
 	# script_pti_item_get_capabilities
@@ -1498,13 +1547,14 @@ new_scripts = [
 		(store_script_param, ":agent", 1),
 		(store_script_param, ":individual", 2),
 		
-		Individual.get(":individual", "base_armour"),
-		(assign, ":equipment", reg0),
-		(try_for_range, ":slot", ek_head, ek_horse),
-			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
-			(agent_equip_item, ":agent", ":item"),
-			(val_rshift, ":equipment", ITEM_BITS),
-		(try_end),
+		# Setting armour should not be necessary thanks to the tf_guarantee_all flag
+		#Individual.get(":individual", "base_armour"),
+		#(assign, ":equipment", reg0),
+		#(try_for_range, ":slot", ek_head, ek_horse),
+		#	(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+		#	(agent_equip_item, ":agent", ":item"),
+		#	(val_rshift, ":equipment", ITEM_BITS),
+		#(try_end),
 		
 		Individual.get(":individual", "base_weapons"),
 		(assign, ":equipment", reg0),
@@ -1513,10 +1563,6 @@ new_scripts = [
 			(agent_equip_item, ":agent", ":item"),
 			(val_rshift, ":equipment", ITEM_BITS),
 		(try_end),
-		
-		## TODO: WORK OUT HOW TO GET AGENT ON HORSE (might have to spawn them in on one in the first place?)
-		#Individual.get(":individual", "base_horse"),
-		#(spawn_horse, reg0),
 	]),
 	
 	# script_pti_equip_troop_as_individual
@@ -1814,6 +1860,24 @@ new_scripts = [
 		(assign, ":day_joined", reg0),
 		(store_current_day, reg0),
 		(val_sub, reg0, ":day_joined"),
+	]),
+	
+	## BATTLE SET UP SCRIPTS ##
+	
+	("pti_set_up_individual_troop",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":troop_id", 2),
+		
+		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		(assign, ":troop_type", reg0),
+		Individual.get(":individual", "home"),
+		(str_store_party_name, s2, reg0),
+		(troop_set_name, ":troop_id", "$pti_individual_name_format"),
+		
+		(call_script, "script_pti_troop_copy_stats", ":troop_type", ":troop_id"),
+		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
+		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 	]),
 	
 	## NEW PARTY SCREEN SCRIPTS ##
