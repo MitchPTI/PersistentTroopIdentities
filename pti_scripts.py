@@ -1526,9 +1526,17 @@ new_scripts = [
 			(troop_set_inventory_slot, ":troop_id", ":slot", -1),
 		(try_end),
 		
+		(assign, ":armour_slots_start", ek_head),
+		(try_begin),
+			(eq, ":troop_id", "trp_pti_nps_presentation_troop"),
+			(eq, "$pti_show_helmets", 0),
+			
+			(assign, ":armour_slots_start", ek_body),
+		(try_end),
+		
 		Individual.get(":individual", "base_armour"),
 		(assign, ":equipment", reg0),
-		(try_for_range, ":slot", ek_head, ek_horse),
+		(try_for_range, ":slot", ":armour_slots_start", ek_horse),
 			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
 			(gt, ":item", 0),
 			
