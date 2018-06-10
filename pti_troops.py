@@ -7,7 +7,7 @@ from ID_scenes import *
 from module_constants import *
 
 def blank_troop(id, flags=tf_hero):
-	return [id, id, id, flags, 0, 0, fac_player_supporters_faction, [], level(1)|def_attrib, 0, 0, 0, 0]
+	return [id, id, id, flags, 0, 0, fac_player_supporters_faction, [], level(1)|def_attrib, 0, 0, 0x000000000000000036db6db6db6db6db00000000001db6db0000000000000000, 0x000000000000000036db6db6db6db6db00000000001db6db0000000000000000]
 
 troops = [
 	blank_troop("pti_load_check")

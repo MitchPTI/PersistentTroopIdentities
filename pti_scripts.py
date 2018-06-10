@@ -847,6 +847,8 @@ new_scripts = [
 		
 		Individual.set(":individual", "troop_type", ":troop_id"),
 		
+		(call_script, "script_pti_individual_generate_face_keys", ":individual"),
+		
 		(call_script, "script_pti_troop_get_name_range", ":troop_id"),
 		(assign, ":names_begin", reg0),
 		(assign, ":names_end", reg1),
@@ -1108,67 +1110,41 @@ new_scripts = [
 		#(face_keys_get_skin_color, ":skin_color_end", s1),
 		#(store_random_in_range, ":skin_color", ":skin_color_begin", ":skin_color_end"),
 		#(face_keys_set_skin_color, s2, ":skin_color"),
-		
-		(try_for_range, ":morph_key", morph_keys_begin, morph_keys_end),
-			(face_keys_get_morph_key, ":morph_key_begin", s0),
-			(face_keys_get_morph_key, ":morph_key_end", s1),
-			(store_random_in_range, ":morph_key", ":morph_key_begin", ":morph_key_end"),
-			
-			(store_mul, ":bitshift", MORPH_KEY_BITS, ":morph_key"),
-			(val_add, ":bitshift", Individual.attribute_bitshifts["morph_keys"]),
-			(assign, ":mask", mask(MORPH_KEY_BITS)),
-			(val_lshift, ":mask", ":bitshift"),
-			(store_sub, ":clear_mask", mask(63), ":mask"),
-			(call_script, "script_pti_individual_set_attribute", ":individual", Individual.attribute_offsets["morph_keys"], ":bitshift", mask(MORPH_KEY_BITS), ":clear_mask", ":morph_key"),
-		(try_end),
 	]),
 	
 	# script_pti_individual_get_face_keys
 	("pti_individual_get_face_keys",
 	[
 		(store_script_param, ":individual", 1),
-		(store_script_param, ":string_reg", 2),
 		
 		# Start with empty face keys (such as found on temp troop)
-		(str_store_troop_face_keys, ":string_reg", "trp_temp_troop"),
+		(str_store_troop_face_keys, s0, "trp_pti_nps_presentation_troop"),
 		
 		Individual.get(":individual", "hair"),
-		(face_keys_set_hair, ":string_reg", reg0),
+		(face_keys_set_hair, s0, reg0),
 		
 		Individual.get(":individual", "beard"),
-		(face_keys_set_beard, ":string_reg", reg0),
+		(face_keys_set_beard, s0, reg0),
 		
 		Individual.get(":individual", "face_texture"),
-		(face_keys_set_face_texture, ":string_reg", reg0),
+		(face_keys_set_face_texture, s0, reg0),
 		
 		Individual.get(":individual", "hair_texture"),
-		(face_keys_set_hair_texture, ":string_reg", reg0),
+		(face_keys_set_hair_texture, s0, reg0),
 		
 		Individual.get(":individual", "hair_colour"),
-		(face_keys_set_hair_color, ":string_reg", reg0),
+		(face_keys_set_hair_color, s0, reg0),
 		
 		Individual.get(":individual", "age"),
 		(assign, ":age", reg0),
 		(store_current_day, ":curr_day"),
 		Individual.get(":individual", "day_joined"),
-		(store_sub, ":extra_years", ":curr_day", ":day_joined"),
+		(store_sub, ":extra_years", ":curr_day", reg0),
 		(val_div, ":extra_years", 90),
 		(val_add, ":age", ":extra_years"),
-		(val_max, ":age", 63),
+		(val_min, ":age", 63),
 		
-		(face_keys_set_age, ":string_reg", ":age"),
-		
-		#Individual.get(":individual", "skin_color"),
-		#(face_keys_set_skin_color, s0, reg0),
-		
-		(try_for_range, ":morph_key", morph_keys_begin, morph_keys_end),
-			(store_mul, ":bitshift", MORPH_KEY_BITS, ":morph_key"),
-			(val_add, ":bitshift", Individual.attribute_bitshifts["morph_keys"]),
-			(assign, ":mask", mask(MORPH_KEY_BITS)),
-			(val_lshift, ":mask", ":bitshift"),
-			(call_script, "script_pti_individual_get_attribute", ":individual", Individual.attribute_offsets["morph_keys"], ":bitshift", mask(MORPH_KEY_BITS)),
-			(face_keys_set_morph_key, ":string_reg", reg0),
-		(try_end),
+		(face_keys_set_age, s0, ":age"),
 	]),
 	
 	# script_pti_give_troop_individual_face
