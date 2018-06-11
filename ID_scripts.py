@@ -755,4 +755,5 @@ script_gpu_create_item_overlay = 753
 script_gpu_create_combo_button_overlay = 754
 script_gpu_create_troop_image = 755
 script_gpu_create_image_button = 756
-script_gpu_get_grid_position = 757
+script_gpu_create_checkbox = 757
+script_gpu_get_grid_position = 758

@@ -847,6 +847,7 @@ new_scripts = [
 		
 		Individual.set(":individual", "troop_type", ":troop_id"),
 		
+		(call_script, "script_pti_individual_generate_base_equipment", ":individual"),
 		(call_script, "script_pti_individual_generate_face_keys", ":individual"),
 		
 		(call_script, "script_pti_troop_get_name_range", ":troop_id"),
@@ -1515,6 +1516,18 @@ new_scripts = [
 			(store_item_kind_count, ":item_count", ":weapon", "trp_temp_troop"),
 			(troop_remove_items, "trp_temp_troop", ":weapon", ":item_count"),
 		(try_end),
+		
+		# Generate horse
+		(try_begin),
+			(store_random_in_range, ":rand", 0, 2),
+			(this_or_next|troop_is_guarantee_horse, ":troop_id"),
+			(eq, ":rand", 1),	# If not guaranteed horse, 50% chance
+			
+			(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", itp_type_horse),
+			(gt, reg0, 0),
+			
+			Individual.set(":individual", "base_horse", reg0),
+		(try_end),
 	]),
 	
 	# script_pti_equip_agent_as_individual
@@ -1552,22 +1565,23 @@ new_scripts = [
 			(troop_set_inventory_slot, ":troop_id", ":slot", -1),
 		(try_end),
 		
+		Individual.get(":individual", "base_armour"),
+		(assign, ":equipment", reg0),
+		
 		(assign, ":armour_slots_start", ek_head),
 		(try_begin),
 			(eq, ":troop_id", "trp_pti_nps_presentation_troop"),
 			(eq, "$pti_show_helmets", 0),
 			
 			(assign, ":armour_slots_start", ek_body),
+			(val_rshift, ":equipment", ITEM_BITS),
 		(try_end),
 		
-		Individual.get(":individual", "base_armour"),
-		(assign, ":equipment", reg0),
 		(try_for_range, ":slot", ":armour_slots_start", ek_horse),
 			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
 			(gt, ":item", 0),
 			
 			(troop_add_item, ":troop_id", ":item"),
-			#(troop_set_inventory_slot, ":troop_id", ":slot", ":item"),
 			(val_rshift, ":equipment", ITEM_BITS),
 		(try_end),
 		
@@ -1578,7 +1592,6 @@ new_scripts = [
 			(gt, ":item", 0),
 			
 			(troop_add_item, ":troop_id", ":item"),
-			#(troop_set_inventory_slot, ":troop_id", ":slot", ":item"),
 			(val_rshift, ":equipment", ITEM_BITS),
 		(try_end),
 		
@@ -1586,7 +1599,6 @@ new_scripts = [
 			Individual.get(":individual", "base_horse"),
 			(gt, reg0, 0),
 			(troop_add_item, ":troop_id", reg0),
-			#(troop_set_inventory_slot, ":troop_id", ek_horse, ":item"),
 		(try_end),
 		
 		(troop_sort_inventory, ":troop_id"),

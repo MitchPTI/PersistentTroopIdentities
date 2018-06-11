@@ -18,18 +18,22 @@ import string
 
 STACK_X_OFFSET = 30
 
-CSTM_INV_SLOT_SIZE = 80
-CSTM_INV_CONT_WIDTH = 3
-CSTM_INV_CONT_HEIGHT = 4
+PTI_INDV_IMAGE_X = -70
+PTI_INDV_IMAGE_Y = 350
+PTI_INDV_IMAGE_SIZE = 1250
 
-CSTM_INV_POS_X = 40
-CSTM_INV_POS_Y = 50
+PTI_INV_SLOT_SIZE = 60
+PTI_INV_CONT_WIDTH = 1
+PTI_INV_CONT_HEIGHT = 4
 
-CSTM_BUTTONS_POS_X = 800
-CSTM_BUTTONS_POS_Y = 685
-CSTM_BUTTONS_SIZE_X = 100
-CSTM_BUTTONS_SIZE_Y = 30
-CSTM_BUTTONS_GAP = 20
+PTI_INV_POS_X = PTI_INDV_IMAGE_X + 295
+PTI_INV_POS_Y = PTI_INDV_IMAGE_Y + 45
+
+PTI_BUTTONS_POS_X = 800
+PTI_BUTTONS_POS_Y = 50
+PTI_BUTTONS_SIZE_X = 110
+PTI_BUTTONS_SIZE_Y = 40
+PTI_BUTTONS_GAP = 20
 
 presentations = [
 	
@@ -38,53 +42,138 @@ presentations = [
 		(ti_on_presentation_load,
 		[
 			## TROOP IMAGE
-			(call_script, "script_pti_individual_generate_base_equipment", "$pti_test_individual"),
 			(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", "$pti_test_individual"),
-			(troop_sort_inventory, "trp_pti_nps_presentation_troop"),
-			(troop_equip_items, "trp_pti_nps_presentation_troop"),
-			(call_script, "script_gpu_create_troop_image", "trp_pti_nps_presentation_troop", -25, 350, 1250),
+			(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", "$pti_test_individual"),
+			
+			(call_script, "script_gpu_create_troop_image", "trp_pti_nps_presentation_troop", PTI_INDV_IMAGE_X, PTI_INDV_IMAGE_Y, PTI_INDV_IMAGE_SIZE),
+			
+			## HELMET CHECKBOX
+			
+			(str_store_string, s0, "@Show Helmet"),
+			(call_script, "script_gpu_create_text_overlay", "str_s0", PTI_INV_POS_X, PTI_INV_POS_Y + PTI_INV_SLOT_SIZE * (PTI_INV_CONT_HEIGHT + 0.5), 1000, 125, 20, 0),
+			(call_script, "script_gpu_create_checkbox", PTI_INV_POS_X + 125, PTI_INV_POS_Y + PTI_INV_SLOT_SIZE * (PTI_INV_CONT_HEIGHT + 0.5)),
+			(assign, "$pti_test_show_helmet_checkbox", reg1),
+			(overlay_set_val, "$pti_test_show_helmet_checkbox", "$pti_show_helmets"),
+			
+			#(create_check_box_overlay, reg1, "mesh_checkbox_off", "mesh_checkbox_on"),
+			#(position_set_x, pos1, PTI_INV_POS_X),
+			#(position_set_y, pos1, PTI_INV_POS_Y + PTI_INV_SLOT_SIZE * 4.5),
+			#(overlay_set_position, reg1, pos1),
 			
 			## TROOP INVENTORY
-			(call_script, "script_gpu_create_scrollable_container", CSTM_INV_POS_X, CSTM_INV_POS_Y, CSTM_INV_SLOT_SIZE * CSTM_INV_CONT_WIDTH, CSTM_INV_SLOT_SIZE * CSTM_INV_CONT_HEIGHT),
-			(assign, "$pti_troop_inventory_container", reg1),
+			(call_script, "script_gpu_create_scrollable_container", PTI_INV_POS_X, PTI_INV_POS_Y, PTI_INV_SLOT_SIZE * PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE * PTI_INV_CONT_HEIGHT),
+			(assign, "$pti_individual_armour_container", reg1),
 			
-			(set_container_overlay, "$pti_troop_inventory_container"),
+			(set_container_overlay, "$pti_individual_armour_container"),
 			
-			(try_for_range, ":item_slot", 0, num_equipment_kinds),
-				(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
-				(troop_get_inventory_slot_modifier, ":imod", "trp_pti_nps_presentation_troop", ":item_slot"),
-				(gt, ":item", 0),
+			Individual.get("$pti_test_individual", "base_armour"),
+			(assign, ":equipment", reg0),
+			(try_for_range, ":slot", ek_head, ek_horse),
+				(store_and, ":item", ":equipment", mask(ITEM_BITS)),
 				
-				(troop_add_item, "trp_pti_nps_presentation_troop", ":item", ":imod"),
-				(troop_set_inventory_slot, "trp_pti_nps_presentation_troop", ":item_slot", -1),
-			(try_end),
-			
-			(troop_get_inventory_capacity, ":capacity", "trp_pti_nps_presentation_troop"),
-			(val_sub, ":capacity", num_equipment_kinds),
-			(try_for_range, ":item_index", 0, ":capacity"),
-				(store_add, ":item_slot", ":item_index", num_equipment_kinds),
-				(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
-				
-				(call_script, "script_gpu_get_grid_position", ":item_index", ":capacity", CSTM_INV_CONT_WIDTH, CSTM_INV_SLOT_SIZE, CSTM_INV_SLOT_SIZE),
+				(store_sub, ":item_index", ":slot", ek_head),
+				(call_script, "script_gpu_get_grid_position", ":item_index", 4, PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE, PTI_INV_SLOT_SIZE),
 				(assign, ":pos_x", reg0),
 				(assign, ":pos_y", reg1),
 				
-				(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", CSTM_INV_SLOT_SIZE * 10, CSTM_INV_SLOT_SIZE * 10),
+				(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", PTI_INV_SLOT_SIZE * 10, PTI_INV_SLOT_SIZE * 10),
 				(gt, ":item", 0),
 				
-				(store_add, ":item_x", ":pos_x", CSTM_INV_SLOT_SIZE / 2),
-				(store_add, ":item_y", ":pos_y", CSTM_INV_SLOT_SIZE / 2),
-				(call_script, "script_gpu_create_item_overlay", ":item", ":item_x", ":item_y", CSTM_INV_SLOT_SIZE * 10),
+				(store_add, ":item_x", ":pos_x", PTI_INV_SLOT_SIZE / 2),
+				(store_add, ":item_y", ":pos_y", PTI_INV_SLOT_SIZE / 2),
+				(call_script, "script_gpu_create_item_overlay", ":item", ":item_x", ":item_y", PTI_INV_SLOT_SIZE * 10),
+				
+				(val_rshift, ":equipment", ITEM_BITS),
 			(try_end),
 			
 			(set_container_overlay, -1),
 			
+			(call_script, "script_gpu_create_scrollable_container", PTI_INV_POS_X + PTI_INV_SLOT_SIZE * 1.5, PTI_INV_POS_Y, PTI_INV_SLOT_SIZE * PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE * PTI_INV_CONT_HEIGHT),
+			(assign, "$pti_individual_weapon_container", reg1),
+			
+			(set_container_overlay, "$pti_individual_weapon_container"),
+			
+			Individual.get("$pti_test_individual", "base_weapons"),
+			(assign, ":equipment", reg0),
+			(try_for_range, ":slot", ek_item_0, ek_head),
+				(store_and, ":item", ":equipment", mask(ITEM_BITS)),
+				
+				(store_sub, ":item_index", ":slot", ek_item_0),
+				(call_script, "script_gpu_get_grid_position", ":item_index", 4, PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE, PTI_INV_SLOT_SIZE),
+				(assign, ":pos_x", reg0),
+				(assign, ":pos_y", reg1),
+				
+				(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", PTI_INV_SLOT_SIZE * 10, PTI_INV_SLOT_SIZE * 10),
+				(gt, ":item", 0),
+				
+				(store_add, ":item_x", ":pos_x", PTI_INV_SLOT_SIZE / 2),
+				(store_add, ":item_y", ":pos_y", PTI_INV_SLOT_SIZE / 2),
+				(call_script, "script_gpu_create_item_overlay", ":item", ":item_x", ":item_y", PTI_INV_SLOT_SIZE * 10),
+				
+				(val_rshift, ":equipment", ITEM_BITS),
+			(try_end),
+			
+			(set_container_overlay, -1),
+			
+			Individual.get("$pti_test_individual", "base_horse"),
+			(assign, ":horse", reg0),
+			(try_begin),
+				(assign, ":pos_x", PTI_INV_POS_X + PTI_INV_SLOT_SIZE * 3),
+				(assign, ":pos_y", PTI_INV_POS_Y),
+				
+				(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", PTI_INV_SLOT_SIZE * 10, PTI_INV_SLOT_SIZE * 10),
+				(gt, ":horse", 0),
+				
+				(store_add, ":item_x", ":pos_x", PTI_INV_SLOT_SIZE / 2),
+				(store_add, ":item_y", ":pos_y", PTI_INV_SLOT_SIZE / 2),
+				(call_script, "script_gpu_create_item_overlay", ":horse", ":item_x", ":item_y", PTI_INV_SLOT_SIZE * 10),
+			(try_end),
+			
+			#(try_begin),
+			#	Individual.get("$pti_test_individual", "base_horse"),
+			#	(gt, reg0, 0),
+			#(try_end),
+			
+			#(call_script, "script_gpu_create_scrollable_container", PTI_INV_POS_X, PTI_INV_POS_Y, PTI_INV_SLOT_SIZE * PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE * PTI_INV_CONT_HEIGHT),
+			#(assign, "$pti_troop_inventory_container", reg1),
+			#
+			#(set_container_overlay, "$pti_troop_inventory_container"),
+			#
+			#(try_for_range, ":item_slot", 0, num_equipment_kinds),
+			#	(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
+			#	(troop_get_inventory_slot_modifier, ":imod", "trp_pti_nps_presentation_troop", ":item_slot"),
+			#	(gt, ":item", 0),
+			#	
+			#	(troop_add_item, "trp_pti_nps_presentation_troop", ":item", ":imod"),
+			#	(troop_set_inventory_slot, "trp_pti_nps_presentation_troop", ":item_slot", -1),
+			#(try_end),
+			#
+			#(troop_get_inventory_capacity, ":capacity", "trp_pti_nps_presentation_troop"),
+			#(val_sub, ":capacity", num_equipment_kinds),
+			#(try_for_range, ":item_index", 0, ":capacity"),
+			#	(store_add, ":item_slot", ":item_index", num_equipment_kinds),
+			#	(troop_get_inventory_slot, ":item", "trp_pti_nps_presentation_troop", ":item_slot"),
+			#	
+			#	(call_script, "script_gpu_get_grid_position", ":item_index", ":capacity", PTI_INV_CONT_WIDTH, PTI_INV_SLOT_SIZE, PTI_INV_SLOT_SIZE),
+			#	(assign, ":pos_x", reg0),
+			#	(assign, ":pos_y", reg1),
+			#	
+			#	(call_script, "script_gpu_create_mesh_overlay", "mesh_inv_slot", ":pos_x", ":pos_y", PTI_INV_SLOT_SIZE * 10, PTI_INV_SLOT_SIZE * 10),
+			#	(gt, ":item", 0),
+			#	
+			#	(store_add, ":item_x", ":pos_x", PTI_INV_SLOT_SIZE / 2),
+			#	(store_add, ":item_y", ":pos_y", PTI_INV_SLOT_SIZE / 2),
+			#	(call_script, "script_gpu_create_item_overlay", ":item", ":item_x", ":item_y", PTI_INV_SLOT_SIZE * 10),
+			#(try_end),
+			#
+			#(set_container_overlay, -1),
+			
 			## EXIT BUTTON
 			(str_store_string, s0, "@Exit"),
-			(call_script, "script_gpu_create_game_button_overlay", "str_s0", CSTM_BUTTONS_POS_X + CSTM_BUTTONS_SIZE_X + CSTM_BUTTONS_GAP, CSTM_BUTTONS_POS_Y),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", PTI_BUTTONS_POS_X + PTI_BUTTONS_SIZE_X + PTI_BUTTONS_GAP, PTI_BUTTONS_POS_Y),
 			(assign, "$pti_test_individual_screen_exit", reg1),
-			(position_set_x, pos1, CSTM_BUTTONS_SIZE_X),
-			(position_set_y, pos1, CSTM_BUTTONS_SIZE_Y),
+			(position_set_x, pos1, PTI_BUTTONS_SIZE_X),
+			(position_set_y, pos1, PTI_BUTTONS_SIZE_Y),
 			(overlay_set_size, "$pti_test_individual_screen_exit", pos1),
 			
 			(presentation_set_duration, 999999),
@@ -93,9 +182,14 @@ presentations = [
 		(ti_on_presentation_event_state_change,
 		[
 			(store_trigger_param_1, ":object"),
-			#(store_trigger_param_2, ":value"),
+			(store_trigger_param_2, ":value"),
 			
 			(try_begin),
+				(eq, ":object", "$pti_test_show_helmet_checkbox"),
+				
+				(assign, "$pti_show_helmets", ":value"),
+				(start_presentation, "prsnt_test_individual_screen"),
+			(else_try),
 				## EXIT BUTTON PRESSED
 				(eq, ":object", "$pti_test_individual_screen_exit"),
 				

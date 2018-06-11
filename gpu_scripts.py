@@ -183,6 +183,18 @@ scripts = [
 		]
 	),
 	
+	# script_gpu_create_checkbox
+	("gpu_create_checkbox",
+	[
+		(store_script_param, ":pos_x", 1),
+		(store_script_param, ":pos_y", 2),
+		
+		(create_check_box_overlay, reg1, "mesh_checkbox_off", "mesh_checkbox_on"),
+		(position_set_x, pos1, ":pos_x"),
+		(position_set_y, pos1, ":pos_y"),
+		(overlay_set_position, reg1, pos1),
+	]),
+	
 	# script_gpu_get_grid_position
 	("gpu_get_grid_position",
 	[
