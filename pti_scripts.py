@@ -296,6 +296,8 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
 			(assign, ":next", reg1),
 		(try_end),
+		
+		(assign, reg0, ":count"),
 	]),
 	
 	("pti_node_set_prev",
@@ -1058,6 +1060,24 @@ new_scripts = [
 		(le, "$pti_nps_selected_troop_id", 0),
 	]),
 	
+	# script_cf_pti_individual_is_wounded
+	("cf_pti_individual_is_wounded",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "is_wounded"),
+		(eq, reg0, 1),
+	]),
+	
+	# script_cf_pti_individual_is_not_wounded
+	("cf_pti_individual_is_not_wounded",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "is_wounded"),
+		(eq, reg0, 0),
+	]),
+	
 	## INDIVIDUAL FACE SCRIPTS
 	
 	# script_pti_individual_generate_face_keys
@@ -1442,14 +1462,18 @@ new_scripts = [
 		Individual.set(":individual", "base_horse", 0),
 		
 		# Generate armour
-		(try_for_range, ":armour_type", itp_type_head_armor, itp_type_pistol),
+		(assign, ":equipment", 0),
+		(try_for_range_backwards, ":armour_type", itp_type_head_armor, itp_type_pistol),
+			(val_lshift, ":equipment", ITEM_BITS),
 			(store_add, ":slot", ":armour_type", ek_head - itp_type_head_armor),
 			
 			(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", ":armour_type"),
-			(gt, reg0, 0),
+			(assign, ":item", reg0),
+			(gt, ":item", 0),
 			
-			(call_script, "script_pti_individual_set_base_item", ":individual", ":slot", reg0),
+			(val_or, ":equipment", ":item"),
 		(try_end),
+		Individual.set(":individual", "base_armour", ":equipment"),
 		
 		(assign, ":next_weapon_slot", ek_item_0),
 		
@@ -1566,8 +1590,6 @@ new_scripts = [
 		(try_end),
 		
 		Individual.get(":individual", "base_armour"),
-		(assign, ":equipment", reg0),
-		
 		(assign, ":armour_slots_start", ek_head),
 		(try_begin),
 			(eq, ":troop_id", "trp_pti_nps_presentation_troop"),
@@ -1579,9 +1601,12 @@ new_scripts = [
 		
 		(try_for_range, ":slot", ":armour_slots_start", ek_horse),
 			(store_and, ":item", ":equipment", mask(ITEM_BITS)),
-			(gt, ":item", 0),
+			(try_begin),
+				(gt, ":item", 0),
+				
+				(troop_add_item, ":troop_id", ":item"),
+			(try_end),
 			
-			(troop_add_item, ":troop_id", ":item"),
 			(val_rshift, ":equipment", ITEM_BITS),
 		(try_end),
 		
@@ -1852,6 +1877,7 @@ new_scripts = [
 	
 	## BATTLE SET UP SCRIPTS ##
 	
+	# script_pti_set_up_individual_troop
 	("pti_set_up_individual_troop",
 	[
 		(store_script_param, ":individual", 1),
