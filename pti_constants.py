@@ -81,6 +81,9 @@ PARTY_BITS = 12
 NAME_BITS = 12
 NUM_DAYS_BITS = 14
 FACE_KEY_BITS = 6
+TOTAL_KILLS_BITS = 14
+BATTLE_KILLS_BITS = 10
+TIMES_WOUNDED_BITS = 7	# 7 bits gives a maximum of 127 times. Even at max surgery there is only a 0.00000000024% chance of a troop surviving this many times
 
 Individual.set_attribute_sizes({
 	"troop_type": TROOP_BITS
@@ -101,10 +104,22 @@ Individual.set_attribute_sizes({
 	, "age": FACE_KEY_BITS
 	#, "skin": FACE_KEY_BITS
 	, "is_wounded": 1
+	, "kill_count": TOTAL_KILLS_BITS
+	, "knock_out_count": TOTAL_KILLS_BITS
+	, "most_kills": BATTLE_KILLS_BITS
+	, "best_kill": TROOP_BITS
+	, "times_wounded": TIMES_WOUNDED_BITS
 })
 
 troop_slots = (200, [
 	"nps_slot_troop_stack_overlay"
+])
+
+agent_slots = (50, [
+	"slot_agent_individual"
+	, "slot_agent_individual_index"
+	, "slot_agent_best_kill"
+	, "slot_agent_best_kill_level"
 ])
 
 array_slots = (0, [
@@ -124,7 +139,7 @@ party_slots = (500, [
 	"slot_party_individuals"
 ])
 
-for (start_index, object_slots) in [troop_slots, array_slots, faction_slots, party_slots]:
+for (start_index, object_slots) in [troop_slots, agent_slots, array_slots, faction_slots, party_slots]:
 	for i, slots in enumerate(object_slots):
 		if not hasattr(slots, "__iter__"):
 			slots = [slots]

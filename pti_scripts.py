@@ -1465,7 +1465,6 @@ new_scripts = [
 		(assign, ":equipment", 0),
 		(try_for_range_backwards, ":armour_type", itp_type_head_armor, itp_type_pistol),
 			(val_lshift, ":equipment", ITEM_BITS),
-			(store_add, ":slot", ":armour_type", ek_head - itp_type_head_armor),
 			
 			(call_script, "script_pti_troop_get_random_item_of_type", "trp_temp_troop", ":armour_type"),
 			(assign, ":item", reg0),
@@ -1590,6 +1589,7 @@ new_scripts = [
 		(try_end),
 		
 		Individual.get(":individual", "base_armour"),
+		(assign, ":equipment", reg0),
 		(assign, ":armour_slots_start", ek_head),
 		(try_begin),
 			(eq, ":troop_id", "trp_pti_nps_presentation_troop"),
@@ -1875,7 +1875,7 @@ new_scripts = [
 		(val_sub, reg0, ":day_joined"),
 	]),
 	
-	## BATTLE SET UP SCRIPTS ##
+	## BATTLE SCRIPTS ##
 	
 	# script_pti_set_up_individual_troop
 	("pti_set_up_individual_troop",
@@ -1892,6 +1892,99 @@ new_scripts = [
 		(call_script, "script_pti_troop_copy_stats", ":troop_type", ":troop_id"),
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
+	]),
+	
+	# script_pti_individual_agent_process_battle
+	("pti_individual_agent_process_battle",
+	[
+		(store_script_param, ":agent", 1),
+		
+		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
+		
+		# Increase the kill and knock out counts
+		(agent_get_kill_count, ":battle_kill_count", ":agent"),
+		Individual.get(":individual", "kill_count"),
+		(val_add, reg0, ":battle_kill_count"),
+		Individual.set(":individual", "kill_count", reg0),
+		
+		(agent_get_kill_count, ":battle_knock_out_count", ":agent", 1),
+		Individual.get(":individual", "knock_out_count"),
+		(val_add, reg0, ":battle_knock_out_count"),
+		Individual.set(":individual", "knock_out_count", reg0),
+		
+		# Update the highest kills in a given battle if applicable
+		(val_add, ":battle_kill_count", ":battle_knock_out_count"),
+		Individual.get(":individual", "most_kills"),
+		(val_max, reg0, ":battle_kill_count"),
+		Individual.set(":individual", "most_kills", reg0),
+		
+		# Update the best kill if applicable
+		(try_begin),
+			(neg|agent_slot_eq, ":agent", pti_slot_agent_best_kill_level, 0),
+			
+			Individual.get(":individual", "best_kill"),
+			(assign, ":best_kill", reg0),
+			(assign, ":best_kill_level", 0),
+			(try_begin),
+				(gt, ":best_kill", 0),
+				
+				(store_character_level, ":best_kill_level", ":best_kill"),
+			(try_end),
+			
+			(agent_get_slot, ":battle_best_kill_level", ":agent", pti_slot_agent_best_kill_level),
+			(gt, ":battle_best_kill_level", ":best_kill_level"),
+			
+			(agent_get_slot, ":battle_best_kill", ":agent", pti_slot_agent_best_kill),
+			Individual.set(":individual", "best_kill", ":battle_best_kill"),
+		(try_end),
+	]),
+	
+	# script_pti_individual_agent_process_casualty
+	("pti_individual_agent_process_casualty",
+	[
+		(store_script_param, ":agent", 1),
+		(store_script_param, ":killer_agent", 2),
+		(store_script_param, ":wounded", 3),
+		
+		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
+		
+		(try_begin),
+			(eq, ":wounded", 1),
+			
+			(call_script, "script_pti_individual_agent_process_battle", ":agent"),
+			
+			Individual.set(":individual", "is_wounded", 1),
+			Individual.get(":individual", "times_wounded"),
+			(val_add, reg0, 1),
+			Individual.set(":individual", "times_wounded", reg0),
+		(else_try),
+			(party_get_slot, ":list", "p_main_party", pti_slot_party_individuals),
+			(agent_get_slot, ":individual_index", ":agent", pti_slot_agent_individual_index),
+			(call_script, "script_pti_linked_list_remove", ":list", ":individual_index"),
+		(try_end),
+	]),
+	
+	# script_pti_restore_main_party
+	("pti_restore_main_party",
+	[
+		(party_clear, "p_main_party"),
+		(get_player_agent_no, ":player_agent"),
+		
+		(try_for_agents, ":agent"),
+			(agent_is_human, ":agent"),
+			(agent_is_alive, ":agent"),
+			(neq, ":agent", ":player_agent"),
+			
+			(agent_get_party_id, ":agent_party", ":agent"),
+			(eq, ":agent_party", "p_main_party"),
+			
+			(call_script, "script_pti_individual_agent_process_battle", ":agent"),
+			
+			(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
+			Individual.get(":individual", "troop_type"),
+			(assign, ":troop_id", reg0),
+			(party_add_members, "p_main_party", ":troop_id", 1),
+		(try_end),
 	]),
 	
 	## NEW PARTY SCREEN SCRIPTS ##
