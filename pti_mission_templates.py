@@ -79,6 +79,7 @@ pti_set_agent_individuals = (
 		(agent_get_troop_id, ":troop_id", ":agent"),
 		(troop_get_slot, ":individual", ":troop_id", pti_slot_troop_individual),
 		(agent_set_slot, ":agent", pti_slot_agent_individual, ":individual"),
+		(agent_set_slot, ":agent", pti_slot_agent_individual_index, ":individual_index"),
   ])
 
 pti_get_killer_team = (
@@ -115,6 +116,21 @@ pti_restore_main_party = (
 			(call_script, "script_pti_restore_main_party"),
 			
 			(assign, "$pti_check_if_battle_is_over", 0),
+		(try_end),
+  ])
+
+pti_process_casualty = (
+  ti_on_agent_killed_or_wounded, 0, 0, [],
+  [
+		(store_trigger_param, ":agent", 1),
+		(store_trigger_param, ":killer_agent", 2),
+		(store_trigger_param, ":wounded", 3),
+		
+		(try_begin),
+			(agent_get_party_id, ":party", ":agent"),
+			(eq, ":party", "p_main_party"),
+			
+			(call_script, "script_pti_individual_agent_process_casualty", ":agent", ":killer_agent", ":wounded"),
 		(try_end),
   ])
 

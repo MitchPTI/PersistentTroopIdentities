@@ -50,12 +50,22 @@ simple_triggers = [
 		(try_begin),
 			(key_clicked, key_t),
 			
-			## CHECK PARTY MEMBERS
+			## GET PLAYER KILLS
 			
-			(call_script, "script_pti_create_individual_of_type", "trp_swadian_recruit"),
-			(assign, "$pti_test_individual", reg0),
+			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+			(assign, ":count", reg0),
 			
-			(start_presentation, "prsnt_test_individual_screen"),
+			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+			(try_for_range, ":unused", 0, ":count"),
+				(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+				
+				Individual.get("$pti_current_individual", "knock_out_count"),
+				(assign, reg1, reg0),
+				Individual.get("$pti_current_individual", "kill_count"),
+				(display_message, "@{s0} {s1} has {reg0} kills and {reg1} knock outs"),
+				
+				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+			(try_end),
 		(try_end),
 	])
 ]
