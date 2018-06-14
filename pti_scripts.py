@@ -1892,6 +1892,8 @@ new_scripts = [
 		(call_script, "script_pti_troop_copy_stats", ":troop_type", ":troop_id"),
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
+		
+		(troop_set_slot, ":troop_id", pti_slot_troop_individual, ":individual"),
 	]),
 	
 	# script_pti_individual_agent_process_battle

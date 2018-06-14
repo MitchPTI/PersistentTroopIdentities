@@ -60,10 +60,8 @@ pti_set_up_individuals = (
 		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
 		(assign, ":count", reg0),
 		(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
-		(display_message, "@Getting party members"),
 		(try_for_range, ":unused", 0, ":count"),
 			(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-			(display_message, "@Getting {s0} {s1}"),
 			(call_script, "script_pti_set_up_individual_troop", "$pti_current_individual", ":pti_current_individual_troop"),
 			(party_add_members, "p_main_party", ":pti_current_individual_troop", 1),
 			
@@ -73,6 +71,58 @@ pti_set_up_individuals = (
 		(try_end),
   ])
 
+pti_set_agent_individuals = (
+  ti_on_agent_spawn, 0, 0, [],
+  [
+		(store_trigger_param, ":agent", 1),
+		
+		(agent_get_troop_id, ":troop_id", ":agent"),
+		(troop_get_slot, ":individual", ":troop_id", pti_slot_troop_individual),
+		(agent_set_slot, ":agent", pti_slot_agent_individual, ":individual"),
+  ])
+
+pti_get_killer_team = (
+  ti_on_agent_killed_or_wounded, 0, 0, [],
+  [
+		(store_trigger_param, ":agent", 2),
+		
+		(agent_get_team, "$pti_last_killer_team", ":agent"),
+		(assign, "$pti_check_if_battle_is_over", 15),
+  ])
+
+pti_restore_main_party = (
+  0.1, 0, 0, [],
+  [
+    (try_begin),
+			(gt, "$pti_check_if_battle_is_over", 0),
+			
+			(val_sub, "$pti_check_if_battle_is_over", 1),
+			#(display_message, "@Checking if battle is over..."),
+			
+			(all_enemies_defeated, "$pti_last_killer_team"),
+			
+			(get_player_agent_no, ":player_agent"),
+			(agent_get_team, ":player_team", ":player_agent"),
+			(try_begin),
+				(teams_are_enemies, ":player_team", "$pti_last_killer_team"),
+				
+				(display_message, "@Player's team has lost!"),
+			(else_try),
+				(display_message, "@Player's team has won!"),
+			(try_end),
+			
+			(display_message, "@Restoring player party"),
+			(call_script, "script_pti_restore_main_party"),
+			
+			(assign, "$pti_check_if_battle_is_over", 0),
+		(try_end),
+  ])
+
 def merge(mission_templates):
 	for template_id in battle_templates:
-		mission_templates[template_id].triggers.append(pti_set_up_individuals)
+		mission_templates[template_id].triggers.extend([
+			pti_set_up_individuals
+			, pti_set_agent_individuals
+			, pti_get_killer_team
+			, pti_restore_main_party
+		])
