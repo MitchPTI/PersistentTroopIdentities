@@ -59,11 +59,19 @@ simple_triggers = [
 			(try_for_range, ":unused", 0, ":count"),
 				(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
 				
+				Individual.get("$pti_current_individual", "best_kill"),
+				(assign, ":best_kill", reg0),
 				Individual.get("$pti_current_individual", "knock_out_count"),
 				(assign, reg1, reg0),
 				Individual.get("$pti_current_individual", "kill_count"),
-				(display_message, "@{s0} {s1} has {reg0} kills and {reg1} knock outs"),
-				
+				(str_store_string, s0, "@{s0} {s1} has {reg0} kills and {reg1} knock outs."),
+				(try_begin),
+					(gt, ":best_kill", 0),
+					
+					(str_store_troop_name, s1, reg0),
+					(str_store_string, s0, "@{s0} Best kill was of a {s1}"),
+				(try_end),
+				(display_message, s0),
 				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
 			(try_end),
 		(try_end),

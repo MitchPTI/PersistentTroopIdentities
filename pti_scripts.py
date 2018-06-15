@@ -968,6 +968,7 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -986,6 +987,7 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1005,6 +1007,7 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1023,6 +1026,7 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1881,7 +1885,8 @@ new_scripts = [
 	("pti_set_up_individual_troop",
 	[
 		(store_script_param, ":individual", 1),
-		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":individual_index", 2),
+		(store_script_param, ":troop_id", 3),
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
 		(assign, ":troop_type", reg0),
@@ -1894,6 +1899,7 @@ new_scripts = [
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 		
 		(troop_set_slot, ":troop_id", pti_slot_troop_individual, ":individual"),
+		(troop_set_slot, ":troop_id", pti_slot_troop_individual_index, ":individual_index"),
 	]),
 	
 	# script_pti_individual_agent_process_battle
@@ -1950,6 +1956,9 @@ new_scripts = [
 		
 		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
 		
+		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		(display_message, "@Processing casualty of {s0} {s1}"),
+		
 		(try_begin),
 			(eq, ":wounded", 1),
 			
@@ -1981,11 +1990,25 @@ new_scripts = [
 			(eq, ":agent_party", "p_main_party"),
 			
 			(call_script, "script_pti_individual_agent_process_battle", ":agent"),
-			
-			(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
-			Individual.get(":individual", "troop_type"),
+		(try_end),
+		
+		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+		(assign, ":count", reg0),
+		
+		(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+		(try_for_range, ":unused", 0, ":count"),
+			Individual.get("$pti_current_individual", "troop_type"),
 			(assign, ":troop_id", reg0),
 			(party_add_members, "p_main_party", ":troop_id", 1),
+			
+			Individual.get("$pti_current_individual", "is_wounded"),
+			(try_begin),
+				(eq, reg0, 1),
+				
+				(party_wound_members, "p_main_party", ":troop_id", 1),
+			(try_end),
+			
+			(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
 		(try_end),
 	]),
 	
