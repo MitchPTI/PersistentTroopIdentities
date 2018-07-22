@@ -51,6 +51,12 @@ battle_templates = [
 	, "town_fight"
 ]
 
+pti_set_after_battle_check = (
+  ti_before_mission_start, 0, 0, [],
+  [
+    (assign, "$pti_after_battle_check", 1),
+	])
+
 pti_set_up_individuals = (
   ti_before_mission_start, 0, 0, [],
   [
@@ -111,6 +117,8 @@ pti_restore_main_party = (
 				(display_message, "@Player's team has won!"),
 			(try_end),
 			
+			(call_script, "script_pti_process_battle"),
+			
 			(display_message, "@Restoring player party"),
 			(call_script, "script_pti_restore_main_party"),
 			
@@ -136,7 +144,8 @@ pti_process_casualty = (
 def merge(mission_templates):
 	for template_id in battle_templates:
 		mission_templates[template_id].triggers.extend([
-			pti_set_up_individuals
+			pti_set_after_battle_check
+			, pti_set_up_individuals
 			, pti_set_agent_individuals
 			, pti_get_killer_team
 			, pti_restore_main_party

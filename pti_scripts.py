@@ -1996,10 +1996,9 @@ new_scripts = [
 		(try_end),
 	]),
 	
-	# script_pti_restore_main_party
-	("pti_restore_main_party",
+	# script_pti_process_battle
+	("pti_process_battle",
 	[
-		(party_clear, "p_main_party"),
 		(get_player_agent_no, ":player_agent"),
 		
 		(try_for_agents, ":agent"),
@@ -2012,6 +2011,12 @@ new_scripts = [
 			
 			(call_script, "script_pti_individual_agent_process_battle", ":agent"),
 		(try_end),
+	]),
+	
+	# script_pti_restore_main_party
+	("pti_restore_main_party",
+	[
+		(party_clear, "p_main_party"),
 		
 		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
 		(assign, ":count", reg0),
