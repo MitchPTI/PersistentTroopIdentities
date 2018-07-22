@@ -114,12 +114,10 @@ Individual.set_attribute_sizes({
 troop_slots = (200, [
 	"nps_slot_troop_stack_overlay"
 	, "slot_troop_individual"
-	, "slot_troop_individual_index"
 ])
 
 agent_slots = (50, [
 	"slot_agent_individual"
-	, "slot_agent_individual_index"
 	, "slot_agent_best_kill"
 	, "slot_agent_best_kill_level"
 ])

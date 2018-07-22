@@ -624,7 +624,28 @@ new_scripts = [
 	("pti_linked_list_remove",
 	[
 		(store_script_param, ":list", 1),
-		(store_script_param, ":index", 2),
+		(store_script_param, ":object", 2),
+		
+		(call_script, "script_pti_linked_list_get_head_node", ":list"),
+		(assign, ":curr_obj", reg0),
+		(assign, ":next", reg1),
+		(assign, ":prev", reg2),
+		(assign, ":curr_index", reg3),
+		
+		(assign, ":index", -1),
+		(party_get_slot, ":size", ":list", pti_slot_array_size),
+		(try_for_range, ":unused", 0, ":size"),
+			(eq, ":curr_obj", ":object"),
+			
+			(assign, ":index", ":curr_index"),
+			(assign, ":size", 0),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
+			(assign, ":curr_obj", reg0),
+			(assign, ":next", reg1),
+			(assign, ":prev", reg2),
+			(assign, ":curr_index", reg3),
+		(try_end),
 		
 		# Connect the neighbour nodes together
 		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
@@ -648,6 +669,13 @@ new_scripts = [
 		(party_get_slot, ":size", ":list", pti_slot_array_size),
 		(val_sub, ":size", 1),
 		(party_set_slot, ":list", pti_slot_array_size, ":size"),
+		
+		# If the first element is being removed, set the head to point to the next element
+		(try_begin),
+			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			
+			(party_set_slot, ":list", pti_slot_list_head, ":next"),
+		(try_end),
 	]),
 	
 	("pti_linked_list_get_nth_index",
@@ -968,7 +996,6 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
-			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -987,7 +1014,6 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
-			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1007,7 +1033,6 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
-			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1026,7 +1051,6 @@ new_scripts = [
 			(assign, "$pti_current_individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
-			(assign, "$pti_current_individual_index", reg3),
 		(try_end),
 	]),
 	
@@ -1885,8 +1909,7 @@ new_scripts = [
 	("pti_set_up_individual_troop",
 	[
 		(store_script_param, ":individual", 1),
-		(store_script_param, ":individual_index", 2),
-		(store_script_param, ":troop_id", 3),
+		(store_script_param, ":troop_id", 2),
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
 		(assign, ":troop_type", reg0),
@@ -1899,7 +1922,6 @@ new_scripts = [
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 		
 		(troop_set_slot, ":troop_id", pti_slot_troop_individual, ":individual"),
-		(troop_set_slot, ":troop_id", pti_slot_troop_individual_index, ":individual_index"),
 	]),
 	
 	# script_pti_individual_agent_process_battle
@@ -1970,8 +1992,7 @@ new_scripts = [
 			Individual.set(":individual", "times_wounded", reg0),
 		(else_try),
 			(party_get_slot, ":list", "p_main_party", pti_slot_party_individuals),
-			(agent_get_slot, ":individual_index", ":agent", pti_slot_agent_individual_index),
-			(call_script, "script_pti_linked_list_remove", ":list", ":individual_index"),
+			(call_script, "script_pti_linked_list_remove", ":list", ":individual"),
 		(try_end),
 	]),
 	

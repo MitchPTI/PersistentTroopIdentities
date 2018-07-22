@@ -62,12 +62,11 @@ pti_set_up_individuals = (
 		(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
 		(try_for_range, ":unused", 0, ":count"),
 			(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-			(call_script, "script_pti_set_up_individual_troop", "$pti_current_individual", "$pti_current_individual_index", ":pti_current_individual_troop"),
+			(call_script, "script_pti_set_up_individual_troop", "$pti_current_individual", ":pti_current_individual_troop"),
 			(party_add_members, "p_main_party", ":pti_current_individual_troop", 1),
 			
 			(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
 			(assign, "$pti_current_individual", reg0),
-			(assign, "$pti_current_individual_index", reg3),
 			(val_add, ":pti_current_individual_troop", 1),
 		(try_end),
   ])
@@ -79,9 +78,7 @@ pti_set_agent_individuals = (
 		
 		(agent_get_troop_id, ":troop_id", ":agent"),
 		(troop_get_slot, ":individual", ":troop_id", pti_slot_troop_individual),
-		(troop_get_slot, ":individual_index", ":troop_id", pti_slot_troop_individual_index),
 		(agent_set_slot, ":agent", pti_slot_agent_individual, ":individual"),
-		(agent_set_slot, ":agent", pti_slot_agent_individual_index, ":individual_index"),
   ])
 
 pti_get_killer_team = (
