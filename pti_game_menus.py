@@ -35,7 +35,14 @@ from module_constants import *
 # Note: The first Menu is the initial character creation menu.
 ####################################################################################################################
 
-
+party_screen_option = (
+	"party_screen", [], "Open Party Screen",
+	[
+		(assign, "$pti_nps_open_agent_screen", 0),
+		(assign, "$pti_nps_selected_troop_id", "trp_player"),
+		(assign, "$pti_nps_selected_individual", -1),
+		(start_presentation, "prsnt_new_party_screen"),
+	])
 
 def merge(game_menus):
-	pass
+	game_menus["camp"].options.append(party_screen_option)

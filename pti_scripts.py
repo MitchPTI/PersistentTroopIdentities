@@ -1084,8 +1084,7 @@ new_scripts = [
 		(store_script_param, ":individual", 1),
 		
 		Individual.get(":individual", "troop_type"),
-		(this_or_next|eq, reg0, "$pti_nps_selected_troop_id"),
-		(le, "$pti_nps_selected_troop_id", 0),
+		(eq, reg0, "$pti_nps_selected_troop_id"),
 	]),
 	
 	# script_cf_pti_individual_is_wounded
@@ -2081,7 +2080,7 @@ new_scripts = [
 			(assign, ":stack_button", reg1),
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":stack_button", ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":stack_button", ":container"),
-			(troop_set_slot, "trp_pti_nps_overlay_is_stack_button", ":stack_button", 1),
+			(troop_set_slot, "trp_pti_nps_stack_object_button_overlays", ":stack_object", ":stack_button"),
 			
 			# Highlight overlay (initially invisible, made visible if stack highlighted)
 			(call_script, "script_gpu_create_image_button", mesh_party_member_button_pressed, mesh_party_member_button_pressed, ":x_offset", ":cur_y", 435),
@@ -2118,6 +2117,38 @@ new_scripts = [
 		(store_script_param, ":troop_id", 1),
 		
 		(eq, ":troop_id", "$pti_nps_selected_troop_id"),
+	]),
+	
+	# script_cf_pti_individual_is_selected
+	("cf_pti_individual_is_selected",
+	[
+		(store_script_param, ":individual", 1),
+		
+		(eq, ":individual", "$pti_nps_selected_individual"),
+	]),
+	
+	# script_cf_pti_prisoner_is_selected
+	("cf_pti_prisoner_is_selected",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(eq, ":troop_id", "$pti_nps_selected_prisoner_troop_id"),
+	]),
+	
+	# script_cf_pti_exhange_troop_is_selected
+	("cf_pti_exhange_troop_is_selected",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(eq, ":troop_id", "$pti_nps_selected_exhange_troop_id"),
+	]),
+	
+	# script_cf_pti_exhange_prisoner_is_selected
+	("cf_pti_exhange_prisoner_is_selected",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(eq, ":troop_id", "$pti_nps_selected_exhange_prisoner_troop_id"),
 	]),
 	
 	# script_pti_nps_troop_stack_init
@@ -2171,10 +2202,13 @@ new_scripts = [
 	# script_pti_nps_individual_stack_init
 	("pti_nps_individual_stack_init",
 	[
-		(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-		(str_store_string_reg, s0, s1),
+		(assign, ":curr_individual", "$pti_current_individual"),
 		
-		(call_script, "script_pti_get_next_individual", "script_cf_pti_individual_is_of_selected_troop"),
+		(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+		
+		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
+		(str_store_string_reg, s0, s1),
+		(assign, reg0, ":curr_individual"),
 	]),
 	
 ]

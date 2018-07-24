@@ -202,44 +202,92 @@ presentations = [
 	[
 		(ti_on_presentation_load,
 		[
+			# Clear variables
+			(assign, "$pti_nps_troop_stack_container", -1),
+			(assign, "$pti_nps_individual_stack_container", -1),
 			(try_for_range, ":slot", 0, 99999),
 				(troop_set_slot, "trp_pti_nps_overlay_highlights_on_mouseover", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_overlay_containers", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_stack_object_text_overlays", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":slot", 0),
-				(troop_slot_eq, "trp_pti_nps_overlay_is_stack_button", ":slot", 0),
+				(troop_slot_eq, "trp_pti_nps_stack_object_button_overlays", ":slot", 0),
 			(try_end),
 			
-			(party_get_num_companion_stacks, ":num_stacks", "p_main_party"),
-			(call_script, "script_pti_nps_create_upper_right_stack_container"),
-			(assign, "$pti_nps_troop_stack_container", reg1),
-			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", "script_cf_pti_troop_is_selected", STACK_X_OFFSET),
-			
-			(call_script, "script_pti_count_individuals", "script_cf_pti_individual_is_of_selected_troop"),
-			(assign, ":num_individuals", reg0),
-			#(display_message, "@{reg0} individuals"),
-			(call_script, "script_pti_get_first_individual", "script_cf_pti_individual_is_of_selected_troop"),
-			(call_script, "script_pti_nps_create_upper_left_stack_container"),
-			(assign, "$pti_nps_individual_stack_container", reg1),
-			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", "script_cf_pti_false", STACK_X_OFFSET),
-			
 			(try_begin),
-				(ge, "$pti_nps_selected_troop_id", 0),
+				# Set up troop stacks if not drilled down to see agents
+				(neq, "$pti_nps_open_agent_screen", 1),
 				
-				(call_script, "script_gpu_create_troop_image", "$pti_nps_selected_troop_id", 350, 250, 1000),
+				# Add label for party companion stacks
+				(party_get_num_companion_stacks, ":num_stacks", "p_main_party"),
+				(call_script, "script_game_get_party_companion_limit", "p_main_party"),
+				(assign, reg1, reg0),
+				(party_get_num_companions, reg0, "p_main_party"),
+				(str_store_string, s0, "@Company: {reg0} / {reg1}"),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 712, 1000, 262, 26, tf_center_justify),
+				
+				(call_script, "script_pti_nps_create_upper_right_stack_container"),
+				(assign, "$pti_nps_troop_stack_container", reg1),
+				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", "script_cf_pti_troop_is_selected", STACK_X_OFFSET),
+				
+				# Add troop image if a troop is selected
+				(try_begin),
+					(gt, "$pti_nps_selected_troop_id", -1),
+					
+					(call_script, "script_gpu_create_troop_image", "$pti_nps_selected_troop_id", 350, 250, 1000),
+				(try_end),
+			(else_try),
+				# Set up agent stacks if drilled down to see them
+				(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+				(assign, ":num_individuals", reg0),
+				
+				# Add label for drilled down view of individuals
+				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
+				(assign, reg0, ":num_individuals"),
+				(str_store_string, s0, "@{s0}: {reg0}"),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 712, 1000, 262, 26, tf_center_justify),
+				
+				#(display_message, "@{reg0} individuals"),
+				(call_script, "script_pti_nps_create_upper_right_stack_container"),
+				(assign, "$pti_nps_individual_stack_container", reg1),
+				(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", "script_cf_pti_individual_is_selected", STACK_X_OFFSET),
+				
+				# Add individual image if an individual is selected
+				(try_begin),
+					(gt, "$pti_nps_selected_individual", -1),
+					
+					(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
+					(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
+					
+					(call_script, "script_gpu_create_troop_image", "trp_pti_nps_presentation_troop", 350, 250, 1000),
+				(try_end),
 			(try_end),
 			
 			(presentation_set_duration, 999999),
 		]),
 		
+		# Keep track of how long the presentation has been running (which tells how long since a troop was selected)
+		# Exit if E is pressed
 		(ti_on_presentation_run,
 		[
+			(store_trigger_param_1, "$pti_nps_milliseconds_running"),
+			
 			(try_begin),
-				(key_clicked, key_e),
+				(this_or_next|key_clicked, key_e),
+				(key_clicked, key_escape),
 				
 				(presentation_set_duration, 0),
+			(else_try),
+				(key_clicked, key_back_space),
+				(eq, "$pti_nps_open_agent_screen", 1),
+				
+				(assign, "$pti_nps_open_agent_screen", 0),
+				(assign, "$pti_nps_selected_individual", -1),
+				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),
+		
+		(ti_escape_pressed, [(presentation_set_duration, 0)]),
 		
 		# Trigger for making text green on mouseover
 		(ti_on_presentation_mouse_enter_leave,
@@ -260,20 +308,37 @@ presentations = [
 			(try_end),
 		]),
 		
+		# Handle clicking of troop/individual stacks, including double clicks
 		(ti_on_presentation_mouse_press,
 		[
 			(store_trigger_param_1, ":overlay"),
-			(store_trigger_param_2, ":mouse_button"),
+			#(store_trigger_param_2, ":mouse_left"),
 			
-			(troop_get_slot, ":container", "trp_pti_nps_overlay_containers", ":overlay"),
+			# Set selected troop id if clicked
 			(try_begin),
-				(eq, ":mouse_button", 0), # Left mouse-click
-				(eq, ":container", "$pti_nps_troop_stack_container"),
-				(troop_slot_eq, "trp_pti_nps_overlay_is_stack_button", ":overlay", 1),
+				(troop_slot_eq, "trp_pti_nps_overlay_containers", ":overlay", "$pti_nps_troop_stack_container"),
 				
-				(troop_get_slot, "$pti_nps_selected_troop_id", "trp_pti_nps_overlay_stack_objects", ":overlay"),
-				#(str_store_troop_name, s0, "$pti_nps_selected_troop_id"),
-				#(display_message, "@Selected {s0}"),
+				(troop_get_slot, ":troop_id", "trp_pti_nps_overlay_stack_objects", ":overlay"),
+				
+				# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
+				(try_begin),
+					(eq, ":troop_id", "$pti_nps_selected_troop_id"),
+					(lt, "$pti_nps_milliseconds_running", 500),
+					
+					(assign, "$pti_nps_open_agent_screen", 1),
+					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+				(try_end),
+				
+				(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+				(start_presentation, "prsnt_new_party_screen"),
+			(try_end),
+			
+			# Set selected individual if clicked
+			(try_begin),
+				(troop_slot_eq, "trp_pti_nps_overlay_containers", ":overlay", "$pti_nps_individual_stack_container"),
+				
+				(troop_get_slot, "$pti_nps_selected_individual", "trp_pti_nps_overlay_stack_objects", ":overlay"),
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),
