@@ -210,7 +210,7 @@ presentations = [
 				(troop_set_slot, "trp_pti_nps_overlay_containers", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_stack_object_text_overlays", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":slot", 0),
-				(troop_slot_eq, "trp_pti_nps_stack_object_button_overlays", ":slot", 0),
+				(troop_slot_eq, "trp_pti_nps_stack_button_overlays", ":slot", 0),
 			(try_end),
 			
 			(try_begin),
@@ -227,13 +227,21 @@ presentations = [
 				
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_troop_stack_container", reg1),
-				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", "script_cf_pti_troop_is_selected", STACK_X_OFFSET),
+				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", STACK_X_OFFSET),
 				
 				# Add troop image if a troop is selected
 				(try_begin),
 					(gt, "$pti_nps_selected_troop_id", -1),
 					
-					(call_script, "script_gpu_create_troop_image", "$pti_nps_selected_troop_id", 350, 250, 1000),
+					# Show pressed button instead of unpressed one
+					(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", "$pti_nps_selected_troop_id"),
+					#(overlay_set_display, ":stack_button", 0),
+					(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", "$pti_nps_selected_troop_id"),
+					(overlay_set_display, ":highlight_button", 1),
+					
+					# Show selected troop image
+					(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", "$pti_nps_selected_troop_id"),
+					(overlay_set_display, ":troop_image", 1),
 				(try_end),
 			(else_try),
 				# Set up agent stacks if drilled down to see them
@@ -250,11 +258,21 @@ presentations = [
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_individual_stack_container", reg1),
 				(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
-				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", "script_cf_pti_individual_is_selected", STACK_X_OFFSET),
+				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", STACK_X_OFFSET),
 				
 				# Add individual image if an individual is selected
 				(try_begin),
 					(gt, "$pti_nps_selected_individual", -1),
+					
+					# Show pressed button instead of unpressed one
+					(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", "$pti_nps_selected_individual"),
+					#(overlay_set_display, ":stack_button", 0),
+					(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", "$pti_nps_selected_individual"),
+					(overlay_set_display, ":highlight_button", 1),
+					
+					# Show selected individual image
+					(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", "$pti_nps_selected_individual"),
+					(overlay_set_display, ":image_troop", 1),
 					
 					(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
 					(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
@@ -267,13 +285,12 @@ presentations = [
 		]),
 		
 		# Keep track of how long the presentation has been running (which tells how long since a troop was selected)
-		# Exit if E is pressed
+		# Exit if esc is pressed
 		(ti_on_presentation_run,
 		[
 			(store_trigger_param_1, "$pti_nps_milliseconds_running"),
 			
 			(try_begin),
-				(this_or_next|key_clicked, key_e),
 				(key_clicked, key_escape),
 				
 				(presentation_set_duration, 0),
@@ -322,8 +339,9 @@ presentations = [
 				
 				# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
 				(try_begin),
+					(neg|troop_is_hero, ":troop_id"),
 					(eq, ":troop_id", "$pti_nps_selected_troop_id"),
-					(lt, "$pti_nps_milliseconds_running", 500),
+					(is_between, "$pti_nps_milliseconds_running", 10, 500),
 					
 					(assign, "$pti_nps_open_agent_screen", 1),
 					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
@@ -331,6 +349,7 @@ presentations = [
 				(try_end),
 				
 				(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+				(assign, "$pti_nps_milliseconds_running", 0),
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 			

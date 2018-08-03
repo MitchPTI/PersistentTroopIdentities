@@ -2061,42 +2061,36 @@ new_scripts = [
 		(store_script_param, ":container", 1),
 		(store_script_param, ":num_stacks", 2),
 		(store_script_param, ":stack_init_script", 3),
-		(store_script_param, ":highlight_condition_script", 4),
-		(store_script_param, ":x_offset", 5),
-		
-		(set_container_overlay, ":container"),
+		(store_script_param, ":x_offset", 4),
 		
 		(store_mul, ":cur_y", 26, ":num_stacks"),
 		(try_for_range, ":i", 0, ":num_stacks"),
+			(set_container_overlay, ":container"),
+			
 			#(display_message, s0),
 			(val_sub, ":cur_y", 26),
 			
 			# Call script to set the associated stack object (e.g. a troop id) and string (e.g. troop name)
 			(call_script, ":stack_init_script", ":i"),
 			(assign, ":stack_object", reg0),
+			(assign, ":image_troop", reg1),
 			
 			# Stack overlay
 			(call_script, "script_gpu_create_image_button", mesh_party_member_button, mesh_party_member_button_pressed, ":x_offset", ":cur_y", 435),
 			(assign, ":stack_button", reg1),
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":stack_button", ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":stack_button", ":container"),
-			(troop_set_slot, "trp_pti_nps_stack_object_button_overlays", ":stack_object", ":stack_button"),
+			(troop_set_slot, "trp_pti_nps_stack_button_overlays", ":stack_object", ":stack_button"),
 			
 			# Highlight overlay (initially invisible, made visible if stack highlighted)
 			(call_script, "script_gpu_create_image_button", mesh_party_member_button_pressed, mesh_party_member_button_pressed, ":x_offset", ":cur_y", 435),
 			(assign, ":highlight_button", reg1),
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":highlight_button", ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":highlight_button", ":container"),
-			(troop_set_slot, "trp_pti_nps_stack_button_highlight_overlays", ":stack_button", ":highlight_button"),
+			(troop_set_slot, "trp_pti_nps_stack_button_highlight_overlays", ":stack_object", ":highlight_button"),
 			#(overlay_set_color, ":highlight_button", 0x000088),
 			#(overlay_set_alpha, ":highlight_button", 0x44),
-			(try_begin),
-				(call_script, ":highlight_condition_script", ":stack_object"),
-				#(display_message, "@Highlighting {s0}"),
-				(overlay_set_display, ":stack_button", 0),
-			(else_try),
-				(overlay_set_display, ":highlight_button", 0),
-			(try_end),
+			(overlay_set_display, ":highlight_button", 0),
 			
 			# Stack text
 			(store_add, ":text_y", ":cur_y", 2),
@@ -2106,6 +2100,12 @@ new_scripts = [
 			(troop_set_slot, "trp_pti_nps_overlay_highlights_on_mouseover", reg1, 1),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", reg1, ":container"),
 			(troop_set_slot, "trp_pti_nps_stack_object_text_overlays", ":stack_object", reg1),
+			
+			# Troop image
+			(set_container_overlay, -1),
+			(call_script, "script_gpu_create_troop_image", ":image_troop", 350, 250, 1000),
+			(overlay_set_display, reg1, 0),
+			(troop_set_slot, "trp_pti_nps_stack_object_troop_images", ":stack_object", reg1),
 		(try_end),
 		
 		(set_container_overlay, -1),
@@ -2176,6 +2176,7 @@ new_scripts = [
 		(try_end),
 		
 		(assign, reg0, ":troop_id"),
+		(assign, reg1, ":troop_id"),
 	]),
 	
 	# script_pti_nps_troop_stack_init
@@ -2197,6 +2198,7 @@ new_scripts = [
 		(try_end),
 		
 		(assign, reg0, ":troop_id"),
+		(assign, reg1, ":troop_id"),
 	]),
 	
 	# script_pti_nps_individual_stack_init
@@ -2206,9 +2208,13 @@ new_scripts = [
 		
 		(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 		
+		(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", ":curr_individual"),
+		(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", ":curr_individual"),
+		
 		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
 		(str_store_string_reg, s0, s1),
 		(assign, reg0, ":curr_individual"),
+		(assign, reg1, "trp_pti_nps_presentation_troop"),
 	]),
 	
 ]
