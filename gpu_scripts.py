@@ -21,6 +21,17 @@ from ID_animations import *
 
 scripts = [
 	
+	("gpu_overlay_set_size",
+	[
+		(store_script_param, ":overlay", 1),
+		(store_script_param, ":size_x", 2),
+		(store_script_param, ":size_y", 3),
+		
+		(position_set_x, pos1, ":size_x"),
+		(position_set_y, pos1, ":size_y"),
+		(overlay_set_size, ":overlay", pos1),
+	]),
+	
 	("gpu_create_scrollable_container",
 	[
 		(store_script_param, ":pos_x", 1),
@@ -64,6 +75,20 @@ scripts = [
 		
 		(set_fixed_point_multiplier, 1000),
 		(create_game_button_overlay, reg1, ":string"),
+		(position_set_x, pos1, ":pos_x"),
+		(position_set_y, pos1, ":pos_y"),
+		(overlay_set_position, reg1, pos1),
+		(overlay_set_text, reg1, ":string"),
+	]),
+	
+	("gpu_create_in_game_button_overlay",
+	[
+		(store_script_param, ":string", 1),
+		(store_script_param, ":pos_x", 2),
+		(store_script_param, ":pos_y", 3),
+		
+		(set_fixed_point_multiplier, 1000),
+		(create_in_game_button_overlay, reg1, ":string"),
 		(position_set_x, pos1, ":pos_x"),
 		(position_set_y, pos1, ":pos_y"),
 		(overlay_set_position, reg1, pos1),

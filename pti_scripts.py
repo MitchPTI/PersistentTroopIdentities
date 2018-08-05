@@ -2103,7 +2103,7 @@ new_scripts = [
 			
 			# Troop image
 			(set_container_overlay, -1),
-			(call_script, "script_gpu_create_troop_image", ":image_troop", 350, 250, 1000),
+			(call_script, "script_gpu_create_troop_image", ":image_troop", 350, 325, 1000),
 			(overlay_set_display, reg1, 0),
 			(troop_set_slot, "trp_pti_nps_stack_object_troop_images", ":stack_object", reg1),
 		(try_end),
