@@ -647,34 +647,40 @@ new_scripts = [
 			(assign, ":curr_index", reg3),
 		(try_end),
 		
-		# Connect the neighbour nodes together
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next", reg1),
-		(assign, ":prev", reg2),
-		
-		(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
-		
-		# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
-		(party_get_slot, ":last_index", ":list", pti_slot_array_size),
-		(val_sub, ":last_index", 1),
 		(try_begin),
-			(neq, ":last_index", ":index"),
+			(gt, ":index", -1),
 			
-			(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
-		(try_end),
-		
-		# Delete the (now unused by the linked list) last index and decrement the size of the list
-		(call_script, "script_pti_array_set", ":list", ":last_index", 0),
-		(party_get_slot, ":size", ":list", pti_slot_array_size),
-		(val_sub, ":size", 1),
-		(party_set_slot, ":list", pti_slot_array_size, ":size"),
-		
-		# If the first element is being removed, set the head to point to the next element
-		(try_begin),
-			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			# Connect the neighbour nodes together
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next", reg1),
+			(assign, ":prev", reg2),
 			
-			(party_set_slot, ":list", pti_slot_list_head, ":next"),
+			(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
+			
+			# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
+			(party_get_slot, ":last_index", ":list", pti_slot_array_size),
+			(val_sub, ":last_index", 1),
+			(try_begin),
+				(neq, ":last_index", ":index"),
+				
+				(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
+			(try_end),
+			
+			# Delete the (now unused by the linked list) last index and decrement the size of the list
+			(call_script, "script_pti_array_set", ":list", ":last_index", 0),
+			(party_get_slot, ":size", ":list", pti_slot_array_size),
+			(val_sub, ":size", 1),
+			(party_set_slot, ":list", pti_slot_array_size, ":size"),
+			
+			# If the first element is being removed, set the head to point to the next element
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":next"),
+			(try_end),
+		(else_try),
+			(display_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -1978,7 +1984,9 @@ new_scripts = [
 		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
-		(display_message, "@Processing casualty of {s0} {s1}"),
+		(assign, reg0, ":agent"),
+		(assign, reg1, ":individual"),
+		(display_message, "@Processing casualty of {s0} {s1}. Agent ID: {reg0} | Individual ID: {reg1}"),
 		
 		(try_begin),
 			(eq, ":wounded", 1),
