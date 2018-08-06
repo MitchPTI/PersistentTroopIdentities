@@ -1328,14 +1328,11 @@ new_scripts = [
 		
 		(troop_sort_inventory, ":troop_id"),
 		
-		(assign, ":max_slot", 0),
 		(assign, ":type_count", 0),
 		(assign, ":end_cond", max_inventory_items),
-		(try_for_range, ":slot", 0, max_inventory_items),
+		(try_for_range, ":slot", 0, ":end_cond"),
 			(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
 			(gt, ":item", 0),
-			
-			(assign, ":max_slot", ":slot"),
 			
 			(try_begin),
 				(item_get_type, ":curr_type", ":item"),
@@ -1344,8 +1341,8 @@ new_scripts = [
 				(val_add, ":type_count", 1),
 			(try_end),
 			
-		(else_try),
-			(assign, ":end_cond", 0),
+		#(else_try),
+		#	(assign, ":end_cond", 0),
 		(try_end),
 		
 		(try_begin),
@@ -1353,7 +1350,7 @@ new_scripts = [
 			
 			(store_random_in_range, ":item_num", 0, ":type_count"),
 			(assign, ":type_count", 0),
-			(assign, ":end_cond", ":max_slot"),
+			(assign, ":end_cond", max_inventory_items),
 			(try_for_range, ":slot", 0, ":end_cond"),
 				(troop_get_inventory_slot, ":item", ":troop_id", ":slot"),
 				(gt, ":item", 0),
