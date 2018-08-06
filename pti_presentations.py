@@ -401,7 +401,14 @@ presentations = [
 				(party_remove_members, "p_main_party", ":troop_id", 1),
 				(party_add_members, "p_main_party", ":upgrade", 1),
 				
-				(assign, "$pti_nps_selected_individual", -1),
+				(try_begin),
+					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
+					(eq, ":stack_size", 0),
+					
+					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
+				(else_try),
+					(assign, "$pti_nps_selected_individual", -1),
+				(try_end),
 				
 				(start_presentation, "prsnt_new_party_screen"),
 			(else_try),
@@ -417,7 +424,14 @@ presentations = [
 				(party_remove_members, "p_main_party", ":troop_id", 1),
 				(party_add_members, "p_main_party", ":upgrade", 1),
 				
-				(assign, "$pti_nps_selected_individual", -1),
+				(try_begin),
+					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
+					(eq, ":stack_size", 0),
+					
+					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
+				(else_try),
+					(assign, "$pti_nps_selected_individual", -1),
+				(try_end),
 				
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
