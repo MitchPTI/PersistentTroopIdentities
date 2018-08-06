@@ -1923,6 +1923,9 @@ new_scripts = [
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 		
+		(troop_get_class, ":class", ":troop_type"),
+		(troop_set_class, ":troop_id", ":class"),
+		
 		(troop_set_slot, ":troop_id", pti_slot_troop_individual, ":individual"),
 	]),
 	
