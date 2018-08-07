@@ -897,6 +897,9 @@ new_scripts = [
 		(store_current_day, ":curr_day"),
 		Individual.set(":individual", "day_joined", ":curr_day"),
 		
+		(call_script, "script_pti_xp_needed_to_upgrade_to", ":troop_id"),
+		Individual.set(":individual", "xp", reg0),
+		
 		(assign, reg0, ":individual"),
 	]),
 	
@@ -1266,6 +1269,19 @@ new_scripts = [
 			(store_proficiency_level, ":proficiency_level", ":source", ":proficiency"),
 			(troop_raise_proficiency_linear, ":target", ":proficiency", ":proficiency_level"),
 		(try_end),
+	]),
+	
+	# script_pti_xp_needed_to_upgrade_to
+	("pti_xp_needed_to_upgrade_to",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		#formula : int needed_upgrade_xp = 2 * (30 + 0.006f * level_boundaries[troops[troop_id].level]);
+		(store_character_level, ":level", ":troop_id"),
+		(get_level_boundary, reg0, ":level"),
+		(val_mul, reg0, 6),
+		(val_div, reg0, 1000),
+		(val_add, reg0, 30),
 	]),
 	
 	## ITEM SCRIPTS
@@ -1905,7 +1921,30 @@ new_scripts = [
 		(val_sub, reg0, ":day_joined"),
 	]),
 	
+	# script_pti_upgrade_individual_in_party_to
+	("pti_upgrade_individual_in_party_to",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":party", 2),
+		(store_script_param, ":upgrade_troop_id", 3),
+		
+		Individual.get(":individual", "troop_type"),
+		(party_remove_members, ":party", reg0, 1),
+		Individual.set(":individual", "troop_type", ":upgrade_troop_id"),
+		(party_add_members, ":party", ":upgrade_troop_id", 1),
+	]),
+	
 	## BATTLE SCRIPTS ##
+	
+	# script_pti_troop_get_xp_for_killing
+	("pti_troop_get_xp_for_killing",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(call_script, "script_game_get_prisoner_price", ":troop_id"),
+		(val_mul, reg0, 6),
+		(val_div, reg0, 5),
+	]),
 	
 	# script_pti_set_up_individual_troop
 	("pti_set_up_individual_troop",
@@ -1952,6 +1991,12 @@ new_scripts = [
 		Individual.get(":individual", "most_kills"),
 		(val_max, reg0, ":battle_kill_count"),
 		Individual.set(":individual", "most_kills", reg0),
+		
+		# Add xp gained in battle
+		(agent_get_slot, ":xp_gained", ":agent", pti_slot_agent_xp_gained),
+		Individual.get(":individual", "xp"),
+		(val_add, reg0, ":xp_gained"),
+		Individual.set(":individual", "xp", reg0),
 		
 		# Update the best kill if applicable
 		(try_begin),

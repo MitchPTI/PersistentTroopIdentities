@@ -1,5 +1,19 @@
 from header_operations import call_script
 from collections import OrderedDict
+from module_info import export_dir
+
+import re
+
+with open(export_dir + "/module.ini") as fh:
+	lines = fh.readlines()
+
+module_ini_dict = dict([re.split("\s*=\s*", line) for line in lines if "=" in line])
+for key, value in module_ini_dict.iteritems():
+	module_ini_dict[key] = value.strip()
+	if "#" in value:
+		module_ini_dict[key] = re.sub("\s*#.*$", "", value).strip()
+
+troop_xp_multiplier = float(module_ini_dict["regulars_xp_multiplier"]) if "regulars_xp_multiplier" in module_ini_dict else 1.0
 
 def mask(bits):
 	return (2 ** bits) - 1
@@ -84,6 +98,7 @@ FACE_KEY_BITS = 6
 TOTAL_KILLS_BITS = 14
 BATTLE_KILLS_BITS = 10
 TIMES_WOUNDED_BITS = 7	# 7 bits gives a maximum of 127 times. Even at max surgery there is only a 0.00000000024% chance of a troop surviving this many times
+XP_BITS = 30
 
 Individual.set_attribute_sizes({
 	"troop_type": TROOP_BITS
@@ -109,6 +124,7 @@ Individual.set_attribute_sizes({
 	, "most_kills": BATTLE_KILLS_BITS
 	, "best_kill": TROOP_BITS
 	, "times_wounded": TIMES_WOUNDED_BITS
+	, "xp": XP_BITS
 })
 
 troop_slots = (200, [
@@ -120,6 +136,7 @@ agent_slots = (50, [
 	"slot_agent_individual"
 	, "slot_agent_best_kill"
 	, "slot_agent_best_kill_level"
+	, "slot_agent_xp_gained"
 ])
 
 array_slots = (0, [

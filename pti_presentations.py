@@ -282,22 +282,57 @@ presentations = [
 				
 				(try_begin),
 					(gt, "$pti_nps_selected_individual", -1),
+					
+					(call_script, "script_pti_nps_create_upper_left_stack_container"),
+					(assign, ":text_overlay", reg1),
+					Individual.get("$pti_nps_selected_individual", "xp"),
+					(str_store_string, s10, "@XP: {reg0}"),
+					(str_store_string_reg, s0, s10),
+					(overlay_set_text, ":text_overlay", "str_s0"),
+					
 					(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 0),
 					(gt, ":upgrade", 0),
+					
+					Individual.get("$pti_nps_selected_individual", "xp"),
+					(assign, ":xp", reg0),
+					
+					(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+					(assign, ":upgrade_xp", reg0),
+					(str_store_string, s10, "@{s10}^XP needed for upgrade: {reg0}"),
+					(str_store_string_reg, s0, s10),
+					(overlay_set_text, ":text_overlay", "str_s0"),
 					
 					(str_store_troop_name, s0, ":upgrade"),
 					(str_store_string, s0, "@Upgrade to {s0}"),
 					(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 300),
-					(assign, "$pti_nps_upgrade_button_1", reg1),
+					(try_begin),
+						(gt, ":xp", ":upgrade_xp"),
+						
+						(assign, "$pti_nps_upgrade_button_1", reg1),
+					(else_try),
+						(overlay_set_alpha, reg1, 0x44),
+					(try_end),
 					#(call_script, "script_gpu_overlay_set_size", "$pti_nps_upgrade_button_1", 250, 25),
 					
 					(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 1),
 					(gt, ":upgrade", 0),
 					
+					(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+					(assign, ":upgrade_xp", reg0),
+					(str_store_string, s10, "@{s10}^XP needed for upgrade: {reg0}"),
+					(str_store_string_reg, s0, s10),
+					(overlay_set_text, ":text_overlay", "str_s0"),
+					
 					(str_store_troop_name, s0, ":upgrade"),
 					(str_store_string, s0, "@Upgrade to {s0}"),
 					(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 250),
-					(assign, "$pti_nps_upgrade_button_2", reg1),
+					(try_begin),
+						(gt, ":xp", ":upgrade_xp"),
+						
+						(assign, "$pti_nps_upgrade_button_2", reg1),
+					(else_try),
+						(overlay_set_alpha, reg1, 0x44),
+					(try_end),
 				(try_end),
 			(try_end),
 			
@@ -389,35 +424,21 @@ presentations = [
 			#(store_trigger_param_2, ":value"),
 			
 			(try_begin),
-				(eq, ":overlay", "$pti_nps_upgrade_button_1"),
 				(gt, "$pti_nps_selected_individual", -1),
+				
+				(this_or_next|eq, ":overlay", "$pti_nps_upgrade_button_1"),
+				(eq, ":overlay", "$pti_nps_upgrade_button_2"),
 				
 				Individual.get("$pti_nps_selected_individual", "troop_type"),
 				(assign, ":troop_id", reg0),
-				(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
-				Individual.set("$pti_nps_selected_individual", "troop_type", ":upgrade"),
-				(call_script, "script_pti_individual_generate_base_equipment", "$pti_nps_selected_individual"),
-				
-				(party_remove_members, "p_main_party", ":troop_id", 1),
-				(party_add_members, "p_main_party", ":upgrade", 1),
-				
 				(try_begin),
-					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
-					(eq, ":stack_size", 0),
+					(eq, ":overlay", "$pti_nps_upgrade_button_1"),
 					
-					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
+					(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
 				(else_try),
-					(assign, "$pti_nps_selected_individual", -1),
+					(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
 				(try_end),
 				
-				(start_presentation, "prsnt_new_party_screen"),
-			(else_try),
-				(eq, ":overlay", "$pti_nps_upgrade_button_2"),
-				(gt, "$pti_nps_selected_individual", -1),
-				
-				Individual.get("$pti_nps_selected_individual", "troop_type"),
-				(assign, ":troop_id", reg0),
-				(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
 				Individual.set("$pti_nps_selected_individual", "troop_type", ":upgrade"),
 				(call_script, "script_pti_individual_generate_base_equipment", "$pti_nps_selected_individual"),
 				

@@ -150,6 +150,31 @@ pti_process_casualty = (
 		(try_end),
   ])
 
+pti_give_xp = (
+  ti_on_agent_killed_or_wounded, 0, 0, [],
+  [
+		(store_trigger_param, ":agent", 1),
+		(store_trigger_param, ":killer_agent", 2),
+		
+		(try_begin),
+			(agent_is_human, ":agent"),
+			(agent_is_human, ":killer_agent"),
+			(agent_get_party_id, ":party", ":killer_agent"),
+			(eq, ":party", "p_main_party"),
+			
+			(agent_get_troop_id, ":troop_id", ":killer_agent"),
+			(neg|troop_is_hero, ":troop_id"),
+			
+			(agent_get_troop_id, ":troop_id", ":agent"),
+			(call_script, "script_pti_troop_get_xp_for_killing", ":troop_id"),
+			(assign, ":xp_for_kill", reg0),
+			
+			(agent_get_slot, ":xp_gained", ":killer_agent", pti_slot_agent_xp_gained),
+			(val_add, ":xp_gained", ":xp_for_kill"),
+			(agent_set_slot, ":killer_agent", pti_slot_agent_xp_gained, ":xp_gained"),
+		(try_end),
+  ])
+
 def merge(mission_templates):
 	for template_id in battle_templates:
 		mission_templates[template_id].triggers.extend([
@@ -159,4 +184,5 @@ def merge(mission_templates):
 			, pti_get_killer_team
 			, pti_restore_main_party
 			, pti_process_casualty
+			, pti_give_xp
 		])
