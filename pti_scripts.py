@@ -1159,7 +1159,7 @@ new_scripts = [
 		#(face_keys_get_age, ":age_begin", s0),
 		#(face_keys_get_age, ":age_end", s1),
 		#(store_random_in_range, ":age", ":age_begin", ":age_end"),
-		(store_random_in_range, ":age", 0, 64),
+		(store_random_in_range, ":age", 0, 48),
 		Individual.set(":individual", "age", ":age"),
 		
 		## These operations apparently don't work anyway
