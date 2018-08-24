@@ -325,6 +325,19 @@ presentations = [
 				(assign, "$pti_nps_open_agent_screen", 0),
 				(assign, "$pti_nps_selected_individual", -1),
 				(start_presentation, "prsnt_new_party_screen"),
+			(else_try),
+				(this_or_next|key_is_down, key_left_control),
+				(key_is_down, key_right_control),
+				(key_clicked, key_x),
+				
+				(try_begin),
+					(gt, "$pti_nps_selected_individual", -1),
+					
+					Individual.get("$pti_nps_selected_individual", "xp"),
+					(val_add, reg0, 1000),
+					Individual.set("$pti_nps_selected_individual", "xp", reg0),
+					(start_presentation, "prsnt_new_party_screen"),
+				(try_end),
 			(try_end),
 		]),
 		
