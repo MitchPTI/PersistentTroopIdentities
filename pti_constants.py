@@ -3,17 +3,20 @@ from collections import OrderedDict
 from module_info import export_dir
 
 import re
-
-with open(export_dir + "/module.ini") as fh:
-	lines = fh.readlines()
-
-module_ini_dict = dict([re.split("\s*=\s*", line) for line in lines if "=" in line])
-for key, value in module_ini_dict.iteritems():
-	module_ini_dict[key] = value.strip()
-	if "#" in value:
-		module_ini_dict[key] = re.sub("\s*#.*$", "", value).strip()
-
-troop_xp_multiplier = float(module_ini_dict["regulars_xp_multiplier"]) if "regulars_xp_multiplier" in module_ini_dict else 1.0
+try:
+	with open(export_dir + "/module.ini") as fh:
+		lines = fh.readlines()
+	
+	module_ini_dict = dict([re.split("\s*=\s*", line) for line in lines if "=" in line])
+	for key, value in module_ini_dict.iteritems():
+		module_ini_dict[key] = value.strip()
+		if "#" in value:
+			module_ini_dict[key] = re.sub("\s*#.*$", "", value).strip()
+	
+	troop_xp_multiplier = float(module_ini_dict["regulars_xp_multiplier"]) if "regulars_xp_multiplier" in module_ini_dict else 1.0
+except Exception as e:
+	print "Something went wrong trying to extract troop xp multiplier from module.ini, setting to 1"
+	troop_xp_multiplier = 1.0
 
 def mask(bits):
 	return (2 ** bits) - 1
