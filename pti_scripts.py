@@ -2261,13 +2261,147 @@ new_scripts = [
 		
 		(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 		
-		(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", ":curr_individual"),
-		(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", ":curr_individual"),
+		(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":curr_individual"),
+		(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":curr_individual"),
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
 		(str_store_string_reg, s0, s1),
 		(assign, reg0, ":curr_individual"),
-		(assign, reg1, "trp_pti_nps_presentation_troop"),
+		(assign, reg1, "$pti_current_individual_troop"),
+		
+		(val_add, "$pti_current_individual_troop", 1),
+	]),
+	
+	# script_pti_nps_select_stack
+	("pti_nps_select_stack",
+	[
+		(store_script_param, ":stack_object", 1),
+		
+		# Hide unpressed stack overlay
+		(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", ":stack_object"),
+		(overlay_set_display, ":stack_button", 0),
+		
+		# Show pressed stack overlay
+		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
+		(overlay_set_display, ":highlight_button", 1),
+		
+		# Show selected object's image
+		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(overlay_set_display, ":image_troop", 1),
+	]),
+	
+	# script_pti_nps_unselect_stack
+	("pti_nps_unselect_stack",
+	[
+		(store_script_param, ":stack_object", 1),
+		
+		# Hide pressed stack overlay
+		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
+		(overlay_set_display, ":highlight_button", 0),
+		
+		# Show unpressed stack overlay
+		(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", ":stack_object"),
+		(overlay_set_display, ":stack_button", 1),
+		
+		# Hide selected object's image
+		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(overlay_set_display, ":image_troop", 0),
+	]),
+	
+	# script_pti_nps_refresh_text
+	("pti_nps_refresh_text",
+	[
+		Individual.get("$pti_nps_selected_individual", "xp"),
+		(str_store_string, s0, "@XP: {reg0}"),
+		
+		(try_begin),
+			(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 0),
+			(gt, ":upgrade", 0),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(str_store_string, s0, "@{s0}^XP needed for upgrade: {reg0}"),
+			
+			(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 1),
+			(gt, ":upgrade", 0),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(str_store_string, s0, "@{s0}^XP needed for upgrade: {reg0}"),
+		(try_end),
+		
+		(overlay_set_text, "$pti_nps_individual_summary", "str_s0"),
+	]),
+	
+	# script_pti_nps_create_individual_upgrade_buttons
+	("pti_nps_create_individual_upgrade_buttons",
+	[
+		(str_clear, s0),
+		
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 300),
+		(assign, "$pti_nps_upgrade_button_1", reg1),
+		(overlay_set_display, "$pti_nps_upgrade_button_1", 0),
+		
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 250),
+		(assign, "$pti_nps_upgrade_button_2", reg1),
+		(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
+	]),
+	
+	# script_pti_nps_refresh_individual_upgrade_buttons
+	("pti_nps_refresh_individual_upgrade_buttons",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(try_begin),
+			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
+			(gt, ":upgrade", 0),
+			
+			(overlay_set_display, "$pti_nps_upgrade_button_1", 1),
+			
+			Individual.get(":individual", "xp"),
+			(assign, ":xp", reg0),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(assign, ":upgrade_xp", reg0),
+			
+			(str_store_troop_name, s0, ":upgrade"),
+			(str_store_string, s0, "@Upgrade to {s0}"),
+			(overlay_set_text, "$pti_nps_upgrade_button_1", "str_s0"),
+			(try_begin),
+				(gt, ":xp", ":upgrade_xp"),
+				
+				(overlay_set_alpha, "$pti_nps_upgrade_button_1", 0xFF),
+			(else_try),
+				(overlay_set_alpha, "$pti_nps_upgrade_button_1", 0x44),
+			(try_end),
+			#(call_script, "script_gpu_overlay_set_size", "$pti_nps_upgrade_button_1", 250, 25),
+		(else_try),
+			(overlay_set_display, "$pti_nps_upgrade_button_1", 0),
+		(try_end),
+		
+		(try_begin),
+			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
+			(gt, ":upgrade", 0),
+			
+			(overlay_set_display, "$pti_nps_upgrade_button_2", 1),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(assign, ":upgrade_xp", reg0),
+			
+			(str_store_troop_name, s0, ":upgrade"),
+			(str_store_string, s0, "@Upgrade to {s0}"),
+			(overlay_set_text, "$pti_nps_upgrade_button_2", "str_s0"),
+			(try_begin),
+				(gt, ":xp", ":upgrade_xp"),
+				
+				(overlay_set_alpha, "$pti_nps_upgrade_button_2", 0xFF),
+			(else_try),
+				(overlay_set_alpha, "$pti_nps_upgrade_button_2", 0x44),
+			(try_end),
+		(else_try),
+			(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
+		(try_end),
 	]),
 	
 ]
