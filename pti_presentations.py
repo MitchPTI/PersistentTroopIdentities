@@ -215,6 +215,8 @@ presentations = [
 				(troop_slot_eq, "trp_pti_nps_stack_button_overlays", ":slot", 0),
 			(try_end),
 			
+			(assign, "$pti_nps_open", 1),
+			
 			(try_begin),
 				# Set up troop stacks if not drilled down to see agents
 				(neq, "$pti_nps_open_agent_screen", 1),
@@ -246,11 +248,20 @@ presentations = [
 					(overlay_set_display, ":troop_image", 1),
 				(try_end),
 			(else_try),
-				# Set up agent stacks if drilled down to see them
+				# Checkbox for showing helmets
+				(str_store_string, s0, "@Show Helmets"),
+				#(call_script, "script_gpu_create_text_overlay", "str_s0", 450, 712, 1000, 100, 27, tf_right_align),
+				gpu_create_text_overlay(550, 715, flags=tf_right_align),
+				
+				(call_script, "script_gpu_create_checkbox", 560, 715),
+				(assign, "$pti_nps_show_helmets_checkbox", reg1),
+				(overlay_set_val, "$pti_nps_show_helmets_checkbox", "$pti_show_helmets"),
+				
+				# Set up agent stacks
 				(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 				(assign, ":num_individuals", reg0),
 				
-				# Add label for drilled down view of individuals
+				# Add individual labels
 				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
 				(assign, reg0, ":num_individuals"),
 				(str_store_string, s0, "@{s0}: {reg0}"),
@@ -348,6 +359,7 @@ presentations = [
 			(try_begin),
 				(key_clicked, key_escape),
 				
+				(assign, "$pti_nps_open", 0),
 				(presentation_set_duration, 0),
 			(else_try),
 				(key_clicked, key_back_space),
@@ -455,6 +467,19 @@ presentations = [
 				(try_end),
 				
 				(start_presentation, "prsnt_new_party_screen"),
+			(try_end),
+		]),
+		
+		# Trigger for "Show Helmets" checkbox being ticked/unticked
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			(store_trigger_param_2, ":value"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_show_helmets_checkbox"),
+				
+				(assign, "$pti_show_helmets", ":value"),
 			(try_end),
 		]),
 		

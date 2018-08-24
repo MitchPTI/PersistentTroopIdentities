@@ -1638,7 +1638,7 @@ new_scripts = [
 		(assign, ":equipment", reg0),
 		(assign, ":armour_slots_start", ek_head),
 		(try_begin),
-			(eq, ":troop_id", "trp_pti_nps_presentation_troop"),
+			(eq, "$pti_nps_open", 1),
 			(eq, "$pti_show_helmets", 0),
 			
 			(assign, ":armour_slots_start", ek_body),
