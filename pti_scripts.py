@@ -106,6 +106,9 @@ new_scripts = [
 		(call_script, "script_pti_linked_list_init"),
 		(party_set_slot, "p_main_party", pti_slot_party_individuals, reg0),
 		(assign, "$pti_individual_name_format", "str_pti_name_format_troop_type_name"),
+		
+		(call_script, "script_pti_linked_list_init"),
+		(assign, "$pti_individuals_array", reg0),
 	]),
 	
 	## ARRAY SCRIPTS
@@ -146,22 +149,28 @@ new_scripts = [
 		(store_script_param, ":index", 2),
 		(store_script_param, ":value", 3),
 		
-		(store_add, ":slot", pti_array_slots_start, ":index"),
 		(try_begin),
-			(ge, ":slot", pti_array_slot_max),
+			(gt, ":array", 0),
 			
+			(store_add, ":slot", pti_array_slots_start, ":index"),
 			(try_begin),
-				(neg|party_slot_ge, ":array", pti_slot_array_next_array, 1),
+				(ge, ":slot", pti_array_slot_max),
 				
-				(call_script, "script_pti_array_init"),
-				(party_set_slot, ":array", pti_slot_array_next_array, reg0),
+				(try_begin),
+					(neg|party_slot_ge, ":array", pti_slot_array_next_array, 1),
+					
+					(call_script, "script_pti_array_init"),
+					(party_set_slot, ":array", pti_slot_array_next_array, reg0),
+				(try_end),
+				
+				(party_get_slot, ":array", ":array", pti_slot_array_next_array),
+				(val_sub, ":slot", pti_array_slot_max),
+				(call_script, "script_pti_array_set", ":array", ":slot", ":value"), 
+			(else_try),
+				(party_set_slot, ":array", ":slot", ":value"),
 			(try_end),
-			
-			(party_get_slot, ":array", ":array", pti_slot_array_next_array),
-			(val_sub, ":slot", pti_array_slot_max),
-			(call_script, "script_pti_array_set", ":array", ":slot", ":value"), 
 		(else_try),
-			(party_set_slot, ":array", ":slot", ":value"),
+			(display_log_message, "@ERROR: script_pti_array_set was called without a valid array being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -170,10 +179,16 @@ new_scripts = [
 		(store_script_param, ":array", 1),
 		(store_script_param, ":value", 2),
 		
-		(party_get_slot, ":index", ":array", pti_slot_array_size),
-		(call_script, "script_pti_array_set", ":array", ":index", ":value"),
-		(store_add, ":size", ":index", 1),
-		(party_set_slot, ":array", pti_slot_array_size, ":size"),
+		(try_begin),
+			(gt, ":array", 0),
+			
+			(party_get_slot, ":index", ":array", pti_slot_array_size),
+			(call_script, "script_pti_array_set", ":array", ":index", ":value"),
+			(store_add, ":size", ":index", 1),
+			(party_set_slot, ":array", pti_slot_array_size, ":size"),
+		(else_try),
+			(display_log_message, "@ERROR: script_pti_array_append was called without a valid array being passed", 0xFF000),
+		(try_end),
 	]),
 	
 	("pti_array_swap",
@@ -368,31 +383,37 @@ new_scripts = [
 		(store_script_param, ":index", 2),
 		(store_script_param, ":value", 3),
 		
-		(party_get_slot, ":new_index", ":list", pti_slot_array_size),
-		
-		# Get the neighbour nodes that will be modified to accommodate the new node (in this case current and previous)
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next_index", reg1),
-		(assign, ":prev_index", reg2),
-		
-		# Modify the neighbour nodes to point to the new node
-		(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":new_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":new_index"),
-		
-		# Create the new node
-		(val_lshift, ":next_index", pti_list_next_node_bitshift),
-		(val_or, ":value", ":next_index"),
-		(val_lshift, ":prev_index", pti_list_prev_node_bitshift),
-		(val_or, ":value", ":prev_index"),
-		(call_script, "script_pti_array_append", ":list", ":value"),
-		
-		# If inserting before the head node, make this the new head node
 		(try_begin),
-			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			(gt, ":list", 0),
 			
-			(party_set_slot, ":list", pti_slot_list_head, ":new_index"),
-			#(assign, reg0, ":new_index"),
-			#(display_message, "@Setting head to index {reg0}"),
+			(party_get_slot, ":new_index", ":list", pti_slot_array_size),
+			
+			# Get the neighbour nodes that will be modified to accommodate the new node (in this case current and previous)
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next_index", reg1),
+			(assign, ":prev_index", reg2),
+			
+			# Modify the neighbour nodes to point to the new node
+			(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":new_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":new_index"),
+			
+			# Create the new node
+			(val_lshift, ":next_index", pti_list_next_node_bitshift),
+			(val_or, ":value", ":next_index"),
+			(val_lshift, ":prev_index", pti_list_prev_node_bitshift),
+			(val_or, ":value", ":prev_index"),
+			(call_script, "script_pti_array_append", ":list", ":value"),
+			
+			# If inserting before the head node, make this the new head node
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":new_index"),
+				#(assign, reg0, ":new_index"),
+				#(display_message, "@Setting head to index {reg0}"),
+			(try_end),
+		(else_try),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -465,47 +486,53 @@ new_scripts = [
 		(store_script_param, ":index_1", 2),
 		(store_script_param, ":index_2", 3),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index_1"),
-		(assign, ":next_index_1", reg1),
-		(assign, ":prev_index_1", reg2),
-		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index_2"),
-		(assign, ":next_index_2", reg1),
-		(assign, ":prev_index_2", reg2),
-		
 		(try_begin),
-			(eq, ":next_index_1", ":index_2"),
+			(gt, ":list", 0),
 			
-			(call_script, "script_pti_linked_list_swap_with_next", ":list", ":index_1"),
-		(else_try),
-			(eq, ":next_index_2", ":index_1"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index_1"),
+			(assign, ":next_index_1", reg1),
+			(assign, ":prev_index_1", reg2),
 			
-			(call_script, "script_pti_linked_list_swap_with_next", ":list", ":index_2"),
-		(else_try),
-			(call_script, "script_pti_linked_list_set_next", ":list", ":index_2", ":next_index_1"),
-			(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index_1", ":index_2"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":index_2", ":prev_index_1"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index_1", ":index_2"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index_2"),
+			(assign, ":next_index_2", reg1),
+			(assign, ":prev_index_2", reg2),
 			
-			(call_script, "script_pti_linked_list_set_next", ":list", ":index_1", ":next_index_2"),
-			(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index_2", ":index_1"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":index_1", ":prev_index_2"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index_2", ":index_1"),
-			
-			# If swapping the head node, set the other node as the new head node
 			(try_begin),
-				(party_slot_eq, ":list", pti_slot_list_head, ":index_1"),
+				(eq, ":next_index_1", ":index_2"),
 				
-				(party_set_slot, ":list", pti_slot_list_head, ":index_2"),
-				#(assign, reg0, ":index_2"),
-				#(display_message, "@Setting head to index {reg0}"),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", ":index_1"),
 			(else_try),
-				(party_slot_eq, ":list", pti_slot_list_head, ":index_2"),
+				(eq, ":next_index_2", ":index_1"),
 				
-				(party_set_slot, ":list", pti_slot_list_head, ":index_1"),
-				#(assign, reg0, ":index_1"),
-				#(display_message, "@Setting head to index {reg0}"),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", ":index_2"),
+			(else_try),
+				(call_script, "script_pti_linked_list_set_next", ":list", ":index_2", ":next_index_1"),
+				(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index_1", ":index_2"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":index_2", ":prev_index_1"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index_1", ":index_2"),
+				
+				(call_script, "script_pti_linked_list_set_next", ":list", ":index_1", ":next_index_2"),
+				(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index_2", ":index_1"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":index_1", ":prev_index_2"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index_2", ":index_1"),
+				
+				# If swapping the head node, set the other node as the new head node
+				(try_begin),
+					(party_slot_eq, ":list", pti_slot_list_head, ":index_1"),
+					
+					(party_set_slot, ":list", pti_slot_list_head, ":index_2"),
+					#(assign, reg0, ":index_2"),
+					#(display_message, "@Setting head to index {reg0}"),
+				(else_try),
+					(party_slot_eq, ":list", pti_slot_list_head, ":index_2"),
+					
+					(party_set_slot, ":list", pti_slot_list_head, ":index_1"),
+					#(assign, reg0, ":index_1"),
+					#(display_message, "@Setting head to index {reg0}"),
+				(try_end),
 			(try_end),
+		(else_try),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -514,34 +541,40 @@ new_scripts = [
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next_index", reg1),
-		(assign, ":prev_index", reg2),
-		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":next_index"),
-		(assign, ":last_index", reg1),
-		
-		(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":next_index"),
-		(call_script, "script_pti_linked_list_set_next", ":list", ":next_index", ":index"),
-		(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":last_index"),
-		
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":prev_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":next_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":last_index", ":index"),
-		
-		# If swapping the head node, set the other node as the new head node
 		(try_begin),
-			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			(gt, ":list", 0),
 			
-			(party_set_slot, ":list", pti_slot_list_head, ":next_index"),
-			#(assign, reg0, ":next_index"),
-			#(display_message, "@Setting head to index {reg0}"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next_index", reg1),
+			(assign, ":prev_index", reg2),
+			
+			(call_script, "script_pti_linked_list_get_node", ":list", ":next_index"),
+			(assign, ":last_index", reg1),
+			
+			(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":next_index"),
+			(call_script, "script_pti_linked_list_set_next", ":list", ":next_index", ":index"),
+			(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":last_index"),
+			
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":prev_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":next_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":last_index", ":index"),
+			
+			# If swapping the head node, set the other node as the new head node
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":next_index"),
+				#(assign, reg0, ":next_index"),
+				#(display_message, "@Setting head to index {reg0}"),
+			(else_try),
+				(party_slot_eq, ":list", pti_slot_list_head, ":next_index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":index"),
+				#(assign, reg0, ":index"),
+				#(display_message, "@Setting head to index {reg0}"),
+			(try_end),
 		(else_try),
-			(party_slot_eq, ":list", pti_slot_list_head, ":next_index"),
-			
-			(party_set_slot, ":list", pti_slot_list_head, ":index"),
-			#(assign, reg0, ":index"),
-			#(display_message, "@Setting head to index {reg0}"),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_next was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -550,34 +583,40 @@ new_scripts = [
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next_index", reg1),
-		(assign, ":prev_index", reg2),
-		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":prev_index"),
-		(assign, ":first_index", reg2),
-		
-		(call_script, "script_pti_linked_list_set_next", ":list", ":first_index", ":index"),
-		(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":prev_index"),
-		(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":next_index"),
-		
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":prev_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":prev_index", ":index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":first_index"),
-		
-		# If swapping the head node, set the other node as the new head node
 		(try_begin),
-			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			(gt, ":list", 0),
 			
-			(party_set_slot, ":list", pti_slot_list_head, ":prev_index"),
-			#(assign, reg0, ":prev_index"),
-			#(display_message, "@Setting head to index {reg0}"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next_index", reg1),
+			(assign, ":prev_index", reg2),
+			
+			(call_script, "script_pti_linked_list_get_node", ":list", ":prev_index"),
+			(assign, ":first_index", reg2),
+			
+			(call_script, "script_pti_linked_list_set_next", ":list", ":first_index", ":index"),
+			(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":prev_index"),
+			(call_script, "script_pti_linked_list_set_next", ":list", ":prev_index", ":next_index"),
+			
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":prev_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":prev_index", ":index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":first_index"),
+			
+			# If swapping the head node, set the other node as the new head node
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":prev_index"),
+				#(assign, reg0, ":prev_index"),
+				#(display_message, "@Setting head to index {reg0}"),
+			(else_try),
+				(party_slot_eq, ":list", pti_slot_list_head, ":prev_index"),
+				
+				(party_set_slot, ":list", pti_slot_list_head, ":index"),
+				#(assign, reg0, ":index"),
+				#(display_message, "@Setting head to index {reg0}"),
+			(try_end),
 		(else_try),
-			(party_slot_eq, ":list", pti_slot_list_head, ":prev_index"),
-			
-			(party_set_slot, ":list", pti_slot_list_head, ":index"),
-			#(assign, reg0, ":index"),
-			#(display_message, "@Setting head to index {reg0}"),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_prev was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -587,37 +626,43 @@ new_scripts = [
 		(store_script_param, ":index", 2),
 		(store_script_param, ":dest_index", 3),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next", reg1),
-		(assign, ":prev", reg2),
-		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":dest_index"),
-		(assign, ":dest_prev", reg2),
-		
 		(try_begin),
-			(eq, ":next", ":dest_index"),	# If already in place, do nothing
-		(else_try),
-			(eq, ":prev", ":dest_index"),	# If nodes are neighbours, do an adjacent swap
+			(gt, ":list", 0),
 			
-			(call_script, "script_pti_linked_list_swap_with_next", ":list", ":dest_index"),
-		(else_try),
-			# Connect the moved node's original neighbours together
-			(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next", reg1),
+			(assign, ":prev", reg2),
 			
-			# Connect the moved node to its new neighbours
-			(call_script, "script_pti_linked_list_set_next", ":list", ":dest_prev", ":index"),
-			(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":dest_index"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":dest_index", ":index"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":dest_prev"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":dest_index"),
+			(assign, ":dest_prev", reg2),
 			
 			(try_begin),
-				(party_slot_eq, ":list", pti_slot_list_head, ":dest_index"),
+				(eq, ":next", ":dest_index"),	# If already in place, do nothing
+			(else_try),
+				(eq, ":prev", ":dest_index"),	# If nodes are neighbours, do an adjacent swap
 				
-				(party_set_slot, ":list", pti_slot_list_head, ":index"),
-				#(assign, reg0, ":index"),
-				#(display_message, "@Setting head to index {reg0}"),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", ":dest_index"),
+			(else_try),
+				# Connect the moved node's original neighbours together
+				(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
+				
+				# Connect the moved node to its new neighbours
+				(call_script, "script_pti_linked_list_set_next", ":list", ":dest_prev", ":index"),
+				(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":dest_index"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":dest_index", ":index"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":dest_prev"),
+				
+				(try_begin),
+					(party_slot_eq, ":list", pti_slot_list_head, ":dest_index"),
+					
+					(party_set_slot, ":list", pti_slot_list_head, ":index"),
+					#(assign, reg0, ":index"),
+					#(display_message, "@Setting head to index {reg0}"),
+				(try_end),
 			(try_end),
+		(else_try),
+			(display_log_message, "@ERROR: script_pti_linked_list_move_before was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -626,61 +671,67 @@ new_scripts = [
 		(store_script_param, ":list", 1),
 		(store_script_param, ":object", 2),
 		
-		(call_script, "script_pti_linked_list_get_head_node", ":list"),
-		(assign, ":curr_obj", reg0),
-		(assign, ":next", reg1),
-		(assign, ":prev", reg2),
-		(assign, ":curr_index", reg3),
-		
-		(assign, ":index", -1),
-		(party_get_slot, ":size", ":list", pti_slot_array_size),
-		(try_for_range, ":unused", 0, ":size"),
-			(eq, ":curr_obj", ":object"),
+		(try_begin),
+			(gt, ":list", 0),
 			
-			(assign, ":index", ":curr_index"),
-			(assign, ":size", 0),
-		(else_try),
-			(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
+			(call_script, "script_pti_linked_list_get_head_node", ":list"),
 			(assign, ":curr_obj", reg0),
 			(assign, ":next", reg1),
 			(assign, ":prev", reg2),
 			(assign, ":curr_index", reg3),
-		(try_end),
-		
-		(try_begin),
-			(gt, ":index", -1),
 			
-			# Connect the neighbour nodes together
-			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-			(assign, ":next", reg1),
-			(assign, ":prev", reg2),
-			
-			(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
-			(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
-			
-			# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
-			(party_get_slot, ":last_index", ":list", pti_slot_array_size),
-			(val_sub, ":last_index", 1),
-			(try_begin),
-				(neq, ":last_index", ":index"),
+			(assign, ":index", -1),
+			(party_get_slot, ":size", ":list", pti_slot_array_size),
+			(try_for_range, ":unused", 0, ":size"),
+				(eq, ":curr_obj", ":object"),
 				
-				(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
+				(assign, ":index", ":curr_index"),
+				(assign, ":size", 0),
+			(else_try),
+				(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
+				(assign, ":curr_obj", reg0),
+				(assign, ":next", reg1),
+				(assign, ":prev", reg2),
+				(assign, ":curr_index", reg3),
 			(try_end),
 			
-			# Delete the (now unused by the linked list) last index and decrement the size of the list
-			(call_script, "script_pti_array_set", ":list", ":last_index", 0),
-			(party_get_slot, ":size", ":list", pti_slot_array_size),
-			(val_sub, ":size", 1),
-			(party_set_slot, ":list", pti_slot_array_size, ":size"),
-			
-			# If the first element is being removed, set the head to point to the next element
 			(try_begin),
-				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				(gt, ":index", -1),
 				
-				(party_set_slot, ":list", pti_slot_list_head, ":next"),
+				# Connect the neighbour nodes together
+				(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+				(assign, ":next", reg1),
+				(assign, ":prev", reg2),
+				
+				(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
+				(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
+				
+				# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
+				(party_get_slot, ":last_index", ":list", pti_slot_array_size),
+				(val_sub, ":last_index", 1),
+				(try_begin),
+					(neq, ":last_index", ":index"),
+					
+					(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
+				(try_end),
+				
+				# Delete the (now unused by the linked list) last index and decrement the size of the list
+				(call_script, "script_pti_array_set", ":list", ":last_index", 0),
+				(party_get_slot, ":size", ":list", pti_slot_array_size),
+				(val_sub, ":size", 1),
+				(party_set_slot, ":list", pti_slot_array_size, ":size"),
+				
+				# If the first element is being removed, set the head to point to the next element
+				(try_begin),
+					(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+					
+					(party_set_slot, ":list", pti_slot_list_head, ":next"),
+				(try_end),
+			(else_try),
+				(display_log_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
 			(try_end),
 		(else_try),
-			(display_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
+			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed", 0xFF000),
 		(try_end),
 	]),
 	
@@ -1974,6 +2025,9 @@ new_scripts = [
 		(store_script_param, ":agent", 1),
 		
 		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
+		
+		#(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		#(display_message, "@Processing battle for {s0} {s1}"),
 		
 		# Increase the kill and knock out counts
 		(agent_get_kill_count, ":battle_kill_count", ":agent"),
