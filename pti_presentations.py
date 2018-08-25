@@ -247,15 +247,7 @@ presentations = [
 				(try_begin),
 					(gt, "$pti_nps_selected_troop_id", -1),
 					
-					# Show pressed button instead of unpressed one
-					(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", "$pti_nps_selected_troop_id"),
-					#(overlay_set_display, ":stack_button", 0),
-					(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", "$pti_nps_selected_troop_id"),
-					(overlay_set_display, ":highlight_button", 1),
-					
-					# Show selected troop image
-					(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", "$pti_nps_selected_troop_id"),
-					(overlay_set_display, ":troop_image", 1),
+					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_troop_id"),
 				(try_end),
 			(else_try),
 				# Individual summary text
@@ -286,19 +278,7 @@ presentations = [
 				(try_begin),
 					(gt, "$pti_nps_selected_individual", -1),
 					
-					# Show pressed button instead of unpressed one
-					(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", "$pti_nps_selected_individual"),
-					#(overlay_set_display, ":stack_button", 0),
-					(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", "$pti_nps_selected_individual"),
-					(overlay_set_display, ":highlight_button", 1),
-					
-					# Show selected individual image
-					(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", "$pti_nps_selected_individual"),
-					(overlay_set_display, ":image_troop", 1),
-					
-					#(call_script, "script_pti_equip_troop_as_individual", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
-					#(call_script, "script_pti_give_troop_individual_face", "trp_pti_nps_presentation_troop", "$pti_nps_selected_individual"),
-					
+					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual"),
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
 			(try_end),
