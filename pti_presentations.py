@@ -386,13 +386,22 @@ presentations = [
 					
 					(start_presentation, "prsnt_new_party_screen"),
 				(else_try),
+					(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
+					
+					(neq, ":troop_id", "$pti_nps_selected_troop_id"),
+					
 					# Unselect previously selected troop if applicable
 					(try_begin),
 						(gt, "$pti_nps_selected_troop_id", -1),
 						
+						#(str_store_troop_name, s0, "$pti_nps_selected_troop_id"),
+						#(display_message, "@Deselecting {s0} stack"),
+						
 						(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_troop_id"),
-						(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
 					(try_end),
+					
+					#(str_store_troop_name, s0, ":troop_id"),
+					#(display_message, "@Selecting {s0} stack"),
 					
 					(call_script, "script_pti_nps_select_stack", ":troop_id"),
 				(try_end),
@@ -404,6 +413,9 @@ presentations = [
 			(try_begin),
 				(troop_slot_eq, "trp_pti_nps_overlay_containers", ":overlay", "$pti_nps_individual_stack_container"),
 				
+				(troop_get_slot, ":individual", "trp_pti_nps_overlay_stack_objects", ":overlay"),
+				(neq, ":individual", "$pti_nps_selected_individual"),
+				
 				# Unselect previously selected individual if applicable
 				(try_begin),
 					(gt, "$pti_nps_selected_individual", -1),
@@ -412,8 +424,8 @@ presentations = [
 				(try_end),
 				
 				# Select new individual
-				(troop_get_slot, "$pti_nps_selected_individual", "trp_pti_nps_overlay_stack_objects", ":overlay"),
-				(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual"),
+				(call_script, "script_pti_nps_select_stack", ":individual"),
+				(assign, "$pti_nps_selected_individual", ":individual"),
 				
 				# Refresh the summary text
 				(call_script, "script_pti_nps_refresh_text"),

@@ -2142,8 +2142,8 @@ new_scripts = [
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":highlight_button", ":container"),
 			(troop_set_slot, "trp_pti_nps_stack_button_highlight_overlays", ":stack_object", ":highlight_button"),
 			#(overlay_set_color, ":highlight_button", 0x000088),
-			#(overlay_set_alpha, ":highlight_button", 0x44),
-			(overlay_set_display, ":highlight_button", 0),
+			(overlay_set_alpha, ":highlight_button", 0),
+			#(overlay_set_display, ":highlight_button", 0),
 			
 			# Stack text
 			(store_add, ":text_y", ":cur_y", 2),
@@ -2297,13 +2297,10 @@ new_scripts = [
 	[
 		(store_script_param, ":stack_object", 1),
 		
-		# Hide unpressed stack overlay
-		(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", ":stack_object"),
-		(overlay_set_display, ":stack_button", 0),
-		
 		# Show pressed stack overlay
 		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
-		(overlay_set_display, ":highlight_button", 1),
+		#(overlay_set_display, ":highlight_button", 1),
+		(overlay_set_alpha, ":highlight_button", 0xFF),
 		
 		# Show selected object's image
 		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
@@ -2317,11 +2314,8 @@ new_scripts = [
 		
 		# Hide pressed stack overlay
 		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
-		(overlay_set_display, ":highlight_button", 0),
-		
-		# Show unpressed stack overlay
-		(troop_get_slot, ":stack_button", "trp_pti_nps_stack_button_overlays", ":stack_object"),
-		(overlay_set_display, ":stack_button", 1),
+		#(overlay_set_display, ":highlight_button", 0),
+		(overlay_set_alpha, ":highlight_button", 0),
 		
 		# Hide selected object's image
 		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
