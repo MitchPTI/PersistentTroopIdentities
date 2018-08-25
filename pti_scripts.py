@@ -113,36 +113,47 @@ new_scripts = [
 	
 	## ARRAY SCRIPTS
 	
+	# script_pti_array_init
 	("pti_array_init",
 	[
-		(spawn_around_party, "p_main_party", "pt_none"),
+		(spawn_around_party, "p_main_party", "pt_array"),
 		(disable_party, reg0),
 	]),
 	
+	# script_pti_array_get
 	("pti_array_get",
 	[
 		(store_script_param, ":array", 1),
 		(store_script_param, ":index", 2),
 		
-		(store_add, ":slot", pti_array_slots_start, ":index"),
 		(try_begin),
-			(ge, ":slot", pti_array_slot_max),
+			(party_get_template_id, ":template", ":array"),
+			(eq, ":template", "pt_array"),
 			
-			(party_get_slot, ":array", ":array", pti_slot_array_next_array),
+			(store_add, ":slot", pti_array_slots_start, ":index"),
 			(try_begin),
-				(gt, ":array", 0),
+				(ge, ":slot", pti_array_slot_max),
 				
-				(val_sub, ":slot", pti_array_slot_max),
-				(call_script, "script_pti_array_get", ":array", ":slot"),
+				(party_get_slot, ":array", ":array", pti_slot_array_next_array),
+				(try_begin),
+					(gt, ":array", 0),
+					
+					(val_sub, ":slot", pti_array_slot_max),
+					(call_script, "script_pti_array_get", ":array", ":slot"),
+				(else_try),
+					(display_log_message, "@ERROR: Tried to get array value from next array, but none found", 0xFF0000),
+					(assign, reg0, -1),
+				(try_end),
 			(else_try),
-				(display_log_message, "@ERROR: Tried to get array value from next array, but none found", 0xFF0000),
-				(assign, reg0, -1),
+				(party_get_slot, reg0, ":array", ":slot"),
 			(try_end),
 		(else_try),
-			(party_get_slot, reg0, ":array", ":slot"),
+			(assign, reg0, ":array"),
+			(display_log_message, "@ERROR: script_pti_array_get was called without a valid array being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_array_set
 	("pti_array_set",
 	[
 		(store_script_param, ":array", 1),
@@ -150,7 +161,8 @@ new_scripts = [
 		(store_script_param, ":value", 3),
 		
 		(try_begin),
-			(gt, ":array", 0),
+			(party_get_template_id, ":template", ":array"),
+			(eq, ":template", "pt_array"),
 			
 			(store_add, ":slot", pti_array_slots_start, ":index"),
 			(try_begin),
@@ -170,151 +182,220 @@ new_scripts = [
 				(party_set_slot, ":array", ":slot", ":value"),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_array_set was called without a valid array being passed", 0xFF000),
+			(assign, reg0, ":array"),
+			(display_log_message, "@ERROR: script_pti_array_set was called without a valid array being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_array_append
 	("pti_array_append",
 	[
 		(store_script_param, ":array", 1),
 		(store_script_param, ":value", 2),
 		
 		(try_begin),
-			(gt, ":array", 0),
+			(party_get_template_id, ":template", ":array"),
+			(eq, ":template", "pt_array"),
 			
 			(party_get_slot, ":index", ":array", pti_slot_array_size),
 			(call_script, "script_pti_array_set", ":array", ":index", ":value"),
 			(store_add, ":size", ":index", 1),
 			(party_set_slot, ":array", pti_slot_array_size, ":size"),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_array_append was called without a valid array being passed", 0xFF000),
+			(assign, reg0, ":array"),
+			(display_log_message, "@ERROR: script_pti_array_append was called without a valid array being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_array_swap
 	("pti_array_swap",
 	[
 		(store_script_param, ":array", 1),
 		(store_script_param, ":index_1", 2),
 		(store_script_param, ":index_2", 3),
 		
-		(call_script, "script_pti_array_get", ":array", ":index_1"),
-		(assign, ":element_1", reg0),
-		(call_script, "script_pti_array_get", ":array", ":index_2"),
-		(assign, ":element_2", reg0),
-		
-		(call_script, "script_pti_array_set", ":array", ":index_1", ":element_2"),
-		(call_script, "script_pti_array_set", ":array", ":index_2", ":element_1"),
+		(try_begin),
+			(party_get_template_id, ":template", ":array"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_array_get", ":array", ":index_1"),
+			(assign, ":element_1", reg0),
+			(call_script, "script_pti_array_get", ":array", ":index_2"),
+			(assign, ":element_2", reg0),
+			
+			(call_script, "script_pti_array_set", ":array", ":index_1", ":element_2"),
+			(call_script, "script_pti_array_set", ":array", ":index_2", ":element_1"),
+		(else_try),
+			(assign, reg0, ":array"),
+			(display_log_message, "@ERROR: script_pti_array_swap was called without a valid array being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
 	## LINKED LIST SCRIPTS
 	
+	# script_pti_linked_list_init
 	("pti_linked_list_init",
 	[
 		(call_script, "script_pti_array_init"),
 	]),
 	
+	# script_pti_linked_list_get_node
 	("pti_linked_list_get_node",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(assign, ":node", reg0),
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(store_and, reg0, ":node", pti_list_node_value_mask),
-		
-		(val_rshift, ":node", pti_list_next_node_bitshift),
-		(store_and, reg1, ":node", pti_list_node_mask),
-		
-		(val_rshift, ":node", pti_list_node_bits),
-		(store_and, reg2, ":node", pti_list_node_mask),
-		
-		(assign, reg3, ":index"),
-		#(display_message, "@Index: {reg3} | Value: {reg0} | Next index: {reg1} | Prev index: {reg2}"),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(assign, ":node", reg0),
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(store_and, reg0, ":node", pti_list_node_value_mask),
+			
+			(val_rshift, ":node", pti_list_next_node_bitshift),
+			(store_and, reg1, ":node", pti_list_node_mask),
+			
+			(val_rshift, ":node", pti_list_node_bits),
+			(store_and, reg2, ":node", pti_list_node_mask),
+			
+			(assign, reg3, ":index"),
+			#(display_message, "@Index: {reg3} | Value: {reg0} | Next index: {reg1} | Prev index: {reg2}"),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_head_node
 	("pti_linked_list_get_head_node",
 	[
 		(store_script_param, ":list", 1),
 		
-		(party_get_slot, ":head_index", ":list", pti_slot_list_head),
-		(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(party_get_slot, ":head_index", ":list", pti_slot_list_head),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_head_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_tail_node
 	("pti_linked_list_get_tail_node",
 	[
 		(store_script_param, ":list", 1),
 		
-		(party_get_slot, ":head_index", ":list", pti_slot_list_head),
-		(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
-		(call_script, "script_pti_linked_list_get_node", ":list", reg2),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(party_get_slot, ":head_index", ":list", pti_slot_list_head),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
+			(call_script, "script_pti_linked_list_get_node", ":list", reg2),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_tail_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_first_index_meeting_condition_r
 	("pti_linked_list_get_first_index_meeting_condition_r",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":condition_script", 2),
 		(store_script_param, ":index", 3),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
 		(try_begin),
-			(call_script, ":condition_script", reg0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
-			(assign, reg0, reg3),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(try_begin),
+				(call_script, ":condition_script", reg0),
+				
+				(assign, reg0, reg3),
+			(else_try),
+				(neg|party_slot_eq, ":list", pti_slot_list_head, reg1),
+				
+				(call_script, "script_pti_linked_list_get_first_index_meeting_condition_r", ":list", ":condition_script", reg1),
+			(else_try),
+				(assign, reg0, -1),
+			(try_end),
 		(else_try),
-			(neg|party_slot_eq, ":list", pti_slot_list_head, reg1),
-			
-			(call_script, "script_pti_linked_list_get_first_index_meeting_condition_r", ":list", ":condition_script", reg1),
-		(else_try),
-			(assign, reg0, -1),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_first_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_last_index_meeting_condition_r
 	("pti_linked_list_get_last_index_meeting_condition_r",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":condition_script", 2),
 		(store_script_param, ":index", 3),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
 		(try_begin),
-			(call_script, ":condition_script", reg0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
-			(assign, reg0, reg3),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(try_begin),
+				(call_script, ":condition_script", reg0),
+				
+				(assign, reg0, reg3),
+			(else_try),
+				(neg|party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				
+				(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", reg2),
+			(else_try),
+				(assign, reg0, -1),
+			(try_end),
 		(else_try),
-			(neg|party_slot_eq, ":list", pti_slot_list_head, ":index"),
-			
-			(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", reg2),
-		(else_try),
-			(assign, reg0, -1),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_last_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_count
 	("pti_linked_list_count",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":condition_script", 2),
 		
-		(assign, ":count", 0),
-		(party_get_slot, ":size", ":list", pti_slot_array_size),
-		
-		(call_script, "script_pti_linked_list_get_head_node", ":list"),
-		(assign, ":next", reg1),
-		
-		(try_for_range, ":unused", 0, ":size"),
-			(try_begin),
-				(call_script, ":condition_script", reg0),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(assign, ":count", 0),
+			(party_get_slot, ":size", ":list", pti_slot_array_size),
+			
+			(call_script, "script_pti_linked_list_get_head_node", ":list"),
+			(assign, ":next", reg1),
+			
+			(try_for_range, ":unused", 0, ":size"),
+				(try_begin),
+					(call_script, ":condition_script", reg0),
+					
+					(val_add, ":count", 1),
+				(try_end),
 				
-				(val_add, ":count", 1),
+				(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
+				(assign, ":next", reg1),
 			(try_end),
 			
-			(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
-			(assign, ":next", reg1),
+			(assign, reg0, ":count"),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_count was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
-		
-		(assign, reg0, ":count"),
 	]),
 	
+	# script_pti_node_set_prev
 	("pti_node_set_prev",
 	[
 		(store_script_param, reg0, 1),
@@ -325,6 +406,7 @@ new_scripts = [
 		(val_or, reg0, ":prev"),
 	]),
 	
+	# script_pti_node_set_next
 	("pti_node_set_next",
 	[
 		(store_script_param, reg0, 1),
@@ -335,6 +417,7 @@ new_scripts = [
 		(val_or, reg0, ":next"),
 	]),
 	
+	# script_pti_node_set_value
 	("pti_node_set_value",
 	[
 		(store_script_param, reg0, 1),
@@ -344,39 +427,67 @@ new_scripts = [
 		(val_or, reg0, ":value"),
 	]),
 	
+	# script_pti_linked_list_set_prev
 	("pti_linked_list_set_prev",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		(store_script_param, ":prev", 3),
 		
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(call_script, "script_pti_node_set_prev", reg0, ":prev"),
-		(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(call_script, "script_pti_node_set_prev", reg0, ":prev"),
+			(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_prev was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_set_next
 	("pti_linked_list_set_next",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		(store_script_param, ":next", 3),
 		
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(call_script, "script_pti_node_set_next", reg0, ":next"),
-		(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(call_script, "script_pti_node_set_next", reg0, ":next"),
+			(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_next was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_set_value
 	("pti_linked_list_set_value",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		(store_script_param, ":value", 3),
 		
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(call_script, "script_pti_node_set_value", reg0, ":value"),
-		(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(call_script, "script_pti_node_set_value", reg0, ":value"),
+			(call_script, "script_pti_array_set", ":list", ":index", reg0),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_value was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_insert_before
 	("pti_linked_list_insert_before",
 	[
 		(store_script_param, ":list", 1),
@@ -384,7 +495,8 @@ new_scripts = [
 		(store_script_param, ":value", 3),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(party_get_slot, ":new_index", ":list", pti_slot_array_size),
 			
@@ -413,53 +525,73 @@ new_scripts = [
 				#(display_message, "@Setting head to index {reg0}"),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_insert_before was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_insert_after
 	("pti_linked_list_insert_after",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		(store_script_param, ":value", 3),
 		
-		(party_get_slot, ":new_index", ":list", pti_slot_array_size),
-		
-		# Get the neighbour nodes that will be modified to accommodate the new node (in this case current and next)
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next_index", reg1),
-		
-		# Modify the neighbour nodes to point to the new node
-		(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":new_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":new_index"),
-		
-		# Create the new node
-		(val_lshift, ":next_index", pti_list_next_node_bitshift),
-		(val_or, ":value", ":next_index"),
-		(val_lshift, ":index", pti_list_prev_node_bitshift),
-		(val_or, ":value", ":index"),
-		(call_script, "script_pti_array_append", ":list", ":value"),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(party_get_slot, ":new_index", ":list", pti_slot_array_size),
+			
+			# Get the neighbour nodes that will be modified to accommodate the new node (in this case current and next)
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next_index", reg1),
+			
+			# Modify the neighbour nodes to point to the new node
+			(call_script, "script_pti_linked_list_set_next", ":list", ":index", ":new_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":new_index"),
+			
+			# Create the new node
+			(val_lshift, ":next_index", pti_list_next_node_bitshift),
+			(val_or, ":value", ":next_index"),
+			(val_lshift, ":index", pti_list_prev_node_bitshift),
+			(val_or, ":value", ":index"),
+			(call_script, "script_pti_array_append", ":list", ":value"),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_insert_after was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_append
 	("pti_linked_list_append",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":value", 2),
 		
 		(try_begin),
-			# If list is empty, create head node pointing to itself as both previous and next
-			(party_slot_eq, ":list", pti_slot_array_size, 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
-			# The next and prev indexes are both 0, which doesn't need to be explicitly added (will be 0 by default)
-			(call_script, "script_pti_array_append", ":list", ":value"),
+			(try_begin),
+				# If list is empty, create head node pointing to itself as both previous and next
+				(party_slot_eq, ":list", pti_slot_array_size, 0),
+				
+				# The next and prev indexes are both 0, which doesn't need to be explicitly added (will be 0 by default)
+				(call_script, "script_pti_array_append", ":list", ":value"),
+			(else_try),
+				# If list is not empty, insert a new node after the tail node
+				(party_get_slot, ":head_index", ":list", pti_slot_list_head),
+				(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
+				(call_script, "script_pti_linked_list_insert_after", ":list", reg2, ":value"),
+			(try_end),
 		(else_try),
-			# If list is not empty, insert a new node after the tail node
-			(party_get_slot, ":head_index", ":list", pti_slot_list_head),
-			(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
-			(call_script, "script_pti_linked_list_insert_after", ":list", reg2, ":value"),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_append was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_copy_node
 	# WARNING: This will overwrite whatever exists at the new index, it is only intended for use in script_pti_linked_list_remove
 	("pti_linked_list_copy_node",
 	[
@@ -467,19 +599,28 @@ new_scripts = [
 		(store_script_param, ":index", 2),
 		(store_script_param, ":new_index", 3),
 		
-		# Point the neighbours at the new index
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(assign, ":next", reg1),
-		(assign, ":prev", reg2),
-		
-		(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":new_index"),
-		(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":new_index"),
-		
-		# Overwrite the new index
-		(call_script, "script_pti_array_get", ":list", ":index"),
-		(call_script, "script_pti_array_set", ":list", ":new_index", reg0),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			# Point the neighbours at the new index
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(assign, ":next", reg1),
+			(assign, ":prev", reg2),
+			
+			(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":new_index"),
+			(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":new_index"),
+			
+			# Overwrite the new index
+			(call_script, "script_pti_array_get", ":list", ":index"),
+			(call_script, "script_pti_array_set", ":list", ":new_index", reg0),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_copy_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_pti_linked_list_swap
 	("pti_linked_list_swap",
 	[
 		(store_script_param, ":list", 1),
@@ -487,7 +628,8 @@ new_scripts = [
 		(store_script_param, ":index_2", 3),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(call_script, "script_pti_linked_list_get_node", ":list", ":index_1"),
 			(assign, ":next_index_1", reg1),
@@ -532,17 +674,20 @@ new_scripts = [
 				(try_end),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_swap_with_next
 	("pti_linked_list_swap_with_next",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
 			(assign, ":next_index", reg1),
@@ -574,17 +719,20 @@ new_scripts = [
 				#(display_message, "@Setting head to index {reg0}"),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_next was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_next was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_swap_with_prev
 	("pti_linked_list_swap_with_prev",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
 			(assign, ":next_index", reg1),
@@ -616,10 +764,12 @@ new_scripts = [
 				#(display_message, "@Setting head to index {reg0}"),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_prev was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_prev was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_move_before
 	("pti_linked_list_move_before",
 	[
 		(store_script_param, ":list", 1),
@@ -627,7 +777,8 @@ new_scripts = [
 		(store_script_param, ":dest_index", 3),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
 			(assign, ":next", reg1),
@@ -662,17 +813,20 @@ new_scripts = [
 				(try_end),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_move_before was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_move_before was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_remove
 	("pti_linked_list_remove",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":object", 2),
 		
 		(try_begin),
-			(gt, ":list", 0),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
 			
 			(call_script, "script_pti_linked_list_get_head_node", ":list"),
 			(assign, ":curr_obj", reg0),
@@ -731,37 +885,57 @@ new_scripts = [
 				(display_log_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
 			(try_end),
 		(else_try),
-			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed", 0xFF000),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_nth_index
 	("pti_linked_list_get_nth_index",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":n", 2),
 		
-		(call_script, "script_pti_linked_list_get_head_node", ":list"),
-		(try_for_range, ":unused", 0, ":n"),
-			(call_script, "script_pti_linked_list_get_node", ":list", reg1),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_linked_list_get_head_node", ":list"),
+			(try_for_range, ":unused", 0, ":n"),
+				(call_script, "script_pti_linked_list_get_node", ":list", reg1),
+			(try_end),
+			
+			(assign, reg0, reg3),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
-		
-		(assign, reg0, reg3),
 	]),
 	
+	# script_pti_linked_list_get_nth_index_after_index
 	("pti_linked_list_get_nth_index_after_index",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":n", 2),
 		(store_script_param, ":index", 3),
 		
-		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-		(try_for_range, ":unused", 0, ":n"),
-			(call_script, "script_pti_linked_list_get_node", ":list", reg1),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+			(try_for_range, ":unused", 0, ":n"),
+				(call_script, "script_pti_linked_list_get_node", ":list", reg1),
+			(try_end),
+			
+			(assign, reg0, reg3),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index_after_index was called without a valid list being passed (party ID: {reg0})", 0xFF000),
 		(try_end),
-		
-		(assign, reg0, reg3),
 	]),
 	
+	# script_pti_linked_list_merge_halves
 	("pti_linked_list_merge_halves",
 	[
 		(store_script_param, ":list", 1),
@@ -852,6 +1026,7 @@ new_scripts = [
 		#(display_message, "@Done merging from {reg0} to {reg1}"),
 	]),
 	
+	# script_pti_linked_list_merge_sort_r
 	("pti_linked_list_merge_sort_r",
 	[
 		(store_script_param, ":list", 1),
@@ -896,16 +1071,26 @@ new_scripts = [
 		#(display_message, "@Done sorting from {reg0} to {reg1}"),
 	]),
 	
+	# script_pti_linked_list_merge_sort
 	("pti_linked_list_merge_sort",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":comparison_script", 2),
 		
-		(party_get_slot, ":size", ":list", pti_slot_array_size),
-		(val_sub, ":size", 1),
-		(call_script, "script_pti_linked_list_merge_sort_r", ":list", ":comparison_script", 0, ":size"),
+		(try_begin),
+			(party_get_template_id, ":template", ":list"),
+			(eq, ":template", "pt_array"),
+			
+			(party_get_slot, ":size", ":list", pti_slot_array_size),
+			(val_sub, ":size", 1),
+			(call_script, "script_pti_linked_list_merge_sort_r", ":list", ":comparison_script", 0, ":size"),
+		(else_try),
+			(assign, reg0, ":list"),
+			(display_log_message, "@ERROR: script_pti_linked_list_merge_sort was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+		(try_end),
 	]),
 	
+	# script_cf_pti_gt
 	("cf_pti_gt",
 	[
 		(store_script_param, ":value_1", 1),

@@ -64,3 +64,4 @@ pt_leaded_looters = 62
 pt_dplmc_spouse = 63
 pt_dplmc_gift_caravan = 64
 pt_dplmc_recruiter = 65
+pt_array = 66

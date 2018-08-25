@@ -25,5 +25,5 @@ pmf_is_prisoner = 0x0001
 
 
 party_templates = [
-	
+	("array","array",icon_gray_knight,0,fac_commoners,merchant_personality,[]),
 ]
