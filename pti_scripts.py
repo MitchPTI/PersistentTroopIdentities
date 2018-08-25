@@ -2213,23 +2213,43 @@ new_scripts = [
 		(str_store_troop_name, s0, ":troop_id"),
 		
 		(try_begin),
-			(troop_is_hero, ":troop_id"),
+			(neg|troop_is_hero, ":troop_id"),
 			
+			# Set up display troop as first individual of this troop type if not hero troop
+			(assign, ":selected_troop_backup", "$pti_nps_selected_troop_id"),
+			
+			(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+			(assign, ":individual", "$pti_current_individual"),
+			
+			(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":individual"),
+			(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":individual"),
+			
+			(assign, "$pti_nps_selected_troop_id", ":selected_troop_backup"),
+			
+			(str_store_troop_name, s0, ":troop_id"),
+			(try_begin),
+				(party_stack_get_size, reg0, "p_main_party", ":stack_no"),
+				(party_stack_get_num_wounded, reg1, "p_main_party", ":stack_no"),
+				(gt, reg1, 0),
+				
+				(store_sub, reg2, reg0, reg1),
+				(str_store_string, s0, "@{s0} ({reg2}/{reg0})"),
+			(else_try),
+				(str_store_string, s0, "@{s0} ({reg0})"),
+			(try_end),
+			
+			(assign, reg0, ":troop_id"),
+			(assign, reg1, "$pti_current_individual_troop"),
+		(else_try),
 			(store_troop_health, reg0, ":troop_id"),
 			(str_store_string, s0, "@{s0} ({reg0}%)"),
-		(else_try),
-			(party_stack_get_size, reg0, "p_main_party", ":stack_no"),
-			(party_stack_get_num_wounded, reg1, "p_main_party", ":stack_no"),
-			(gt, reg1, 0),
 			
-			(store_sub, reg2, reg0, reg1),
-			(str_store_string, s0, "@{s0} ({reg2}/{reg0})"),
-		(else_try),
-			(str_store_string, s0, "@{s0} ({reg0})"),
+			(assign, reg0, ":troop_id"),
+			(assign, reg1, ":troop_id"),
 		(try_end),
 		
-		(assign, reg0, ":troop_id"),
-		(assign, reg1, ":troop_id"),
+		(val_add, "$pti_current_individual_troop", 1),
 	]),
 	
 	# script_pti_nps_troop_stack_init

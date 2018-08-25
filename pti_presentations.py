@@ -219,6 +219,14 @@ presentations = [
 			(assign, "$pti_current_individual_troop", "trp_pti_individual_1"),
 			(assign, "$pti_nps_open", 1),
 			
+			# Checkbox for showing helmets
+			(str_store_string, s0, "@Show Helmets"),
+			gpu_create_text_overlay(550, 715, flags=tf_right_align),
+			
+			(call_script, "script_gpu_create_checkbox", 560, 715),
+			(assign, "$pti_nps_show_helmets_checkbox", reg1),
+			(overlay_set_val, "$pti_nps_show_helmets_checkbox", "$pti_show_helmets"),
+			
 			(try_begin),
 				# Set up troop stacks if not drilled down to see agents
 				(neq, "$pti_nps_open_agent_screen", 1),
@@ -250,15 +258,6 @@ presentations = [
 					(overlay_set_display, ":troop_image", 1),
 				(try_end),
 			(else_try),
-				# Checkbox for showing helmets
-				(str_store_string, s0, "@Show Helmets"),
-				#(call_script, "script_gpu_create_text_overlay", "str_s0", 450, 712, 1000, 100, 27, tf_right_align),
-				gpu_create_text_overlay(550, 715, flags=tf_right_align),
-				
-				(call_script, "script_gpu_create_checkbox", 560, 715),
-				(assign, "$pti_nps_show_helmets_checkbox", reg1),
-				(overlay_set_val, "$pti_nps_show_helmets_checkbox", "$pti_show_helmets"),
-				
 				# Individual summary text
 				(call_script, "script_pti_nps_create_upper_left_stack_container"),
 				(assign, "$pti_nps_individual_summary", reg1),
@@ -467,9 +466,9 @@ presentations = [
 					
 					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
 				(else_try),
-					(assign, "$pti_nps_selected_individual", -1),
+					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
 				(try_end),
-				
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),
@@ -484,6 +483,7 @@ presentations = [
 				(eq, ":overlay", "$pti_nps_show_helmets_checkbox"),
 				
 				(assign, "$pti_show_helmets", ":value"),
+				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),
 		
