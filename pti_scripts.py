@@ -2395,7 +2395,7 @@ new_scripts = [
 			
 			# Troop image
 			(set_container_overlay, -1),
-			(call_script, "script_gpu_create_troop_image", ":image_troop", 350, 325, 1000),
+			(call_script, "script_gpu_create_troop_image", ":image_troop", 330, 325, 1000),
 			(overlay_set_display, reg1, 0),
 			(troop_set_slot, "trp_pti_nps_stack_object_troop_images", ":stack_object", reg1),
 		(try_end),
@@ -2542,8 +2542,20 @@ new_scripts = [
 		(overlay_set_alpha, ":highlight_button", 0xFF),
 		
 		# Show selected object's image
-		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
-		(overlay_set_display, ":image_troop", 1),
+		(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(overlay_set_display, ":troop_image", 1),
+		
+		(try_begin),
+			(eq, "$pti_nps_open_agent_screen", 1),
+			
+			(call_script, "script_pti_individual_get_type_and_name", ":stack_object"),
+			Individual.get(":stack_object", "home"),
+			(str_store_party_name, s2, reg0),
+			(overlay_set_text, "$pti_nps_title", "str_pti_name_format_name_of_home"),
+		(else_try),
+			(str_store_troop_name, s0, ":stack_object"),
+			(overlay_set_text, "$pti_nps_title", "str_s0"),
+		(try_end),
 	]),
 	
 	# script_pti_nps_unselect_stack
@@ -2557,8 +2569,11 @@ new_scripts = [
 		(overlay_set_alpha, ":highlight_button", 0),
 		
 		# Hide selected object's image
-		(troop_get_slot, ":image_troop", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
-		(overlay_set_display, ":image_troop", 0),
+		(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(overlay_set_display, ":troop_image", 0),
+		
+		(str_clear, s0),
+		(overlay_set_text, "$pti_nps_title", "str_s0"),
 	]),
 	
 	# script_pti_nps_refresh_text

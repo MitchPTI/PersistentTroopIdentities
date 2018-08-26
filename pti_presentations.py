@@ -227,6 +227,12 @@ presentations = [
 			(assign, "$pti_nps_show_helmets_checkbox", reg1),
 			(overlay_set_val, "$pti_nps_show_helmets_checkbox", "$pti_show_helmets"),
 			
+			# Title (initially empty, set in script_pti_nps_select_stack)
+			(str_clear, s0),
+			gpu_create_text_overlay(500, 665, flags=tf_center_justify),
+			(assign, "$pti_nps_title", reg1),
+			
+			# Stacks
 			(try_begin),
 				# Set up troop stacks if not drilled down to see agents
 				(neq, "$pti_nps_open_agent_screen", 1),
