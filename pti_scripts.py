@@ -2584,23 +2584,50 @@ new_scripts = [
 	# script_pti_nps_refresh_text
 	("pti_nps_refresh_text",
 	[
-		Individual.get("$pti_nps_selected_individual", "xp"),
-		(str_store_string, s0, "@XP: {reg0}"),
+		# Troop type
+		Individual.get("$pti_nps_selected_individual", "troop_type"),
+		(str_store_troop_name, s10, reg0),
 		
+		# Home
+		Individual.get("$pti_nps_selected_individual", "home"),
+		(str_store_party_name, s0, reg0),
+		(str_store_string, s10, "@{s10} from {s0}"),
+		
+		# Age
+		Individual.get("$pti_nps_selected_individual", "age"),
+		(val_add, reg0, 16),
+		(str_store_string, s10, "@{s10}^{reg0} years old"),
+		
+		# Days of service
+		(store_current_day, ":days_in_party"),
+		Individual.get("$pti_nps_selected_individual", "day_joined"),
+		(val_sub, ":days_in_party", reg0),
+		(assign, reg0, ":days_in_party"),
+		(str_store_string, s10, "@{s10}^Has been in service for {reg0} days"),
+		
+		# Battle stats
+		Individual.get("$pti_nps_selected_individual", "kill_count"),
+		(str_store_string, s10, "@{s10}^Number of enemies killed: {reg0}"),
+		
+		Individual.get("$pti_nps_selected_individual", "knock_out_count"),
+		(str_store_string, s10, "@{s10}^Number of enemies knocked out: {reg0}"),
+		
+		Individual.get("$pti_nps_selected_individual", "most_kills"),
+		(str_store_string, s10, "@{s10}^Most enemies killed in one battle: {reg0}"),
+		
+		Individual.get("$pti_nps_selected_individual", "best_kill"),
 		(try_begin),
-			(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 0),
-			(gt, ":upgrade", 0),
+			(gt, reg0, 0),
 			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(str_store_string, s0, "@{s0}^XP needed for upgrade: {reg0}"),
-			
-			(troop_get_upgrade_troop, ":upgrade", "$pti_nps_selected_troop_id", 1),
-			(gt, ":upgrade", 0),
-			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(str_store_string, s0, "@{s0}^XP needed for upgrade: {reg0}"),
+			(str_store_troop_name, s0, reg0),
+			(str_store_string, s10, "@{s10}^Best kill: {s0}"),
 		(try_end),
 		
+		Individual.get("$pti_nps_selected_individual", "times_wounded"),
+		(str_store_string, s10, "@{s10}^Number of times wounded: {reg0}"),
+		
+		# Finish
+		(str_store_string_reg, s0, s10),
 		(overlay_set_text, "$pti_nps_individual_summary", "str_s0"),
 	]),
 	

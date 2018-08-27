@@ -259,6 +259,7 @@ presentations = [
 				# Individual summary text
 				(call_script, "script_pti_nps_create_upper_left_stack_container"),
 				(assign, "$pti_nps_individual_summary", reg1),
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 750, 750),	# Reduce font size
 				(call_script, "script_pti_nps_refresh_text"),
 				
 				# Set up agent stacks
@@ -269,7 +270,7 @@ presentations = [
 				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
 				(assign, reg0, ":num_individuals"),
 				(str_store_string, s0, "@{s0}: {reg0}"),
-				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 712, 1000, 262, 26, tf_center_justify),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 715, 800, 262, 26, tf_center_justify),
 				
 				#(display_message, "@{reg0} individuals"),
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
