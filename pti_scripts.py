@@ -105,10 +105,13 @@ new_scripts = [
 	[
 		(call_script, "script_pti_linked_list_init"),
 		(party_set_slot, "p_main_party", pti_slot_party_individuals, reg0),
-		(assign, "$pti_individual_name_format", "str_pti_name_format_troop_type_name"),
+		(party_set_name, reg0, "@Player Party Individuals Array - You should not be seeing this"),
 		
 		(call_script, "script_pti_linked_list_init"),
 		(assign, "$pti_individuals_array", reg0),
+		(party_set_name, "$pti_individuals_array", "@Individuals Data - You should not be seeing this"),
+		
+		(assign, "$pti_individual_name_format", "str_pti_name_format_troop_type_name"),
 	]),
 	
 	## ARRAY SCRIPTS
@@ -116,7 +119,9 @@ new_scripts = [
 	# script_pti_array_init
 	("pti_array_init",
 	[
-		(spawn_around_party, "p_main_party", "pt_array"),
+		(set_spawn_radius, 0),
+		(spawn_around_party, "p_temp_party", "pt_array"),
+		#(party_set_flags, reg0, pf_disabled, 1),
 		(disable_party, reg0),
 	]),
 	
