@@ -1107,11 +1107,55 @@ new_scripts = [
 	## INDIVIDUAL CREATION AND ADDITION TO PARTY SCRIPTS
 	
 	# script_pti_create_individual
+	# This script doesn't actually produce any data, it just returns a free array index that can be used
+	# These array indexes point to a particular space in one big global array where data can be put and later retrieved (Individual.get and Individual.set)
+	# The space allocated could be at the end of the array if it is full, or it could be space previously allocated to an individual that has been killed
+	# "$pti_individuals_array_next_free_index" gets updated to the latter in script_pti_individual_agent_process_casualty
 	("pti_create_individual",
 	[
-		(party_get_slot, reg0, "$pti_individuals_array", pti_slot_array_size),
-		(store_add, ":size", reg0, Individual.num_attribute_slots),
-		(party_set_slot, "$pti_individuals_array", pti_slot_array_size, ":size"),
+		# Update the size of the individuals array if a new individual must be added at the end
+		(party_get_slot, ":size", "$pti_individuals_array", pti_slot_array_size),
+		(try_begin),
+			(ge, "$pti_individuals_array_next_free_index", ":size"),
+			
+			(val_add, ":size", Individual.num_attribute_slots),
+			(party_set_slot, "$pti_individuals_array", pti_slot_array_size, ":size"),
+		(try_end),
+		
+		# Get the index to be returned that points to free space to fill with the new individual's data
+		(assign, ":individual", "$pti_individuals_array_next_free_index"),
+		
+		# Find the next free index that can be used for future individual creation
+		# By default update to the end of the array, but then search for an earlier free space between the previous one and the end
+		(assign, "$pti_individuals_array_next_free_index", ":size"),
+		
+		(store_add, ":next_slots_start", "$pti_individuals_array_next_free_index", Individual.num_attribute_slots),
+		(store_sub, ":end_cond", ":size", ":next_slots_start"),
+		(val_div, ":end_cond", Individual.num_attribute_slots),
+		(try_for_range, ":individual_offset", 0, ":end_cond"),
+			# To see if a space is free, check if all slots in it have values of 0
+			(assign, ":is_empty", 1),
+			(assign, ":inner_end_cond", Individual.num_attribute_slots),
+			(try_for_range, ":slot_offset", 0, ":inner_end_cond"),
+				(store_mul, ":total_offset", ":individual_offset", Individual.num_attribute_slots),
+				(val_add, ":total_offset", ":slot_offset"),
+				(store_add, ":index", ":next_slots_start", ":total_offset"),
+				(call_script, "script_pti_array_get", "$pti_individuals_array", ":index"),
+				(neq, reg0, 0),
+				
+				(assign, ":inner_end_cond", 0),
+				(assign, ":is_empty", 0),
+			(try_end),
+			
+			(eq, ":is_empty", 1),
+			
+			(assign, ":end_cond", 0),
+			(store_mul, "$pti_individuals_array_next_free_index", ":individual_offset", Individual.num_attribute_slots),
+			(val_add, "$pti_individuals_array_next_free_index", ":next_slots_start"),
+		(try_end),
+		
+		# Return the free space that was available for this individual
+		(assign, reg0, ":individual"),
 	]),
 	
 	# script_pti_create_individual_of_type
@@ -2175,6 +2219,30 @@ new_scripts = [
 		(party_add_members, ":party", ":upgrade_troop_id", 1),
 	]),
 	
+	# script_pti_kill_individual_in_party
+	("pti_kill_individual_in_party",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":party", 2),
+		
+		# Remove the individual from the party
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(call_script, "script_pti_linked_list_remove", ":list", ":individual"),
+		
+		# Clear the individual's data
+		(try_for_range, ":offset", 0, Individual.num_attribute_slots),
+			(store_add, ":index", ":individual", ":offset"),
+			(call_script, "script_pti_array_set", "$pti_individuals_array", ":index", 0),
+		(try_end),
+		
+		# Mark this index as the next free one if it is earlier than the current next free one
+		(try_begin),
+			(lt, ":individual", "$pti_individuals_array_next_free_index"),
+			
+			(assign, "$pti_individuals_array_next_free_index", ":individual"),
+		(try_end),
+	]),
+	
 	## BATTLE SCRIPTS ##
 	
 	# script_pti_troop_get_xp_for_killing
@@ -2287,8 +2355,7 @@ new_scripts = [
 			(val_add, reg0, 1),
 			Individual.set(":individual", "times_wounded", reg0),
 		(else_try),
-			(party_get_slot, ":list", "p_main_party", pti_slot_party_individuals),
-			(call_script, "script_pti_linked_list_remove", ":list", ":individual"),
+			(call_script, "script_pti_kill_individual_in_party", ":individual", "p_main_party"),
 		(try_end),
 	]),
 	
