@@ -2662,6 +2662,8 @@ new_scripts = [
 		
 		# Age
 		Individual.get("$pti_nps_selected_individual", "age"),
+		(val_mul, reg0, 2),
+		(val_div, reg0, 3),
 		(val_add, reg0, 16),
 		(str_store_string, s10, "@{s10}^{reg0} years old"),
 		
