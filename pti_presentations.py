@@ -232,6 +232,17 @@ presentations = [
 			gpu_create_text_overlay(500, 665, flags=tf_center_justify),
 			(assign, "$pti_nps_title", reg1),
 			
+			# Stack movement buttons
+			(str_store_string, s0, "@Move Up"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 615),
+			(assign, "$pti_nps_move_up_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
+			
+			(str_store_string, s0, "@Move Down"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 575),
+			(assign, "$pti_nps_move_down_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
+			
 			# Stacks
 			(try_begin),
 				# Set up troop stacks if not drilled down to see agents
