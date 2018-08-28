@@ -150,11 +150,12 @@ pti_process_casualty = (
 		(try_end),
   ])
 
-pti_give_xp = (
+pti_process_kill = (
   ti_on_agent_killed_or_wounded, 0, 0, [],
   [
 		(store_trigger_param, ":agent", 1),
 		(store_trigger_param, ":killer_agent", 2),
+		(store_trigger_param, ":wounded", 3),
 		
 		(try_begin),
 			(agent_is_human, ":agent"),
@@ -172,6 +173,9 @@ pti_give_xp = (
 			(agent_get_slot, ":xp_gained", ":killer_agent", pti_slot_agent_xp_gained),
 			(val_add, ":xp_gained", ":xp_for_kill"),
 			(agent_set_slot, ":killer_agent", pti_slot_agent_xp_gained, ":xp_gained"),
+			
+			(val_add, ":wounded", 1),
+			(set_trigger_result, ":wounded"),	# This is necessary because script_pti_troop_get_xp_for_killing calls script_game_get_prisoner_price, which calls set_trigger_result and inadvertently overrides all kills to knocked unconscious
 		(try_end),
   ])
 
@@ -184,5 +188,5 @@ def merge(mission_templates):
 			, pti_get_killer_team
 			, pti_restore_main_party
 			, pti_process_casualty
-			, pti_give_xp
+			, pti_process_kill
 		])
