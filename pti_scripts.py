@@ -1381,6 +1381,44 @@ new_scripts = [
 		(eq, reg0, "$pti_nps_selected_troop_id"),
 	]),
 	
+	# script_cf_pti_individual_is_upgradeable
+	("cf_pti_individual_is_upgradeable",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(assign, ":upgrade_xp", -1),
+		(try_begin),
+			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
+			(gt, ":upgrade", 0),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(assign, ":upgrade_xp", reg0),
+			
+			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
+			(gt, ":upgrade", 0),
+			
+			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
+			(val_min, ":upgrade_xp", reg0),
+		(try_end),
+		
+		(gt, ":upgrade_xp", -1),
+		
+		Individual.get(":individual", "xp"),
+		(ge, reg0, ":upgrade_xp"),
+	]),
+	
+	# script_cf_pti_individual_is_of_selected_troop_and_upgradeable
+	("cf_pti_individual_is_of_selected_troop_and_upgradeable",
+	[
+		(store_script_param, ":individual", 1),
+		
+		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
+		(call_script, "script_cf_pti_individual_is_upgradeable", ":individual"),
+	]),
+	
 	# script_cf_pti_individual_is_wounded
 	("cf_pti_individual_is_wounded",
 	[
@@ -2526,10 +2564,14 @@ new_scripts = [
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
-			# Set up display troop as first individual of this troop type if not hero troop
 			(assign, ":selected_troop_backup", "$pti_nps_selected_troop_id"),
-			
 			(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+			
+			# Get the number of upgrades available (to later determine if + should be added to name)
+			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop_and_upgradeable"),
+			(assign, ":num_upgradeable", reg0),
+			
+			# Set up display troop as first individual of this troop type if not hero troop
 			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 			(assign, ":individual", "$pti_current_individual"),
 			
@@ -2548,6 +2590,12 @@ new_scripts = [
 				(str_store_string, s0, "@{s0} ({reg2}/{reg0})"),
 			(else_try),
 				(str_store_string, s0, "@{s0} ({reg0})"),
+			(try_end),
+			
+			(try_begin),
+				(gt, ":num_upgradeable", 0),
+				
+				(str_store_string, s0, "@{s0} +"),
 			(try_end),
 			
 			(assign, reg0, ":troop_id"),
@@ -2595,8 +2643,20 @@ new_scripts = [
 		(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":curr_individual"),
 		(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":curr_individual"),
 		
+		(assign, ":upgradeable", 0),
+		(try_begin),
+			(call_script, "script_cf_pti_individual_is_upgradeable", ":curr_individual"),
+			
+			(assign, ":upgradeable", 1),
+		(try_end),
+		
 		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
 		(str_store_string_reg, s0, s1),
+		(try_begin),
+			(eq, ":upgradeable", 1),
+			
+			(str_store_string, s0, "@{s0} +"),
+		(try_end),
 		(assign, reg0, ":curr_individual"),
 		(assign, reg1, "$pti_current_individual_troop"),
 		
