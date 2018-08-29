@@ -222,10 +222,12 @@ presentations = [
 			# Checkbox for showing helmets
 			(str_store_string, s0, "@Show Helmets"),
 			gpu_create_text_overlay(550, 715, flags=tf_right_align),
+			(call_script, "script_gpu_overlay_set_size", reg1, 750, 750),	# Reduce font size
 			
-			(call_script, "script_gpu_create_checkbox", 560, 715),
+			(call_script, "script_gpu_create_checkbox", 560, 717),
 			(assign, "$pti_nps_show_helmets_checkbox", reg1),
 			(overlay_set_val, "$pti_nps_show_helmets_checkbox", "$pti_show_helmets"),
+			(call_script, "script_gpu_overlay_set_size", "$pti_nps_show_helmets_checkbox", 750, 750),	# Reduce checkbox size
 			
 			# Title (initially empty, set in script_pti_nps_select_stack)
 			(str_clear, s0),
