@@ -203,8 +203,7 @@ presentations = [
 		(ti_on_presentation_load,
 		[
 			# Troop class rename text box
-			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
-			(str_store_class_name, s0, ":class"),
+			(str_store_class_name, s0, "$pti_class_to_be_renamed"),
 			(call_script, "script_gpu_create_text_box_overlay", "str_s0", 400, 400),
 			(assign, "$pti_nps_troop_class_rename_overlay"),
 			
@@ -235,8 +234,7 @@ presentations = [
 			(else_try),
 				(eq, ":overlay", "$pti_nps_troop_class_rename_done_button"),
 				
-				(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
-				(class_set_name, ":class", s7),
+				(class_set_name, "$pti_class_to_be_renamed", s7),
 				
 				(start_presentation, "prsnt_new_party_screen"),
 				#(presentation_set_duration, 0),
@@ -362,6 +360,14 @@ presentations = [
 				(str_store_class_name, s0, ":class"),
 				(overlay_add_item, "$pti_nps_troop_class_selector", s0),
 			(try_end),
+			
+			(try_begin),
+				(eq, "$pti_nps_open_agent_screen", 1),
+				
+				(str_store_string, s0, "@Default"),
+				(overlay_add_item, "$pti_nps_troop_class_selector", s0),
+			(try_end),
+			
 			(overlay_set_display, "$pti_nps_troop_class_selector", 0),
 			
 			# Troop class rename button
@@ -583,7 +589,20 @@ presentations = [
 			(try_begin),
 				(eq, ":overlay", "$pti_nps_troop_class_selector"),
 				
-				(troop_set_class, "$pti_nps_selected_troop_id", ":value"),
+				(try_begin),
+					(eq, "$pti_nps_open_agent_screen", 1),
+					
+					(try_begin),
+						(lt, ":value", grc_everyone),
+						
+						Individual.set("$pti_nps_selected_individual", "class_overridden", 1),
+						Individual.set("$pti_nps_selected_individual", "class", ":value"),
+					(else_try),
+						Individual.set("$pti_nps_selected_individual", "class_overridden", 0),
+					(try_end),
+				(else_try),
+					(troop_set_class, "$pti_nps_selected_troop_id", ":value"),
+				(try_end),
 			(try_end),
 		]),
 		
@@ -595,6 +614,8 @@ presentations = [
 			(try_begin),
 				(eq, ":overlay", "$pti_nps_troop_class_rename_button"),
 				
+				(call_script, "script_pti_nps_get_selected_class"),
+				(assign, "$pti_class_to_be_renamed", reg0),
 				(start_presentation, "prsnt_rename_troop_class"),
 			(try_end),
 		]),

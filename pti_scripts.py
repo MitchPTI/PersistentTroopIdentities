@@ -2309,8 +2309,16 @@ new_scripts = [
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 		
-		(troop_get_class, ":class", ":troop_type"),
-		(troop_set_class, ":troop_id", ":class"),
+		Individual.get(":individual", "class_overridden"),
+		(try_begin),
+			(eq, reg0, 1),
+			
+			Individual.get(":individual", "class"),
+			(troop_set_class, ":troop_id", reg0),
+		(else_try),
+			(troop_get_class, ":class", ":troop_type"),
+			(troop_set_class, ":troop_id", ":class"),
+		(try_end),
 		
 		(troop_set_slot, ":troop_id", pti_slot_troop_individual, ":individual"),
 	]),
@@ -2713,16 +2721,42 @@ new_scripts = [
 		(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
 	]),
 	
+	# script_pti_nps_get_selected_class
+	("pti_nps_get_selected_class",
+	[
+		(try_begin),
+			(eq, "$pti_nps_open_agent_screen", 1),
+			(gt, "$pti_nps_selected_individual_id", -1),
+			
+			Individual.get("$pti_nps_selected_individual", "class_overridden"),
+			(try_begin),
+				(eq, reg0, 1),
+				
+				Individual.get("$pti_nps_selected_individual", "class"),
+				(assign, ":class", reg0),
+			(else_try),
+				(assign, ":class", grc_everyone),
+			(try_end),
+		(else_try),
+			(gt, "$pti_nps_selected_troop_id", 0),
+			
+			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
+		(else_try),
+			(assign, ":class", -1),
+		(try_end),
+		
+		(assign, reg0, ":class"),
+	]),
+	
 	# script_pti_nps_refresh_troop_class
 	("pti_nps_refresh_troop_class",
 	[
+		(call_script, "script_pti_nps_get_selected_class"),
 		(try_begin),
-			(gt, "$pti_nps_selected_troop_id", 0),
+			(gt, reg0, -1),
 			
 			(overlay_set_display, "$pti_nps_troop_class_selector", 1),
-			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
-			(overlay_set_val, "$pti_nps_troop_class_selector", ":class"),
-			
+			(overlay_set_val, "$pti_nps_troop_class_selector", reg0),
 			(overlay_set_display, "$pti_nps_troop_class_rename_button", 1),
 		(try_end),
 	]),

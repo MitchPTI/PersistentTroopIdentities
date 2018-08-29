@@ -102,6 +102,7 @@ TOTAL_KILLS_BITS = 14
 BATTLE_KILLS_BITS = 10
 TIMES_WOUNDED_BITS = 7	# 7 bits gives a maximum of 127 times. Even at max surgery there is only a 0.00000000024% chance of a troop surviving this many times
 XP_BITS = 30
+CLASS_BITS = 3
 
 Individual.set_attribute_sizes({
 	"troop_type": TROOP_BITS
@@ -128,6 +129,8 @@ Individual.set_attribute_sizes({
 	, "best_kill": TROOP_BITS
 	, "times_wounded": TIMES_WOUNDED_BITS
 	, "xp": XP_BITS
+	, "class": CLASS_BITS
+	, "class_overridden": 1
 })
 
 troop_slots = (200, [
