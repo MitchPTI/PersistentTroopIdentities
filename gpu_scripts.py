@@ -67,6 +67,21 @@ scripts = [
 		(overlay_set_text, reg1, ":string"),
 	]),
 	
+	# script_gpu_create_text_box_overlay
+	("gpu_create_text_box_overlay",
+	[
+		(store_script_param, ":string", 1),
+		(store_script_param, ":pos_x", 2),
+		(store_script_param, ":pos_y", 3),
+		
+		(set_fixed_point_multiplier, 1000),
+		(create_simple_text_box_overlay, reg1, ":string"),
+		(position_set_x, pos1, ":pos_x"),
+		(position_set_y, pos1, ":pos_y"),
+		(overlay_set_position, reg1, pos1),
+		(overlay_set_text, reg1, ":string"),
+	]),
+	
 	("gpu_create_game_button_overlay",
 	[
 		(store_script_param, ":string", 1),
@@ -149,6 +164,7 @@ scripts = [
 		(overlay_set_size, reg1, pos3),
 	]),
 	
+	# script_gpu_create_combo_button_overlay
 	("gpu_create_combo_button_overlay",
 	[
 		(store_script_param, ":pos_x", 1),
@@ -156,6 +172,19 @@ scripts = [
 		
 		(set_fixed_point_multiplier, 1000),
 		(create_combo_button_overlay, reg1),
+		(position_set_x, pos1, ":pos_x"),
+		(position_set_y, pos1, ":pos_y"),
+		(overlay_set_position, reg1, pos1),
+	]),
+	
+	# script_gpu_create_combo_label_overlay
+	("gpu_create_combo_label_overlay",
+	[
+		(store_script_param, ":pos_x", 1),
+		(store_script_param, ":pos_y", 2),
+		
+		(set_fixed_point_multiplier, 1000),
+		(create_combo_label_overlay, reg1),
 		(position_set_x, pos1, ":pos_x"),
 		(position_set_y, pos1, ":pos_y"),
 		(overlay_set_position, reg1, pos1),

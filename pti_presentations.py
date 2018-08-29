@@ -198,6 +198,57 @@ presentations = [
 		]),
 	]),
 	
+	("rename_troop_class", 0, mesh_party_window_b,
+	[
+		(ti_on_presentation_load,
+		[
+			# Troop class rename text box
+			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
+			(str_store_class_name, s0, ":class"),
+			(call_script, "script_gpu_create_text_box_overlay", "str_s0", 400, 400),
+			(assign, "$pti_nps_troop_class_rename_overlay"),
+			
+			# Button for when finished renaming troop class
+			(str_store_string, s0, "@Done"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 585, 350),
+			(assign, "$pti_nps_troop_class_rename_done_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_rename_done_button", 85, 30),	# Reduce size
+			
+			# Cancel button
+			(str_store_string, s0, "@Cancel"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 475, 350),
+			(assign, "$pti_nps_troop_class_rename_cancel_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_rename_cancel_button", 85, 30),	# Reduce size
+			
+			(presentation_set_duration, 999999),
+		]),
+		
+		# Trigger for renaming troop class
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_troop_class_rename_overlay"),
+				
+				(str_store_string, s7, s0),
+			(else_try),
+				(eq, ":overlay", "$pti_nps_troop_class_rename_done_button"),
+				
+				(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
+				(class_set_name, ":class", s7),
+				
+				(start_presentation, "prsnt_new_party_screen"),
+				#(presentation_set_duration, 0),
+			(else_try),
+				(eq, ":overlay", "$pti_nps_troop_class_rename_cancel_button"),
+				
+				(start_presentation, "prsnt_new_party_screen"),
+				#(presentation_set_duration, 0),
+			(try_end),
+		]),
+	]),
+	
 	("new_party_screen", 0, mesh_party_window_b,
 	[
 		(ti_on_presentation_load,
@@ -301,6 +352,30 @@ presentations = [
 					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual"),
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
+			(try_end),
+			
+			# Troop class (set at end of presentation to make it exist on top of other overlays, so clicking it isn't blocked)
+			(call_script, "script_gpu_create_combo_label_overlay", 685, 375),
+			(assign, "$pti_nps_troop_class_selector", reg1),
+			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_selector", 380, 650),	# Reduce size
+			(try_for_range, ":class", grc_infantry, grc_everyone),
+				(str_store_class_name, s0, ":class"),
+				(overlay_add_item, "$pti_nps_troop_class_selector", s0),
+			(try_end),
+			(overlay_set_display, "$pti_nps_troop_class_selector", 0),
+			
+			# Troop class rename button
+			(str_store_string, s0, "@Rename"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 625, 350),
+			(assign, "$pti_nps_troop_class_rename_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_rename_button", 80, 20),	# Reduce size
+			(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
+			
+			# Set the troop class
+			(try_begin),
+				(gt, "$pti_nps_selected_troop_id", -1),
+				
+				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
 			
 			(presentation_set_duration, 999999),
@@ -407,6 +482,7 @@ presentations = [
 				(try_end),
 				
 				(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
 			
 			# Set selected individual if clicked
@@ -427,10 +503,9 @@ presentations = [
 				(call_script, "script_pti_nps_select_stack", ":individual"),
 				(assign, "$pti_nps_selected_individual", ":individual"),
 				
-				# Refresh the summary text
+				# Refresh overlays
+				(call_script, "script_pti_nps_refresh_troop_class"),
 				(call_script, "script_pti_nps_refresh_text"),
-				
-				# Update the upgrade buttons
 				(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 			(try_end),
 		]),
@@ -496,6 +571,31 @@ presentations = [
 				
 				(assign, "$pti_show_helmets", ":value"),
 				(start_presentation, "prsnt_new_party_screen"),
+			(try_end),
+		]),
+		
+		# Trigger for changing troop class
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			(store_trigger_param_2, ":value"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_troop_class_selector"),
+				
+				(troop_set_class, "$pti_nps_selected_troop_id", ":value"),
+			(try_end),
+		]),
+		
+		# Trigger for renaming troop class
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_troop_class_rename_button"),
+				
+				(start_presentation, "prsnt_rename_troop_class"),
 			(try_end),
 		]),
 		

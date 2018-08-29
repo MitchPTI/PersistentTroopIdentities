@@ -2704,8 +2704,27 @@ new_scripts = [
 		(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
 		(overlay_set_display, ":troop_image", 0),
 		
+		# Clear title
 		(str_clear, s0),
 		(overlay_set_text, "$pti_nps_title", "str_s0"),
+		
+		# Hide the troop class overlays
+		(overlay_set_display, "$pti_nps_troop_class_selector", 0),
+		(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
+	]),
+	
+	# script_pti_nps_refresh_troop_class
+	("pti_nps_refresh_troop_class",
+	[
+		(try_begin),
+			(gt, "$pti_nps_selected_troop_id", 0),
+			
+			(overlay_set_display, "$pti_nps_troop_class_selector", 1),
+			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
+			(overlay_set_val, "$pti_nps_troop_class_selector", ":class"),
+			
+			(overlay_set_display, "$pti_nps_troop_class_rename_button", 1),
+		(try_end),
 	]),
 	
 	# script_pti_nps_refresh_text
@@ -2765,11 +2784,11 @@ new_scripts = [
 	[
 		(str_clear, s0),
 		
-		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 300),
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 290),
 		(assign, "$pti_nps_upgrade_button_1", reg1),
 		(overlay_set_display, "$pti_nps_upgrade_button_1", 0),
 		
-		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 250),
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 240),
 		(assign, "$pti_nps_upgrade_button_2", reg1),
 		(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
 	]),
