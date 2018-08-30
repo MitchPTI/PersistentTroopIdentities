@@ -50,7 +50,7 @@ simple_triggers = [
 		(try_begin),
 			(eq, "$pti_after_battle_check", 1),
 			
-			(display_message, "@Battle is over, restoring player party"),
+			#(display_message, "@Battle is over, restoring player party"),
 			
 			(assign, "$pti_after_battle_check", 0),
 			(call_script, "script_pti_restore_main_party"),

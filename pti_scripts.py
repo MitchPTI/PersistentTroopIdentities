@@ -2386,10 +2386,10 @@ new_scripts = [
 		
 		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
 		
-		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
-		(assign, reg0, ":agent"),
-		(assign, reg1, ":individual"),
-		(display_message, "@Processing casualty of {s0} {s1}. Agent ID: {reg0} | Individual ID: {reg1}"),
+		#(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		#(assign, reg0, ":agent"),
+		#(assign, reg1, ":individual"),
+		#(display_message, "@Processing casualty of {s0} {s1}. Agent ID: {reg0} | Individual ID: {reg1}"),
 		
 		(try_begin),
 			(eq, ":wounded", 1),

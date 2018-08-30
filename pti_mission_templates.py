@@ -120,14 +120,14 @@ pti_restore_main_party = (
 			(try_begin),
 				(teams_are_enemies, ":player_team", "$pti_last_killer_team"),
 				
-				(display_message, "@Player's team has lost!"),
+				#(display_message, "@Player's team has lost!"),
 			(else_try),
-				(display_message, "@Player's team has won!"),
+				#(display_message, "@Player's team has won!"),
 			(try_end),
 			
 			(call_script, "script_pti_process_battle"),
 			
-			(display_message, "@Restoring player party"),
+			#(display_message, "@Restoring player party"),
 			(call_script, "script_pti_restore_main_party"),
 			
 			(assign, "$pti_check_if_battle_is_over", 0),
