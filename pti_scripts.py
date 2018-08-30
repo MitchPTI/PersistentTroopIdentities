@@ -1428,6 +1428,15 @@ new_scripts = [
 		(eq, reg0, 1),
 	]),
 	
+	# script_cf_pti_individual_is_nonwounded
+	("cf_pti_individual_is_nonwounded",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "is_wounded"),
+		(eq, reg0, 0),
+	]),
+	
 	# script_cf_pti_individual_is_of_selected_troop_and_wounded
 	("cf_pti_individual_is_of_selected_troop_and_wounded",
 	[
@@ -1435,6 +1444,15 @@ new_scripts = [
 		
 		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
 		(call_script, "script_cf_pti_individual_is_wounded", ":individual"),
+	]),
+	
+	# script_cf_pti_individual_is_of_selected_troop_and_nonwounded
+	("cf_pti_individual_is_of_selected_troop_and_nonwounded",
+	[
+		(store_script_param, ":individual", 1),
+		
+		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
+		(call_script, "script_cf_pti_individual_is_nonwounded", ":individual"),
 	]),
 	
 	# script_cf_pti_individual_is_not_wounded
@@ -2290,6 +2308,64 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_kill_individual_in_selected_party
+	# This exists for use in script_pti_apply_casualties_to_individuals, as it must pass a script to script_pti_apply_script_randomly_to_party_members_meeting_condition that only takes one argument (the individual)
+	("pti_kill_individual_in_selected_party",
+	[
+		(store_script_param, ":individual", 1),
+		
+		(call_script, "script_pti_kill_individual_in_party", ":individual", "$pti_selected_party_id"),
+	]),
+	
+	# script_pti_heal_individual
+	("pti_heal_individual",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.set(":individual", "is_wounded", 0),
+		
+		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		(display_message, "@{s1} healed"),
+	]),
+	
+	# script_pti_wound_individual
+	("pti_wound_individual",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.set(":individual", "is_wounded", 1),
+	]),
+	
+	# script_pti_apply_script_randomly_to_party_members_meeting_condition
+	("pti_apply_script_randomly_to_party_members_meeting_condition",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":script", 2),
+		(store_script_param, ":condition_script", 3),
+		(store_script_param, ":n", 4),
+		
+		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		(assign, ":count", reg0),
+		
+		(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+		(try_for_range, ":i", 0, ":count"),
+			(try_begin),
+				(store_sub, ":remaining_individuals", ":count", ":i"),
+				(store_random_in_range, ":rand", 0, ":remaining_individuals"),
+				(le, ":rand", ":n"),
+				
+				(call_script, ":script", "$pti_current_individual"),
+				(val_sub, ":n", 1),
+				
+				(eq, ":n", 0),
+				
+				(assign, ":count", 0),	# End the loop when enough have been healed
+			(try_end),
+			
+			(call_script, "script_pti_get_next_individual", ":party", ":condition_script"),
+		(try_end),
+	]),
+	
 	# script_pti_apply_wound_treatment_to_individuals
 	("pti_apply_wound_treatment_to_individuals",
 	[
@@ -2306,29 +2382,52 @@ new_scripts = [
 			
 			(gt, ":individuals_wounded_count", ":party_wounded_count"),
 			
-			# Iterate over the wounded individuals and give each a heal probability of (number left to be healed) / (number left to iterate over)
 			(store_sub, ":difference", ":individuals_wounded_count", ":party_wounded_count"),
-			(call_script, "script_pti_get_first_individual", ":party", "script_cf_pti_individual_is_of_selected_troop_and_wounded"),
-			(try_for_range, ":i", 0, ":individuals_wounded_count"),
-				(try_begin),
-					(store_sub, ":remaining_individuals", ":individuals_wounded_count", ":i"),
-					(store_random_in_range, ":rand", 0, ":remaining_individuals"),
-					(le, ":rand", ":difference"),
-					
-					Individual.set("$pti_current_individual", "is_wounded", 0),
-					(val_sub, ":difference", 1),
-					
-					#(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-					#(str_store_string, s0, reg1),
-					#(display_message, "@{s0} has healed"),
-					
-					(eq, ":difference", 0),
-					
-					(assign, ":individuals_wounded_count", 0),	# End the loop when enough have been healed
-				(try_end),
-				
-				(call_script, "script_pti_get_next_individual", ":party", "script_cf_pti_individual_is_of_selected_troop_and_wounded"),
-			(try_end),
+			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_heal_individual", "script_cf_pti_individual_is_of_selected_troop_and_wounded", ":difference"),
+		(try_end),
+	]),
+	
+	# script_pti_apply_casualties_to_individuals
+	("pti_apply_casualties_to_individuals",
+	[
+		(store_script_param, ":party", 1),
+		
+		(party_get_num_companion_stacks, ":num_stacks", ":party"),
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":troop_id", ":party", ":stack"),
+			
+			# Apply kills
+			(party_stack_get_size, ":party_count", ":party", ":stack"),
+			
+			(assign, "$pti_selected_troop_id", ":troop_id"),
+			(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_of_selected_troop"),
+			(assign, ":individuals_count", reg0),
+			
+			(gt, ":individuals_count", ":party_count"),
+			
+			(store_sub, ":difference", ":individuals_count", ":party_count"),
+			(assign, "$pti_selected_party_id", ":party"),
+			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_kill_individual_in_selected_party", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			
+			(str_store_troop_name_by_count, s0, ":troop_id", ":difference"),
+			(assign, reg0, ":difference"),
+			(display_message, "@{reg0} {s0} killed"),
+			
+			# Apply wounds
+			(party_stack_get_num_wounded, ":party_wounded_count", ":party", ":stack"),
+			
+			(assign, "$pti_selected_troop_id", ":troop_id"),
+			(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_of_selected_troop_and_wounded"),
+			(assign, ":individuals_wounded_count", reg0),
+			
+			(gt, ":party_wounded_count", ":individuals_wounded_count"),
+			
+			(store_sub, ":difference", ":party_wounded_count", ":individuals_wounded_count"),
+			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_wound_individual", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			
+			(str_store_troop_name_by_count, s0, ":troop_id", ":difference"),
+			(assign, reg0, ":difference"),
+			(display_message, "@{reg0} {s0} wounded"),
 		(try_end),
 	]),
 	

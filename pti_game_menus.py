@@ -86,6 +86,15 @@ quick_start_option = (
 		(jump_to_menu, "mnu_start_phase_2"),
 	])
 
+def get_option_index(menu, id):
+	index = -1
+	for i, option in enumerate(menu.options):
+		if option.id == id:
+			index = i
+			break
+	
+	return index
+
 def merge(game_menus):
 	game_menus["camp"].options.append(party_screen_option)
 	
@@ -97,3 +106,10 @@ def merge(game_menus):
 			(change_screen_return),
 		(try_end),
 	]
+	
+	game_menus["order_attack_2"].operations[0:0] = [
+		(call_script, "script_pti_restore_party", "p_main_party"),
+	]
+	game_menus["order_attack_2"].operations.extend([
+		(call_script, "script_pti_apply_casualties_to_individuals", "p_main_party"),
+	])
