@@ -1378,7 +1378,7 @@ new_scripts = [
 		(store_script_param, ":individual", 1),
 		
 		Individual.get(":individual", "troop_type"),
-		(eq, reg0, "$pti_nps_selected_troop_id"),
+		(eq, reg0, "$pti_selected_troop_id"),
 	]),
 	
 	# script_cf_pti_individual_is_upgradeable
@@ -2528,7 +2528,7 @@ new_scripts = [
 	[
 		(store_script_param, ":troop_id", 1),
 		
-		(eq, ":troop_id", "$pti_nps_selected_troop_id"),
+		(eq, ":troop_id", "$pti_selected_troop_id"),
 	]),
 	
 	# script_cf_pti_individual_is_selected
@@ -2574,8 +2574,8 @@ new_scripts = [
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
-			(assign, ":selected_troop_backup", "$pti_nps_selected_troop_id"),
-			(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+			(assign, ":selected_troop_backup", "$pti_selected_troop_id"),
+			(assign, "$pti_selected_troop_id", ":troop_id"),
 			
 			# Get the number of upgrades available (to later determine if + should be added to name)
 			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop_and_upgradeable"),
@@ -2588,7 +2588,7 @@ new_scripts = [
 			(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":individual"),
 			(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":individual"),
 			
-			(assign, "$pti_nps_selected_troop_id", ":selected_troop_backup"),
+			(assign, "$pti_selected_troop_id", ":selected_troop_backup"),
 			
 			(str_store_troop_name, s0, ":troop_id"),
 			(try_begin),
@@ -2740,9 +2740,9 @@ new_scripts = [
 				(assign, ":class", grc_everyone),
 			(try_end),
 		(else_try),
-			(gt, "$pti_nps_selected_troop_id", 0),
+			(gt, "$pti_selected_troop_id", 0),
 			
-			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
+			(troop_get_class, ":class", "$pti_selected_troop_id"),
 		(else_try),
 			(assign, ":class", -1),
 		(try_end),

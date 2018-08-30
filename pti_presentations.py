@@ -313,9 +313,9 @@ presentations = [
 				
 				# Add troop image if a troop is selected
 				(try_begin),
-					(gt, "$pti_nps_selected_troop_id", -1),
+					(gt, "$pti_selected_troop_id", -1),
 					
-					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_troop_id"),
+					(call_script, "script_pti_nps_select_stack", "$pti_selected_troop_id"),
 				(try_end),
 			(else_try),
 				# Individual summary text
@@ -329,7 +329,7 @@ presentations = [
 				(assign, ":num_individuals", reg0),
 				
 				# Add individual labels
-				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
+				(str_store_troop_name_plural, s0, "$pti_selected_troop_id"),
 				(assign, reg0, ":num_individuals"),
 				(str_store_string, s0, "@{s0}: {reg0}"),
 				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 715, 800, 262, 26, tf_center_justify),
@@ -379,7 +379,7 @@ presentations = [
 			
 			# Set the troop class
 			(try_begin),
-				(gt, "$pti_nps_selected_troop_id", -1),
+				(gt, "$pti_selected_troop_id", -1),
 				
 				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
@@ -457,7 +457,7 @@ presentations = [
 				# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
 				(try_begin),
 					(neg|troop_is_hero, ":troop_id"),
-					(eq, ":troop_id", "$pti_nps_selected_troop_id"),
+					(eq, ":troop_id", "$pti_selected_troop_id"),
 					(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
 					(is_between, ":milliseconds_since_click", 10, 500),
 					
@@ -469,16 +469,16 @@ presentations = [
 				(else_try),
 					(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
 					
-					(neq, ":troop_id", "$pti_nps_selected_troop_id"),
+					(neq, ":troop_id", "$pti_selected_troop_id"),
 					
 					# Unselect previously selected troop if applicable
 					(try_begin),
-						(gt, "$pti_nps_selected_troop_id", -1),
+						(gt, "$pti_selected_troop_id", -1),
 						
-						#(str_store_troop_name, s0, "$pti_nps_selected_troop_id"),
+						#(str_store_troop_name, s0, "$pti_selected_troop_id"),
 						#(display_message, "@Deselecting {s0} stack"),
 						
-						(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_troop_id"),
+						(call_script, "script_pti_nps_unselect_stack", "$pti_selected_troop_id"),
 					(try_end),
 					
 					#(str_store_troop_name, s0, ":troop_id"),
@@ -487,7 +487,7 @@ presentations = [
 					(call_script, "script_pti_nps_select_stack", ":troop_id"),
 				(try_end),
 				
-				(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+				(assign, "$pti_selected_troop_id", ":troop_id"),
 				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
 			
@@ -554,10 +554,10 @@ presentations = [
 				(party_add_members, "p_main_party", ":upgrade", 1),
 				
 				(try_begin),
-					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
+					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_selected_troop_id"),
 					(eq, ":stack_size", 0),
 					
-					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
+					(assign, "$pti_selected_troop_id", ":upgrade"),
 				(else_try),
 					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
@@ -601,7 +601,7 @@ presentations = [
 						Individual.set("$pti_nps_selected_individual", "class_overridden", 0),
 					(try_end),
 				(else_try),
-					(troop_set_class, "$pti_nps_selected_troop_id", ":value"),
+					(troop_set_class, "$pti_selected_troop_id", ":value"),
 				(try_end),
 			(try_end),
 		]),
