@@ -128,7 +128,7 @@ pti_restore_main_party = (
 			(call_script, "script_pti_process_battle"),
 			
 			#(display_message, "@Restoring player party"),
-			(call_script, "script_pti_restore_main_party"),
+			(call_script, "script_pti_restore_party", "p_main_party"),
 			
 			(assign, "$pti_check_if_battle_is_over", 0),
 		(try_end),

@@ -2422,28 +2422,30 @@ new_scripts = [
 		(try_end),
 	]),
 	
-	# script_pti_restore_main_party
-	("pti_restore_main_party",
+	# script_pti_restore_party
+	("pti_restore_party",
 	[
-		(party_clear, "p_main_party"),
+		(store_script_param, ":party", 1),
 		
-		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+		(party_clear, ":party"),
+		
+		(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_true"),
 		(assign, ":count", reg0),
 		
-		(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+		(call_script, "script_pti_get_first_individual", ":party", "script_cf_pti_true"),
 		(try_for_range, ":unused", 0, ":count"),
 			Individual.get("$pti_current_individual", "troop_type"),
 			(assign, ":troop_id", reg0),
-			(party_add_members, "p_main_party", ":troop_id", 1),
+			(party_add_members, ":party", ":troop_id", 1),
 			
 			Individual.get("$pti_current_individual", "is_wounded"),
 			(try_begin),
 				(eq, reg0, 1),
 				
-				(party_wound_members, "p_main_party", ":troop_id", 1),
+				(party_wound_members, ":party", ":troop_id", 1),
 			(try_end),
 			
-			(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+			(call_script, "script_pti_get_next_individual", ":party", "script_cf_pti_true"),
 		(try_end),
 	]),
 	

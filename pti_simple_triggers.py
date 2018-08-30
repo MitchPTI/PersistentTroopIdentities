@@ -53,7 +53,7 @@ simple_triggers = [
 			#(display_message, "@Battle is over, restoring player party"),
 			
 			(assign, "$pti_after_battle_check", 0),
-			(call_script, "script_pti_restore_main_party"),
+			(call_script, "script_pti_restore_party", "p_main_party"),
 		(try_end),
 	]),
 	
