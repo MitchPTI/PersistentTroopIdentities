@@ -174,6 +174,13 @@ pti_process_kill = (
 			(val_add, ":xp_gained", ":xp_for_kill"),
 			(agent_set_slot, ":killer_agent", pti_slot_agent_xp_gained, ":xp_gained"),
 			
+			(store_character_level, ":kill_level", ":troop_id"),
+			(agent_get_slot, ":best_kill_level", ":killer_agent", pti_slot_agent_best_kill_level),
+			(gt, ":kill_level", ":best_kill_level"),
+			
+			(agent_set_slot, ":killer_agent", pti_slot_agent_best_kill_level, ":kill_level"),
+			(agent_set_slot, ":killer_agent", pti_slot_agent_best_kill, ":troop_id"),
+			
 			(val_add, ":wounded", 1),
 			(set_trigger_result, ":wounded"),	# This is necessary because script_pti_troop_get_xp_for_killing calls script_game_get_prisoner_price, which calls set_trigger_result and inadvertently overrides all kills to knocked unconscious
 		(try_end),
