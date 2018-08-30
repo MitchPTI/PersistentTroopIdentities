@@ -268,6 +268,8 @@ presentations = [
 			(assign, "$pti_current_individual_troop", "trp_pti_individual_1"),
 			(assign, "$pti_nps_open", 1),
 			
+			(call_script, "script_pti_restore_party", "p_main_party"),
+			
 			# Checkbox for showing helmets
 			(str_store_string, s0, "@Show Helmets"),
 			gpu_create_text_overlay(550, 715, flags=tf_right_align),

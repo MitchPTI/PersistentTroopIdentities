@@ -57,6 +57,12 @@ simple_triggers = [
 		(try_end),
 	]),
 	
+	# This trigger will activate after battles when the player returns to the world map
+	(1,
+	[
+		(call_script, "script_pti_apply_wound_treatment_to_individuals", "p_main_party"),
+	]),
+	
 	# For testing - trigger to bring up new party screen upon pressing T
 	(0, 
 	[
