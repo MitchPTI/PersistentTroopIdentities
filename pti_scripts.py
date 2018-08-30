@@ -2662,6 +2662,14 @@ new_scripts = [
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
 		(str_store_string_reg, s0, s1),
+		
+		(try_begin),
+			Individual.get(":curr_individual", "is_wounded"),
+			(eq, reg0, 1),
+			
+			(str_store_string, s0, "@{s0} (wounded)"),
+		(try_end),
+		
 		(try_begin),
 			(eq, ":upgradeable", 1),
 			

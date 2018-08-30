@@ -418,6 +418,18 @@ presentations = [
 					Individual.set("$pti_nps_selected_individual", "xp", reg0),
 					(start_presentation, "prsnt_new_party_screen"),
 				(try_end),
+			(else_try),
+				(this_or_next|key_is_down, key_left_control),
+				(key_is_down, key_right_control),
+				(key_clicked, key_w),
+				
+				(try_begin),
+					(gt, "$pti_nps_selected_individual", -1),
+					
+					Individual.set("$pti_nps_selected_individual", "is_wounded", 1),
+					(call_script, "script_pti_restore_party", "p_main_party"),
+					(start_presentation, "prsnt_new_party_screen"),
+				(try_end),
 			(try_end),
 		]),
 		
