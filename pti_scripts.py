@@ -2431,6 +2431,31 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	## PARTY SCRIPTS
+	
+	# script_pti_party_copy_prisoners
+	("pti_party_copy_prisoners",
+	[
+		(store_script_param, ":target_party", 1),
+		(store_script_param, ":source_party", 2),
+		
+		(str_store_party_name, s0, ":source_party"),
+		(str_store_party_name, s1, ":target_party"),
+		(display_message, "@Transferring prisoners from {s0} to {s1}"),
+		
+		(party_get_num_prisoner_stacks, ":num_stacks", ":source_party"),
+		(try_for_range, ":stack_no", 0, ":num_stacks"),
+			(party_prisoner_stack_get_troop_id, ":stack_troop", ":source_party", ":stack_no"),
+			(party_prisoner_stack_get_size, ":stack_size", ":source_party", ":stack_no"),
+			(party_add_prisoners, ":target_party", ":stack_troop", ":stack_size"),
+			
+			#(str_store_troop_name_by_count, s0, ":stack_troop", ":stack_size"),
+			#(str_store_party_name, s1, ":target_party"),
+			#(assign, reg0, ":stack_size"),
+			#(display_message, "@Transferring {reg0} {s0} to {s1}"),
+		(try_end),
+	]),
+	
 	## BATTLE SCRIPTS ##
 	
 	# script_pti_troop_get_xp_for_killing
@@ -2577,7 +2602,11 @@ new_scripts = [
 	[
 		(store_script_param, ":party", 1),
 		
+		# Clear party, but retain prisoners
+		(call_script, "script_pti_party_copy_prisoners", "p_pti_prisoners", ":party"),
 		(party_clear, ":party"),
+		(call_script, "script_pti_party_copy_prisoners", ":party", "p_pti_prisoners"),
+		(party_clear, "p_pti_prisoners"),
 		
 		(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_true"),
 		(assign, ":count", reg0),
