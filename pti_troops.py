@@ -10,16 +10,22 @@ def blank_troop(id, flags=tf_hero):
 	return [id, id, id, flags, 0, 0, fac_player_supporters_faction, [], level(1)|def_attrib, 0, 0, 0x000000000000000036db6db6db6db6db00000000001db6db0000000000000000, 0x000000000000000036db6db6db6db6db00000000001db6db0000000000000000]
 
 troops = [
+	# Used for checking when the game has been loaded and activating a trigger
 	blank_troop("pti_load_check")
+	
+	# Mapping new party screen overlays to stack objects/containers
 	, blank_troop("pti_nps_overlay_stack_objects")
 	, blank_troop("pti_nps_overlay_containers")
+	
+	# New party screen boolean values
 	, blank_troop("pti_nps_is_highlighted")
+	, blank_troop("pti_nps_overlay_highlights_on_mouseover")
+	
+	# Mapping new party screen stack objects to overlays
 	, blank_troop("pti_nps_stack_button_overlays")
 	, blank_troop("pti_nps_stack_button_highlight_overlays")
-	, blank_troop("pti_nps_overlay_highlights_on_mouseover")
 	, blank_troop("pti_nps_stack_object_text_overlays")
 	, blank_troop("pti_nps_stack_object_troop_images")
-	, blank_troop("pti_nps_presentation_troop", flags=tf_guarantee_all)
 ]
 
 for i in xrange(1000):

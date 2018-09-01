@@ -1525,7 +1525,7 @@ new_scripts = [
 		(store_script_param, ":individual", 1),
 		
 		# Start with empty face keys (such as found on temp troop)
-		(str_store_troop_face_keys, s0, "trp_pti_nps_presentation_troop"),
+		(str_store_troop_face_keys, s0, "trp_temp_troop"),
 		
 		Individual.get(":individual", "hair"),
 		(face_keys_set_hair, s0, reg0),
