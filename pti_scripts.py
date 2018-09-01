@@ -1524,8 +1524,8 @@ new_scripts = [
 	[
 		(store_script_param, ":individual", 1),
 		
-		# Start with empty face keys (such as found on temp troop)
-		(str_store_troop_face_keys, s0, "trp_temp_troop"),
+		# Start with average face keys (all dummy troops made in pti_troops have totally average faces as opposed to the usual down syndrome you'd see on troops with each set of face keys given as 0)
+		(str_store_troop_face_keys, s0, "trp_pti_load_check"),
 		
 		Individual.get(":individual", "hair"),
 		(face_keys_set_hair, s0, reg0),
