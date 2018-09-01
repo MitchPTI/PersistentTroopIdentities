@@ -20,14 +20,12 @@ troops = [
 	# New party screen boolean values
 	, blank_troop("pti_nps_is_highlighted")
 	, blank_troop("pti_nps_overlay_highlights_on_mouseover")
-	
-	# Mapping new party screen stack objects to overlays
-	, blank_troop("pti_nps_stack_button_overlays")
-	, blank_troop("pti_nps_stack_button_highlight_overlays")
-	, blank_troop("pti_nps_stack_object_text_overlays")
-	, blank_troop("pti_nps_stack_object_troop_images")
 ]
 
+# Mapping new party screen stack objects to overlays
+troops.extend([blank_troop("pti_nps_{}_{}_overlays".format(container, obj)) for container in pti_nps_containers for obj in pti_nps_objects])
+
+# Individual troops - these are placeholder troops that have the appearance, name and equipment of an individual applied to them, for use in both battles and presentations
 for i in xrange(1000):
 	troop = blank_troop("pti_individual_{}".format(i), flags=tf_guarantee_all|tf_no_capture_alive)
 	troops.append(troop)

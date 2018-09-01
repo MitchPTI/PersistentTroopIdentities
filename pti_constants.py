@@ -102,7 +102,7 @@ TOTAL_KILLS_BITS = 14
 BATTLE_KILLS_BITS = 10
 TIMES_WOUNDED_BITS = 7	# 7 bits gives a maximum of 127 times. Even at max surgery there is only a 0.00000000024% chance of a troop surviving this many times
 XP_BITS = 30
-CLASS_BITS = 3
+CLASS_BITS = 4
 
 Individual.set_attribute_sizes({
 	"troop_type": TROOP_BITS
@@ -181,3 +181,6 @@ faction_naming_regions = OrderedDict([
 	, ("fac_kingdom_6", ["persian", "arabic", "egyptian"]) # Sarranids
 	, ("default", ["english"])
 ])
+
+pti_nps_containers = ("upper_left", "upper_right", "lower_left", "lower_right")
+pti_nps_objects = ("button", "highlight", "text", "image")

@@ -78,13 +78,19 @@ presentations = [
 			(assign, "$pti_nps_individual_stack_container", -1),
 			(assign, "$pti_nps_upgrade_button_1", -1),
 			(assign, "$pti_nps_upgrade_button_2", -1),
+			(assign, "$pti_nps_individual_summary", -1),
 			(try_for_range, ":slot", 0, 99999),
 				(troop_set_slot, "trp_pti_nps_overlay_highlights_on_mouseover", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_overlay_containers", ":slot", 0),
-				(troop_set_slot, "trp_pti_nps_stack_object_text_overlays", ":slot", 0),
 				(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":slot", 0),
-				(troop_slot_eq, "trp_pti_nps_stack_button_overlays", ":slot", 0),
+				
+				] + [(troop_set_slot, "trp_pti_nps_{}_{}_overlays".format(container, obj), ":slot", 0) for container in pti_nps_containers for obj in pti_nps_objects] + [
 			(try_end),
+			
+			(assign, "$pti_nps_upper_left_container", -1),
+			(assign, "$pti_nps_upper_right_container", -1),
+			(assign, "$pti_nps_lower_left_container", -1),
+			(assign, "$pti_nps_lower_right_container", -1),
 			
 			(assign, "$pti_nps_last_click_milliseconds", 0),
 			(assign, "$pti_current_individual_troop", "trp_pti_individual_1"),
@@ -139,7 +145,7 @@ presentations = [
 				(try_begin),
 					(gt, "$pti_selected_troop_id", -1),
 					
-					(call_script, "script_pti_nps_select_stack", "$pti_selected_troop_id"),
+					(call_script, "script_pti_nps_select_stack", "$pti_selected_troop_id", "$pti_nps_troop_stack_container"),
 				(try_end),
 			(else_try),
 				# Individual summary text
@@ -148,7 +154,6 @@ presentations = [
 				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 750, 750),	# Reduce font size
 				(call_script, "script_pti_nps_refresh_text"),
 				
-				# Set up agent stacks
 				(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 				(assign, ":num_individuals", reg0),
 				
@@ -158,6 +163,7 @@ presentations = [
 				(str_store_string, s0, "@{s0}: {reg0}"),
 				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 715, 800, 262, 26, tf_center_justify),
 				
+				# Set up agent stacks
 				#(display_message, "@{reg0} individuals"),
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_individual_stack_container", reg1),
@@ -171,10 +177,16 @@ presentations = [
 				(try_begin),
 					(gt, "$pti_nps_selected_individual", -1),
 					
-					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual"),
+					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_individual_stack_container"),
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
 			(try_end),
+			
+			# Prisoner stacks
+			(party_get_num_prisoner_stacks, ":num_stacks", "p_main_party"),
+			(call_script, "script_pti_nps_create_lower_right_stack_container"),
+			(assign, "$pti_nps_prisoner_stack_container", reg1),
+			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
 			
 			# Troop class (set at end of presentation to make it exist on top of other overlays, so clicking it isn't blocked)
 			(call_script, "script_gpu_create_combo_label_overlay", 685, 375),
@@ -284,71 +296,83 @@ presentations = [
 			(store_trigger_param_1, ":overlay"),
 			#(store_trigger_param_2, ":mouse_left"),
 			
-			# Set selected troop id if clicked
 			(try_begin),
-				(troop_slot_eq, "trp_pti_nps_overlay_containers", ":overlay", "$pti_nps_troop_stack_container"),
+				(troop_get_slot, ":container", "trp_pti_nps_overlay_containers", ":overlay"),
+				(this_or_next|eq, ":container", "$pti_nps_upper_left_container"),
+				(this_or_next|eq, ":container", "$pti_nps_upper_right_container"),
+				(this_or_next|eq, ":container", "$pti_nps_lower_left_container"),
+				(eq, ":container", "$pti_nps_lower_right_container"),
 				
-				(troop_get_slot, ":troop_id", "trp_pti_nps_overlay_stack_objects", ":overlay"),
+				(troop_get_slot, ":stack_object", "trp_pti_nps_overlay_stack_objects", ":overlay"),
 				
-				# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
+				#(assign, reg0, ":stack_object"),
+				#(assign, reg1, ":container"),
+				#(display_message, "@Clicked object (ID: {reg0}) in container {reg1}"),
+				
+				# If the clicked stack is not the already selected one, unselect the previously selected stack and select the new one
 				(try_begin),
-					(neg|troop_is_hero, ":troop_id"),
-					(eq, ":troop_id", "$pti_selected_troop_id"),
-					(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
-					(is_between, ":milliseconds_since_click", 10, 500),
+					(this_or_next|neq, ":container", "$pti_nps_selected_stack_container"),
+					(neq, ":stack_object", "$pti_nps_selected_stack_object"),
 					
-					(assign, "$pti_nps_open_agent_screen", 1),
-					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
-					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+					# Unselect previously selected stack if applicable
+					(try_begin),
+						(gt, "$pti_nps_selected_stack_container", 0),
+						(gt, "$pti_nps_selected_stack_object", -1),
+						
+						(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_stack_object", "$pti_nps_selected_stack_container"),
+						
+						#(assign, reg0, "$pti_nps_selected_stack_object"),
+						#(assign, reg1, "$pti_nps_selected_stack_container"),
+						#(display_message, "@Unselecting object (ID: {reg0}) in container {reg1}"),
+					(try_end),
 					
-					(start_presentation, "prsnt_new_party_screen"),
-				(else_try),
-					(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
+					# Select the clicked stack
+					(call_script, "script_pti_nps_select_stack", ":stack_object", ":container"),
+					
+					#(assign, reg0, ":stack_object"),
+					#(assign, reg1, ":container"),
+					#(display_message, "@Selecting object (ID: {reg0}) in container {reg1}"),
+				(try_end),
+				
+				# Run relevant scripts for the given container (e.g. party troops, party individuals, party prisoners, etc)
+				(try_begin),
+					(eq, ":container", "$pti_nps_troop_stack_container"),
+					
+					(assign, ":troop_id", ":stack_object"),
+					
+					# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
+					(try_begin),
+						(neg|troop_is_hero, ":troop_id"),
+						(eq, ":troop_id", "$pti_selected_troop_id"),
+						(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
+						(is_between, ":milliseconds_since_click", 10, 500),
+						
+						(assign, "$pti_nps_open_agent_screen", 1),
+						(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+						(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+						
+						(start_presentation, "prsnt_new_party_screen"),
+					(else_try),
+						(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
+					(try_end),
 					
 					(neq, ":troop_id", "$pti_selected_troop_id"),
 					
-					# Unselect previously selected troop if applicable
-					(try_begin),
-						(gt, "$pti_selected_troop_id", -1),
-						
-						#(str_store_troop_name, s0, "$pti_selected_troop_id"),
-						#(display_message, "@Deselecting {s0} stack"),
-						
-						(call_script, "script_pti_nps_unselect_stack", "$pti_selected_troop_id"),
-					(try_end),
+					(assign, "$pti_selected_troop_id", ":troop_id"),
+					(call_script, "script_pti_nps_refresh_troop_class"),
+				(else_try),
+					(eq, ":container", "$pti_nps_individual_stack_container"),
 					
-					#(str_store_troop_name, s0, ":troop_id"),
-					#(display_message, "@Selecting {s0} stack"),
+					(assign, ":individual", ":stack_object"),
+					(neq, ":individual", "$pti_nps_selected_individual"),
 					
-					(call_script, "script_pti_nps_select_stack", ":troop_id"),
+					(assign, "$pti_nps_selected_individual", ":individual"),
+					
+					# Refresh overlays
+					(call_script, "script_pti_nps_refresh_troop_class"),
+					(call_script, "script_pti_nps_refresh_text"),
+					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
-				
-				(assign, "$pti_selected_troop_id", ":troop_id"),
-				(call_script, "script_pti_nps_refresh_troop_class"),
-			(try_end),
-			
-			# Set selected individual if clicked
-			(try_begin),
-				(troop_slot_eq, "trp_pti_nps_overlay_containers", ":overlay", "$pti_nps_individual_stack_container"),
-				
-				(troop_get_slot, ":individual", "trp_pti_nps_overlay_stack_objects", ":overlay"),
-				(neq, ":individual", "$pti_nps_selected_individual"),
-				
-				# Unselect previously selected individual if applicable
-				(try_begin),
-					(gt, "$pti_nps_selected_individual", -1),
-					
-					(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_individual"),
-				(try_end),
-				
-				# Select new individual
-				(call_script, "script_pti_nps_select_stack", ":individual"),
-				(assign, "$pti_nps_selected_individual", ":individual"),
-				
-				# Refresh overlays
-				(call_script, "script_pti_nps_refresh_troop_class"),
-				(call_script, "script_pti_nps_refresh_text"),
-				(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 			(try_end),
 		]),
 		

@@ -46,6 +46,7 @@ party_screen_option = (
 		(assign, "$pti_nps_open_agent_screen", 0),
 		(assign, "$pti_selected_troop_id", "trp_player"),
 		(assign, "$pti_nps_selected_individual", -1),
+		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
 		(start_presentation, "prsnt_new_party_screen"),
 	])
 

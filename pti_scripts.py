@@ -2636,6 +2636,7 @@ new_scripts = [
 		(set_container_overlay, -1),
 		
 		(call_script, "script_gpu_create_scrollable_container", 29, 298, 262, 388),
+		(assign, "$pti_nps_upper_left_container", reg1),
 	]),
 	
 	# script_pti_nps_create_upper_right_stack_container
@@ -2644,6 +2645,69 @@ new_scripts = [
 		(set_container_overlay, -1),
 		
 		(call_script, "script_gpu_create_scrollable_container", 685, 298, 262, 388),
+		(assign, "$pti_nps_upper_right_container", reg1),
+	]),
+	
+	# script_pti_nps_create_lower_left_stack_container
+	("pti_nps_create_lower_left_stack_container",
+	[
+		(set_container_overlay, -1),
+		
+		(call_script, "script_gpu_create_scrollable_container", 29, 108, 262, 134),
+		(assign, "$pti_nps_lower_left_container", reg1),
+	]),
+	
+	# script_pti_nps_create_lower_right_stack_container
+	("pti_nps_create_lower_right_stack_container",
+	[
+		(set_container_overlay, -1),
+		
+		(call_script, "script_gpu_create_scrollable_container", 685, 108, 262, 134),
+		(assign, "$pti_nps_lower_right_container", reg1),
+	]),
+	
+	# script_pti_container_get_overlay_mappings
+	("pti_container_get_overlay_mappings",
+	[
+		(store_script_param, ":container", 1),
+		
+		(try_begin),
+			(eq, ":container", "$pti_nps_upper_left_container"),
+			
+			(assign, reg0, "trp_pti_nps_upper_left_button_overlays"),
+			(assign, reg1, "trp_pti_nps_upper_left_highlight_overlays"),
+			(assign, reg2, "trp_pti_nps_upper_left_text_overlays"),
+			(assign, reg3, "trp_pti_nps_upper_left_image_overlays"),
+		(else_try),
+			(eq, ":container", "$pti_nps_upper_right_container"),
+			
+			(assign, reg0, "trp_pti_nps_upper_right_button_overlays"),
+			(assign, reg1, "trp_pti_nps_upper_right_highlight_overlays"),
+			(assign, reg2, "trp_pti_nps_upper_right_text_overlays"),
+			(assign, reg3, "trp_pti_nps_upper_right_image_overlays"),
+		(else_try),
+			(eq, ":container", "$pti_nps_lower_left_container"),
+			
+			(assign, reg0, "trp_pti_nps_lower_left_button_overlays"),
+			(assign, reg1, "trp_pti_nps_lower_left_highlight_overlays"),
+			(assign, reg2, "trp_pti_nps_lower_left_text_overlays"),
+			(assign, reg3, "trp_pti_nps_lower_left_image_overlays"),
+		(else_try),
+			(eq, ":container", "$pti_nps_lower_right_container"),
+			
+			(assign, reg0, "trp_pti_nps_lower_right_button_overlays"),
+			(assign, reg1, "trp_pti_nps_lower_right_highlight_overlays"),
+			(assign, reg2, "trp_pti_nps_lower_right_text_overlays"),
+			(assign, reg3, "trp_pti_nps_lower_right_image_overlays"),
+		(else_try),
+			(assign, reg0, ":container"),
+			(display_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF00000),
+			
+			(assign, reg0, -1),
+			(assign, reg1, -1),
+			(assign, reg2, -1),
+			(assign, reg3, -1),
+		(try_end),
 	]),
 	
 	# script_pti_nps_add_stacks_to_container
@@ -2653,6 +2717,12 @@ new_scripts = [
 		(store_script_param, ":num_stacks", 2),
 		(store_script_param, ":stack_init_script", 3),
 		(store_script_param, ":x_offset", 4),
+		
+		(call_script, "script_pti_container_get_overlay_mappings", ":container"),
+		(assign, ":button_mapping", reg0),
+		(assign, ":highlight_mapping", reg1),
+		(assign, ":text_mapping", reg2),
+		(assign, ":image_mapping", reg3),
 		
 		(store_mul, ":cur_y", 26, ":num_stacks"),
 		(try_for_range, ":i", 0, ":num_stacks"),
@@ -2671,14 +2741,14 @@ new_scripts = [
 			(assign, ":stack_button", reg1),
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":stack_button", ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":stack_button", ":container"),
-			(troop_set_slot, "trp_pti_nps_stack_button_overlays", ":stack_object", ":stack_button"),
+			(troop_set_slot, ":button_mapping", ":stack_object", ":stack_button"),
 			
 			# Highlight overlay (initially invisible, made visible if stack highlighted)
 			(call_script, "script_gpu_create_image_button", mesh_party_member_button_pressed, mesh_party_member_button_pressed, ":x_offset", ":cur_y", 435),
 			(assign, ":highlight_button", reg1),
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", ":highlight_button", ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", ":highlight_button", ":container"),
-			(troop_set_slot, "trp_pti_nps_stack_button_highlight_overlays", ":stack_object", ":highlight_button"),
+			(troop_set_slot, ":highlight_mapping", ":stack_object", ":highlight_button"),
 			#(overlay_set_color, ":highlight_button", 0x000088),
 			(overlay_set_alpha, ":highlight_button", 0),
 			#(overlay_set_display, ":highlight_button", 0),
@@ -2690,13 +2760,13 @@ new_scripts = [
 			(troop_set_slot, "trp_pti_nps_overlay_stack_objects", reg1, ":stack_object"),
 			(troop_set_slot, "trp_pti_nps_overlay_highlights_on_mouseover", reg1, 1),
 			(troop_set_slot, "trp_pti_nps_overlay_containers", reg1, ":container"),
-			(troop_set_slot, "trp_pti_nps_stack_object_text_overlays", ":stack_object", reg1),
+			(troop_set_slot, ":text_mapping", ":stack_object", reg1),
 			
 			# Troop image
 			(set_container_overlay, -1),
 			(call_script, "script_gpu_create_troop_image", ":image_troop", 330, 325, 1000),
 			(overlay_set_display, reg1, 0),
-			(troop_set_slot, "trp_pti_nps_stack_object_troop_images", ":stack_object", reg1),
+			(troop_set_slot, ":image_mapping", ":stack_object", reg1),
 		(try_end),
 		
 		(set_container_overlay, -1),
@@ -2800,6 +2870,39 @@ new_scripts = [
 		(val_add, "$pti_current_individual_troop", 1),
 	]),
 	
+	# script_pti_nps_prisoner_stack_init
+	("pti_nps_prisoner_stack_init",
+	[
+		(store_script_param, ":stack_no", 1),
+		
+		(party_prisoner_stack_get_troop_id, ":troop_id", "p_main_party", ":stack_no"),
+		
+		(str_store_troop_name, s0, ":troop_id"),
+		(try_begin),
+			(neg|troop_is_hero, ":troop_id"),
+			
+			(try_begin),
+				(party_stack_get_size, reg0, "p_main_party", ":stack_no"),
+				(party_stack_get_num_wounded, reg1, "p_main_party", ":stack_no"),
+				(gt, reg1, 0),
+				
+				(store_sub, reg2, reg0, reg1),
+				(str_store_string, s0, "@{s0} ({reg2}/{reg0})"),
+			(else_try),
+				(str_store_string, s0, "@{s0} ({reg0})"),
+			(try_end),
+			
+			(assign, reg0, ":troop_id"),
+			(assign, reg1, "$pti_current_individual_troop"),
+		(else_try),
+			(store_troop_health, reg0, ":troop_id"),
+			(str_store_string, s0, "@{s0} ({reg0}%)"),
+		(try_end),
+		
+		(assign, reg0, ":troop_id"),
+		(assign, reg1, ":troop_id"),
+	]),
+	
 	# script_pti_nps_troop_stack_init
 	("pti_nps_prisoner_troop_stack_init",
 	[
@@ -2864,18 +2967,24 @@ new_scripts = [
 	("pti_nps_select_stack",
 	[
 		(store_script_param, ":stack_object", 1),
+		(store_script_param, ":container", 2),
+		
+		(call_script, "script_pti_container_get_overlay_mappings", ":container"),
+		(assign, ":highlight_mapping", reg1),
+		(assign, ":image_mapping", reg3),
 		
 		# Show pressed stack overlay
-		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
+		(troop_get_slot, ":highlight_button", ":highlight_mapping", ":stack_object"),
 		#(overlay_set_display, ":highlight_button", 1),
 		(overlay_set_alpha, ":highlight_button", 0xFF),
 		
 		# Show selected object's image
-		(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(troop_get_slot, ":troop_image", ":image_mapping", ":stack_object"),
 		(overlay_set_display, ":troop_image", 1),
 		
 		(try_begin),
 			(eq, "$pti_nps_open_agent_screen", 1),
+			(eq, ":container", "$pti_nps_individual_stack_container"),
 			
 			(call_script, "script_pti_individual_get_type_and_name", ":stack_object"),
 			Individual.get(":stack_object", "home"),
@@ -2885,29 +2994,55 @@ new_scripts = [
 			(str_store_troop_name, s0, ":stack_object"),
 			(overlay_set_text, "$pti_nps_title", "str_s0"),
 		(try_end),
+		
+		(assign, "$pti_nps_selected_stack_object", ":stack_object"),
+		(assign, "$pti_nps_selected_stack_container", ":container"),
 	]),
 	
 	# script_pti_nps_unselect_stack
 	("pti_nps_unselect_stack",
 	[
 		(store_script_param, ":stack_object", 1),
+		(store_script_param, ":container", 2),
+		
+		(call_script, "script_pti_container_get_overlay_mappings", ":container"),
+		(assign, ":highlight_mapping", reg1),
+		(assign, ":image_mapping", reg3),
 		
 		# Hide pressed stack overlay
-		(troop_get_slot, ":highlight_button", "trp_pti_nps_stack_button_highlight_overlays", ":stack_object"),
+		(troop_get_slot, ":highlight_button", ":highlight_mapping", ":stack_object"),
 		#(overlay_set_display, ":highlight_button", 0),
 		(overlay_set_alpha, ":highlight_button", 0),
 		
 		# Hide selected object's image
-		(troop_get_slot, ":troop_image", "trp_pti_nps_stack_object_troop_images", ":stack_object"),
+		(troop_get_slot, ":troop_image", ":image_mapping", ":stack_object"),
 		(overlay_set_display, ":troop_image", 0),
 		
 		# Clear title
 		(str_clear, s0),
 		(overlay_set_text, "$pti_nps_title", "str_s0"),
 		
+		# Clear any individual text
+		(try_begin),
+			(gt, "$pti_nps_individual_summary", -1),
+			
+			(str_clear, s0),
+			(overlay_set_text, "$pti_nps_individual_summary", "str_s0"),
+		(try_end),
+		
 		# Hide the troop class overlays
 		(overlay_set_display, "$pti_nps_troop_class_selector", 0),
 		(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
+		
+		# Hide the upgrade buttons
+		(try_begin),
+			(gt, "$pti_nps_upgrade_button_1", -1),
+			
+			(overlay_set_display, "$pti_nps_upgrade_button_1", 0),
+			
+			(gt, "$pti_nps_upgrade_button_2", -1),
+			(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
+		(try_end),
 	]),
 	
 	# script_pti_nps_get_selected_class
