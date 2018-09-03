@@ -2280,8 +2280,8 @@ new_scripts = [
 			(try_begin),
 				(eq, ":names_begin", 0),
 				
-				(assign, ":names_begin", "str_default_boy_name_1"),
-				(assign, ":names_end", "str_default_boy_names_end"),
+				(assign, ":names_begin", "str_default_girl_name_1"),
+				(assign, ":names_end", "str_default_girl_names_end"),
 			(try_end),
 		(else_try),
 			(faction_get_slot, ":names_begin", ":faction", pti_slot_faction_boy_names_begin),
@@ -2290,8 +2290,8 @@ new_scripts = [
 			(try_begin),
 				(eq, ":names_begin", 0),
 				
-				(assign, ":names_begin", "str_default_girl_name_1"),
-				(assign, ":names_end", "str_default_girl_names_end"),
+				(assign, ":names_begin", "str_default_boy_name_1"),
+				(assign, ":names_end", "str_default_boy_names_end"),
 			(try_end),
 		(try_end),
 		
