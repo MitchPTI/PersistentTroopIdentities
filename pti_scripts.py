@@ -2515,9 +2515,9 @@ new_scripts = [
 		(store_script_param, ":target_party", 1),
 		(store_script_param, ":source_party", 2),
 		
-		(str_store_party_name, s0, ":source_party"),
-		(str_store_party_name, s1, ":target_party"),
-		(display_message, "@Transferring prisoners from {s0} to {s1}"),
+		#(str_store_party_name, s0, ":source_party"),
+		#(str_store_party_name, s1, ":target_party"),
+		#(display_message, "@Transferring prisoners from {s0} to {s1}"),
 		
 		(party_get_num_prisoner_stacks, ":num_stacks", ":source_party"),
 		(try_for_range, ":stack_no", 0, ":num_stacks"),
