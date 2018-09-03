@@ -1360,7 +1360,8 @@ new_scripts = [
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
 		(party_get_slot, ":head", ":list", pti_slot_list_head),
-		(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", ":head"),
+		(call_script, "script_pti_linked_list_get_node", ":list", ":head"),
+		(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", reg2),
 		(try_begin),
 			(neq, reg0, -1),
 			
