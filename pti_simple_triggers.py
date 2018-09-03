@@ -19,7 +19,7 @@ from module_constants import *
 # 2) Operation block: This must be a valid operation block. See header_operations.py for reference.
 ####################################################################################################################
 
-simple_triggers = [
+new_simple_triggers = [
 	
 	# This trigger will activate each time the game is loaded
 	(0,
@@ -57,13 +57,31 @@ simple_triggers = [
 		(try_end),
 	]),
 	
-	# This trigger will activate after battles when the player returns to the world map
+	# Every hour, apply party healing to individuals
 	(1,
 	[
 		(call_script, "script_pti_apply_wound_treatment_to_individuals", "p_main_party"),
 	]),
 	
-	# For testing - trigger to bring up new party screen upon pressing T
+	# Every 6 hours, remove the recent prisoner attribute from all individuals if there are none scheduled to potentially run away tonight (as indicated by g_prisoner_recruit_troop_id)
+	(6,
+	[
+		(try_begin),
+			(le, "$g_prisoner_recruit_troop_id", 0),
+			
+			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+			(assign, ":count", reg0),
+			
+			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+			(try_for_range, ":unused", 0, ":count"),
+				Individual.set("$pti_current_individual", "is_recent_prisoner", 0),
+				
+				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+			(try_end),
+		(try_end),
+	]),
+	
+	# For testing - trigger activated upon pressing T
 	(0, 
 	[
 		(try_begin),
@@ -73,3 +91,35 @@ simple_triggers = [
 		(try_end),
 	])
 ]
+
+def merge(simple_triggers):
+	# Inject pti code into desertion of recently recruited prisoners to remove individuals
+	for trigger in simple_triggers:
+		for i, operation in enumerate(trigger.operations):
+			if type(operation) == tuple and operation[0] == party_remove_members and (operation[1] == "p_main_party" or operation[1] == p_main_party) and operation[2] == "$g_prisoner_recruit_troop_id":
+				# Delete (assign, ":num_escaped", reg0), which updates the num_escaped variable to the value returned by the party_remove_members operation
+				if trigger.operations[i+1][0] == assign and trigger.operations[i+1][2] == reg0:
+					del trigger.operations[i+1]
+				
+				# Replace the party_remove_members with pti code
+				num_escaped = operation[3]
+				trigger.operations[i:i+1] = [
+					# Randomly "kill" the escaped number of individuals (just removes them from party and game)
+					(assign, reg0, num_escaped),
+					(display_message, "@Randomly choosing {reg0} individuals to be marked for killing"),
+					(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", "p_main_party", "script_pti_mark_individual_for_killing", "script_cf_pti_individual_is_recent_prisoner", num_escaped),
+					(call_script, "script_pti_kill_individuals_in_party", "p_main_party", "script_cf_pti_individual_is_marked_for_killing"),
+					
+					# Remove the recent prisoner tag from the rest of the individuals, so no more are at risk of running away
+					(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+					(assign, ":count", reg0),
+					
+					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+					(try_for_range, ":unused", 0, ":count"),
+						Individual.set("$pti_current_individual", "is_recent_prisoner", 0),
+						
+						(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+					(try_end),
+				]
+	
+	simple_triggers.extend(new_simple_triggers)

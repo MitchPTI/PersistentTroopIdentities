@@ -1216,6 +1216,45 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_recruit_prisoners
+	("pti_recruit_prisoners",
+	[
+		(store_script_param, ":dest_party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":number", 3),
+		
+		# Get the faction of the troop in order to randomly pick a home fief
+		# If not a kingdom troop, just go by current location
+		(store_faction_of_troop, ":faction", ":troop_id"),
+		(try_begin),
+			(neg|is_between, ":faction", npc_kingdoms_begin, npc_kingdoms_end),
+			
+			(assign, ":minimum_distance", 1000000),
+			(try_for_range, ":center", centers_begin, centers_end),
+				(store_distance_to_party_from_party, ":dist", ":dest_party", ":center"),
+				(try_begin),
+					(lt, ":dist", ":minimum_distance"),
+					
+					(assign, ":minimum_distance", ":dist"),
+					(assign, ":nearest_center", ":center"),
+				(try_end),
+			(try_end),
+			
+			(store_faction_of_party, ":faction", ":nearest_center"),
+		(try_end),
+		
+		(try_for_range, ":unused", 0, ":number"),
+			(call_script, "script_cf_select_random_village_with_faction", ":faction"),
+			(assign, ":center", reg0),
+			
+			(call_script, "script_pti_create_individual_of_type", ":troop_id"),
+			(assign, ":individual", reg0),
+			Individual.set(":individual", "home", ":center"),
+			Individual.set(":individual", "is_recent_prisoner", 1),
+			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+		(try_end),
+	]),
+	
 	## INDIVIDUAL ATTRIBUTE GETTING AND SETTING
 	
 	# script_pti_individual_get_attribute
@@ -1462,6 +1501,24 @@ new_scripts = [
 		
 		Individual.get(":individual", "is_wounded"),
 		(eq, reg0, 0),
+	]),
+	
+	# script_cf_pti_individual_is_recent_prisoner
+	("cf_pti_individual_is_recent_prisoner",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "is_recent_prisoner"),
+		(eq, reg0, 1),
+	]),
+	
+	# script_cf_pti_individual_is_marked_for_killing
+	("cf_pti_individual_is_marked_for_killing",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "marked_for_kill"),
+		(eq, reg0, 1),
 	]),
 	
 	## INDIVIDUAL FACE SCRIPTS
@@ -2308,13 +2365,29 @@ new_scripts = [
 		(try_end),
 	]),
 	
-	# script_pti_kill_individual_in_selected_party
-	# This exists for use in script_pti_apply_casualties_to_individuals, as it must pass a script to script_pti_apply_script_randomly_to_party_members_meeting_condition that only takes one argument (the individual)
-	("pti_kill_individual_in_selected_party",
+	# script_pti_mark_individual_for_killing
+	# Killing individuals while iterating over them causes problems, so use this and then script_pti_kill_marked_individuals after your loop instead
+	("pti_mark_individual_for_killing",
 	[
 		(store_script_param, ":individual", 1),
 		
-		(call_script, "script_pti_kill_individual_in_party", ":individual", "$pti_selected_party_id"),
+		Individual.set(":individual", "marked_for_kill", 1),
+	]),
+	
+	# script_pti_kill_individuals_in_party
+	("pti_kill_individuals_in_party",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":condition_script", 2),
+		
+		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		(assign, ":count", reg0),
+		(display_message, "@Count of {reg0} found in script_pti_kill_individuals_in_party"),
+		
+		(try_for_range, ":unused", 0, ":count"),
+			(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+			(call_script, "script_pti_kill_individual_in_party", "$pti_current_individual", ":party"),
+		(try_end),
 	]),
 	
 	# script_pti_heal_individual
@@ -2407,7 +2480,8 @@ new_scripts = [
 			
 			(store_sub, ":difference", ":individuals_count", ":party_count"),
 			(assign, "$pti_selected_party_id", ":party"),
-			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_kill_individual_in_selected_party", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_mark_individual_for_killing", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			(call_script, "script_pti_kill_individuals_in_party", ":party", "script_cf_pti_individual_is_marked_for_killing"),
 			
 			(str_store_troop_name_by_count, s0, ":troop_id", ":difference"),
 			(assign, reg0, ":difference"),

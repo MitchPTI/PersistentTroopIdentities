@@ -25,6 +25,9 @@ class ModObjContainer(object):
 	def __setitem__(self, item, value):
 		self._items[item] = value
 	
+	def __contains__(self, key):
+		return key in self._items
+	
 	def __getattr__(self, attr):
 		return self[attr]
 	

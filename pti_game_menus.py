@@ -96,6 +96,15 @@ def get_option_index(menu, id):
 	
 	return index
 
+def get_menu_option(menus, menu_id, option_id):
+	option = -1
+	if menu_id in menus:
+		index = get_option_index(menus[menu_id], option_id)
+		if index > -1:
+			option = menus[menu_id].options[index]
+	
+	return option
+
 def merge(game_menus):
 	game_menus["camp"].options.append(party_screen_option)
 	
@@ -114,3 +123,20 @@ def merge(game_menus):
 	game_menus["order_attack_2"].operations.extend([
 		(call_script, "script_pti_apply_casualties_to_individuals", "p_main_party"),
 	])
+	
+	
+	menu_option_ids = [
+		("camp_recruit_prisoners", "camp_recruit_prisoners_accept")
+	]
+	for menu_id, option_id in menu_option_ids:
+		menu_option = get_menu_option(game_menus, menu_id, option_id)
+		if menu_option != -1:
+			add_troops_operations = dict([(i, operation) for i, operation in enumerate(menu_option.consequences) if operation[0] == party_add_members and (operation[1] == "p_main_party" or operation[1] == p_main_party)])
+			for index, operation in add_troops_operations.iteritems():
+				troop_id = operation[2]
+				size = operation[3]
+				menu_option.consequences[index] = (call_script, "script_pti_recruit_prisoners", "p_main_party", troop_id, size)
+			if not add_troops_operations:
+				print "No party_add_members operations found in game menu {} option {}".format(menu_id, option_id)
+		else:
+			print "Could not find game menu {} option {}".format(menu_id, option_id)
