@@ -2415,7 +2415,6 @@ new_scripts = [
 		
 		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
 		(assign, ":count", reg0),
-		(display_message, "@Count of {reg0} found in script_pti_kill_individuals_in_party"),
 		
 		(try_for_range, ":unused", 0, ":count"),
 			(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
@@ -2663,8 +2662,7 @@ new_scripts = [
 	("pti_individual_agent_process_casualty",
 	[
 		(store_script_param, ":agent", 1),
-		(store_script_param, ":killer_agent", 2),
-		(store_script_param, ":wounded", 3),
+		(store_script_param, ":wounded", 2),
 		
 		(agent_get_slot, ":individual", ":agent", pti_slot_agent_individual),
 		

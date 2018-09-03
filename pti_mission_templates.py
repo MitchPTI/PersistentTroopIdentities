@@ -141,7 +141,6 @@ pti_process_casualty = (
   ti_on_agent_killed_or_wounded, 0, 0, [],
   [
 		(store_trigger_param, ":agent", 1),
-		(store_trigger_param, ":killer_agent", 2),
 		(store_trigger_param, ":wounded", 3),
 		
 		(try_begin),
@@ -149,7 +148,7 @@ pti_process_casualty = (
 			(agent_get_party_id, ":party", ":agent"),
 			(eq, ":party", "p_main_party"),
 			
-			(call_script, "script_pti_individual_agent_process_casualty", ":agent", ":killer_agent", ":wounded"),
+			(call_script, "script_pti_individual_agent_process_casualty", ":agent", ":wounded"),
 			
 			(val_add, ":wounded", 1),
 			(set_trigger_result, ":wounded"),	# Just in case any scripts are called that call on set_trigger_result and thus mess with the outcome (killed/wounded)
