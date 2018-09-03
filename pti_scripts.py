@@ -887,6 +887,8 @@ new_scripts = [
 					(party_set_slot, ":list", pti_slot_list_head, ":next"),
 				(try_end),
 			(else_try),
+				(assign, reg0, ":object"),
+				(assign, reg1, ":list"),
 				(display_log_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
 			(try_end),
 		(else_try),
