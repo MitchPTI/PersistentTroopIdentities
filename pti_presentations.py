@@ -135,7 +135,7 @@ presentations = [
 				(assign, reg1, reg0),
 				(party_get_num_companions, reg0, "p_main_party"),
 				(str_store_string, s0, "@Company: {reg0} / {reg1}"),
-				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 712, 1000, 262, 26, tf_center_justify),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 710, 1000, 262, 26, tf_center_justify),
 				
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_troop_stack_container", reg1),
@@ -151,7 +151,7 @@ presentations = [
 				# Individual summary text
 				(call_script, "script_pti_nps_create_upper_left_stack_container"),
 				(assign, "$pti_nps_individual_summary", reg1),
-				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 750, 750),	# Reduce font size
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 800, 800),	# Reduce font size
 				(call_script, "script_pti_nps_refresh_text"),
 				
 				(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
