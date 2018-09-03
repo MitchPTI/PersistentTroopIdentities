@@ -133,6 +133,7 @@ Individual.set_attribute_sizes({
 	, "class_overridden": 1
 	, "is_recent_prisoner": 1
 	, "marked_for_kill": 1
+	, "train_troops_quest": 1
 })
 
 troop_slots = (200, [

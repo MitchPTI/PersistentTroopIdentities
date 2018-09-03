@@ -1257,6 +1257,126 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_get_random_village_associated_with_lord
+	("pti_get_random_village_associated_with_lord",
+	[
+		(store_script_param, ":lord", 1),
+		
+		# Count fiefs the lord owns
+		(assign, ":num_centers", 0),
+		(try_for_range, ":center", centers_begin, centers_end),
+			(party_slot_eq, ":center", slot_town_lord, ":lord"),
+			
+			(val_add, ":num_centers", 1),
+		(try_end),
+		
+		(try_begin),
+			# If the lord owns at least one fief, choose randomly from those fiefs
+			(gt, ":num_centers", 0),
+			
+			(store_random_in_range, ":rand", 0, ":num_centers"),
+			
+			(assign, ":end_cond", centers_end),
+			(assign, ":center_number", 0),
+			(try_for_range, ":center", centers_begin, ":end_cond"),
+				(party_slot_eq, ":center", slot_town_lord, ":lord"),
+				
+				(try_begin),
+					(eq, ":center_number", ":rand"),
+					
+					(assign, ":chosen_center", ":center"),
+					(assign, ":end_cond", 0),	# End loop
+				(else_try),
+					(val_add, ":center_number", 1),
+				(try_end),
+			(try_end),
+			
+			# If the chosen fief is not a village, choose randomly from its surrounding villages
+			(neg|party_slot_eq, ":chosen_center", slot_party_type, spt_village),
+			
+			# Count surrounding villages of the chosen center
+			(assign, ":num_villages", 0),
+			(try_for_range, ":village", villages_begin, villages_end),
+				(party_slot_eq, ":village", slot_village_bound_center, ":chosen_center"),
+				
+				(val_add, ":num_villages", 1),
+			(try_end),
+			
+			(store_random_in_range, ":rand", 0, ":num_villages"),
+			
+			(assign, ":end_cond", villages_end),
+			(assign, ":village_number", 0),
+			(try_for_range,":village", villages_begin, ":end_cond"),
+				(party_slot_eq, ":village", slot_village_bound_center, ":chosen_center"),
+				
+				(try_begin),
+					(eq, ":village_number", ":rand"),
+					
+					(assign, ":chosen_center", ":village"),
+					(assign, ":end_cond", 0),	# End loop
+				(else_try),
+					(val_add, ":village_number", 1),
+				(try_end),
+			(try_end),
+		(else_try),
+			# If the lord owns no fiefs, choose randomly from villages of his faction
+			(store_faction_of_troop, ":faction", ":lord"),
+			(call_script, "script_cf_select_random_village_with_faction", ":faction"),
+		(else_try),
+			# If the faction has no villages, randomly choose one of the lord's culture
+			(faction_get_slot, ":culture", ":faction", slot_faction_culture),
+			
+			(assign, ":num_villages", 0),
+			(try_for_range, ":village", villages_begin, villages_end),
+				(party_slot_eq, ":village", slot_center_culture, ":culture"),
+				
+				(val_add, ":num_villages", 1),
+			(try_end),
+			
+			(store_random_in_range, ":rand", 0, ":num_villages"),
+			
+			(assign, ":end_cond", villages_end),
+			(assign, ":village_number", 0),
+			(try_for_range,":village", villages_begin, ":end_cond"),
+				(party_slot_eq, ":village", slot_center_culture, ":culture"),
+				
+				(try_begin),
+					(eq, ":village_number", ":rand"),
+					
+					(assign, ":chosen_center", ":village"),
+					(assign, ":end_cond", 0),	# End loop
+				(else_try),
+					(val_add, ":village_number", 1),
+				(try_end),
+			(try_end),
+		(else_try),
+			# If there were no villages of the lord's culture then lol what the fuck is going on? Just choose any random village at this point
+			(store_random_in_range, ":chosen_center", villages_begin, villages_end),
+		(try_end),
+		
+		(assign, reg0, ":chosen_center"),
+	]),
+	
+	# script_pti_collect_troops_from_train_troop_quest
+	("pti_collect_troops_from_train_troop_quest",
+	[
+		(store_script_param, ":dest_party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":lord", 3),
+		(store_script_param, ":number", 4),
+		
+		(try_for_range, ":unused", 0, ":number"),
+			(call_script, "script_pti_create_individual_of_type", ":troop_id"),
+			(assign, ":individual", reg0),
+			
+			(call_script, "script_pti_get_random_village_associated_with_lord", ":lord"),
+			Individual.set(":individual", "home", reg0),
+			Individual.set(":individual", "train_troops_quest", 1),
+			
+			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+		(try_end),
+	]),
+	
 	## INDIVIDUAL ATTRIBUTE GETTING AND SETTING
 	
 	# script_pti_individual_get_attribute
@@ -1543,6 +1663,15 @@ new_scripts = [
 		(store_script_param, ":individual", 1),
 		
 		Individual.get(":individual", "marked_for_kill"),
+		(eq, reg0, 1),
+	]),
+	
+	# script_cf_pti_individual_is_from_train_troops_quest
+	("cf_pti_individual_is_from_train_troops_quest",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "train_troops_quest"),
 		(eq, reg0, 1),
 	]),
 	
@@ -3236,6 +3365,17 @@ new_scripts = [
 		
 		Individual.get("$pti_nps_selected_individual", "times_wounded"),
 		(str_store_string, s10, "@{s10}^Number of times wounded: {reg0}"),
+		
+		Individual.get("$pti_nps_selected_individual", "train_troops_quest"),
+		(try_begin),
+			(eq, reg0, 1),
+			
+			(quest_get_slot, ":giver_troop", "qst_raise_troops", slot_quest_giver_troop),
+			(quest_get_slot, ":target_troop", "qst_raise_troops", slot_quest_target_troop),
+			(str_store_troop_name, s0, ":giver_troop"),
+			(str_store_troop_name, s1, ":target_troop"),
+			(str_store_string, s10, "@{s10}^^Is to be returned to {s0} upon being trained to the level of {s1}"),
+		(try_end),
 		
 		# Finish
 		(str_store_string_reg, s0, s10),
