@@ -388,24 +388,17 @@ presentations = [
 				(this_or_next|eq, ":overlay", "$pti_nps_upgrade_button_1"),
 				(eq, ":overlay", "$pti_nps_upgrade_button_2"),
 				
-				Individual.get("$pti_nps_selected_individual", "xp"),
-				(assign, ":xp", reg0),
-				
 				Individual.get("$pti_nps_selected_individual", "troop_type"),
 				(assign, ":troop_id", reg0),
 				(try_begin),
 					(eq, ":overlay", "$pti_nps_upgrade_button_1"),					
 					
 					(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
-					(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-					(assign, ":upgrade_xp", reg0),
 				(else_try),
 					(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
-					(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-					(assign, ":upgrade_xp", reg0),
 				(try_end),
 				
-				(ge, ":xp", ":upgrade_xp"),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", "$pti_nps_selected_individual", ":upgrade"),
 				
 				Individual.set("$pti_nps_selected_individual", "troop_type", ":upgrade"),
 				(call_script, "script_pti_individual_generate_base_equipment", "$pti_nps_selected_individual"),

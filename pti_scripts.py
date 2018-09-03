@@ -1422,6 +1422,27 @@ new_scripts = [
 		(eq, reg0, "$pti_selected_troop_id"),
 	]),
 	
+	# script_cf_pti_individual_can_upgrade_to
+	("cf_pti_individual_can_upgrade_to",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":troop_id", 2),
+		
+		(call_script, "script_pti_xp_needed_to_upgrade_to", ":troop_id"),
+		(assign, ":upgrade_xp", reg0),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(store_character_level, ":next_level", ":troop_id"),
+		(val_add, ":next_level", 1),
+		(call_script, "script_pti_xp_needed_to_reach_level", ":next_level"),
+		(val_max, ":upgrade_xp", reg0),
+		
+		Individual.get(":individual", "xp"),
+		(ge, reg0, ":upgrade_xp"),
+	]),
+	
 	# script_cf_pti_individual_is_upgradeable
 	("cf_pti_individual_is_upgradeable",
 	[
@@ -1430,25 +1451,26 @@ new_scripts = [
 		Individual.get(":individual", "troop_type"),
 		(assign, ":troop_id", reg0),
 		
-		(assign, ":upgrade_xp", -1),
+		(assign, ":upgradeable", 0),
 		(try_begin),
 			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
 			(gt, ":upgrade", 0),
 			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(assign, ":upgrade_xp", reg0),
-			
-			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
-			(gt, ":upgrade", 0),
-			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(val_min, ":upgrade_xp", reg0),
+			(try_begin),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+				
+				(assign, ":upgradeable", 1),
+			(else_try),
+				(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
+				(gt, ":upgrade", 0),
+				
+				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+				
+				(assign, ":upgradeable", 1),
+			(try_end),
 		(try_end),
 		
-		(gt, ":upgrade_xp", -1),
-		
-		Individual.get(":individual", "xp"),
-		(ge, reg0, ":upgrade_xp"),
+		(eq, ":upgradeable", 1),
 	]),
 	
 	# script_cf_pti_individual_is_of_selected_troop_and_upgradeable
@@ -1685,8 +1707,16 @@ new_scripts = [
 	[
 		(store_script_param, ":troop_id", 1),
 		
-		#formula : int needed_upgrade_xp = 2 * (30 + 0.006f * level_boundaries[troops[troop_id].level]);
 		(store_character_level, ":level", ":troop_id"),
+		(call_script, "script_pti_xp_needed_to_reach_level", ":level"),
+	]),
+	
+	# script_pti_xp_needed_to_reach_level
+	("pti_xp_needed_to_reach_level",
+	[
+		(store_script_param, ":level", 1),
+		
+		#formula : int needed_upgrade_xp = 2 * (30 + 0.006f * level_boundaries[troops[troop_id].level]);
 		(get_level_boundary, reg0, ":level"),
 		(val_mul, reg0, 6),
 		(val_div, reg0, 1000),
@@ -3241,17 +3271,11 @@ new_scripts = [
 			
 			(overlay_set_display, "$pti_nps_upgrade_button_1", 1),
 			
-			Individual.get(":individual", "xp"),
-			(assign, ":xp", reg0),
-			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(assign, ":upgrade_xp", reg0),
-			
 			(str_store_troop_name, s0, ":upgrade"),
 			(str_store_string, s0, "@Upgrade to {s0}"),
 			(overlay_set_text, "$pti_nps_upgrade_button_1", "str_s0"),
 			(try_begin),
-				(gt, ":xp", ":upgrade_xp"),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
 				
 				(overlay_set_alpha, "$pti_nps_upgrade_button_1", 0xFF),
 			(else_try),
@@ -3268,14 +3292,11 @@ new_scripts = [
 			
 			(overlay_set_display, "$pti_nps_upgrade_button_2", 1),
 			
-			(call_script, "script_pti_xp_needed_to_upgrade_to", ":upgrade"),
-			(assign, ":upgrade_xp", reg0),
-			
 			(str_store_troop_name, s0, ":upgrade"),
 			(str_store_string, s0, "@Upgrade to {s0}"),
 			(overlay_set_text, "$pti_nps_upgrade_button_2", "str_s0"),
 			(try_begin),
-				(gt, ":xp", ":upgrade_xp"),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
 				
 				(overlay_set_alpha, "$pti_nps_upgrade_button_2", 0xFF),
 			(else_try),
