@@ -83,6 +83,8 @@ quick_start_option = (
 		#(call_script, "script_pti_recruit_troops_from_center", "p_main_party", trp_rhodok_tribesman, p_village_40, 5),
 		#(call_script, "script_pti_recruit_troops_from_center", "p_main_party", trp_sarranid_recruit, p_village_91, 5),
 		
+		 (party_set_morale, "p_main_party", 100),
+		
 		(party_relocate_near_party, "p_main_party", "p_town_6", 2),
 		(jump_to_menu, "mnu_start_phase_2"),
 	])
