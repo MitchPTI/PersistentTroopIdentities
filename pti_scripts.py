@@ -3566,3 +3566,4 @@ def merge(scripts):
 	volunteer_troop = add_troops_op[2]
 	volunteer_amount = add_troops_op[3]
 	scripts["village_recruit_volunteers_recruit"].operations[index] = (call_script, "script_pti_recruit_troops_from_center", "p_main_party", volunteer_troop, "$current_town", volunteer_amount)
+	scripts["game_event_party_encounter"].operations.append((call_script, "script_pti_apply_wound_treatment_to_individuals", "p_main_party"))
