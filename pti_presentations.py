@@ -180,6 +180,12 @@ presentations = [
 					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_individual_stack_container"),
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
+				
+				# Add disband button
+				(str_store_string, s0, "@Disband"),
+				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 585, 125),
+				(assign, "$pti_nps_disband_button", reg1),
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_disband_button", 125, 40),	# Reduce size
 			(try_end),
 			
 			# Prisoner stacks
@@ -470,6 +476,19 @@ presentations = [
 				(call_script, "script_pti_nps_get_selected_class"),
 				(assign, "$pti_class_to_be_renamed", reg0),
 				(start_presentation, "prsnt_rename_troop_class"),
+			(try_end),
+		]),
+		
+		# Trigger for disbanding individuals
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_disband_button"),
+				
+				(call_script, "script_pti_kill_individual_in_party", "$pti_nps_selected_individual", "p_main_party"),
+				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),
 		
