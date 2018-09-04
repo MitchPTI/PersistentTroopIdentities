@@ -1853,6 +1853,51 @@ new_scripts = [
 		(val_add, reg0, 30),
 	]),
 	
+	## MORALE SCRIPTS
+	
+	# script_pti_troop_print_morale_description_to_s0
+	("pti_troop_print_morale_description_to_s0",
+	[
+		(store_script_param, ":troop_id", 1),
+		
+		(call_script, "script_game_get_morale_of_troops_from_faction", ":troop_id"),
+		(try_begin),
+			(lt, reg0, 10),
+
+			(str_store_string, s0, "@Terrible"),
+		(else_try),
+			(lt, reg0, 20),
+
+			(str_store_string, s0, "@Very Low"),
+		(else_try),
+			(lt, reg0, 30),
+
+			(str_store_string, s0, "@Low"),
+		(else_try),
+			(lt, reg0, 40),
+
+			(str_store_string, s0, "@Below Average"),
+		(else_try),
+			(lt, reg0, 60),
+
+			(str_store_string, s0, "@Average"),
+		(else_try),
+			(lt, reg0, 70),
+
+			(str_store_string, s0, "@Above Average"),
+		(else_try),
+			(lt, reg0, 80),
+
+			(str_store_string, s0, "@High"),
+		(else_try),
+			(lt, reg0, 90),
+
+			(str_store_string, s0, "@Very High"),
+		(else_try),
+			(str_store_string, s0, "@Excellent"),
+		(try_end),
+	]),
+	
 	## ITEM SCRIPTS
 	
 	# script_pti_item_get_capabilities
@@ -3216,6 +3261,7 @@ new_scripts = [
 		(troop_get_slot, ":troop_image", ":image_mapping", ":stack_object"),
 		(overlay_set_display, ":troop_image", 1),
 		
+		# Set the title
 		(try_begin),
 			(eq, "$pti_nps_open_agent_screen", 1),
 			(eq, ":container", "$pti_nps_individual_stack_container"),
@@ -3227,6 +3273,30 @@ new_scripts = [
 		(else_try),
 			(str_store_troop_name, s0, ":stack_object"),
 			(overlay_set_text, "$pti_nps_title", "str_s0"),
+		(try_end),
+		
+		# Set the weekly wages and morale text (will eventually be done separately for troops and individuals)
+		(try_begin),
+			(this_or_next|eq, ":container", "$pti_nps_individual_stack_container"),
+			(eq, ":container", "$pti_nps_troop_stack_container"),
+			
+			(assign, ":troop_id", "$pti_selected_troop_id"),
+			(try_begin),
+				(eq, ":container", "$pti_nps_troop_stack_container"),
+				
+				(assign, ":troop_id", ":stack_object"),
+			(try_end),
+			
+			(gt, ":troop_id", 0),
+			
+			(call_script, "script_game_get_troop_wage", ":troop_id"),
+			(store_sub, reg1, reg0, 1),	
+			(str_store_string, s0, "@Weekly wage: {reg0} {reg1?denars:denar}"),
+			(overlay_set_text, "$pti_nps_weekly_wages", "str_s0"),
+			
+			(call_script, "script_pti_troop_print_morale_description_to_s0", ":troop_id"),
+			(str_store_string, s0, "@Morale: {s0}"),
+			(overlay_set_text, "$pti_nps_morale", "str_s0"),
 		(try_end),
 		
 		(assign, "$pti_nps_selected_stack_object", ":stack_object"),
@@ -3263,6 +3333,13 @@ new_scripts = [
 			(str_clear, s0),
 			(overlay_set_text, "$pti_nps_individual_summary", "str_s0"),
 		(try_end),
+		
+		# Clear the weekly wages and morale text
+		(str_clear, s0),
+		(overlay_set_text, "$pti_nps_weekly_wages", "str_s0"),
+		
+		(str_clear, s0),
+		(overlay_set_text, "$pti_nps_morale", "str_s0"),
 		
 		# Hide the troop class overlays
 		(overlay_set_display, "$pti_nps_troop_class_selector", 0),

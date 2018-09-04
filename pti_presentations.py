@@ -124,6 +124,13 @@ presentations = [
 			(assign, "$pti_nps_move_down_button", reg1),
 			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
 			
+			# Weekly wages and morale
+			(str_clear, s0),
+			gpu_create_text_overlay(500, 205, flags=tf_center_justify),
+			(assign, "$pti_nps_weekly_wages", reg1),
+			gpu_create_text_overlay(500, 180, flags=tf_center_justify),
+			(assign, "$pti_nps_morale", reg1),
+			
 			# Stacks
 			(try_begin),
 				# Set up troop stacks if not drilled down to see agents
