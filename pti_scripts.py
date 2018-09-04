@@ -2596,6 +2596,35 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_cf_party_remove_random_regular_troop
+	# Overwriting this allows for the removal of troops when choosing to leave some behind to escape a battle
+	# Input: arg1 = party_no
+	# Output: troop_id that has been removed (can fail)
+	("cf_party_remove_random_regular_troop",
+	[
+		(store_script_param_1, ":party"),
+		
+		(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_nonwounded"),
+		(assign, ":count", reg0),
+		
+		(assign, reg0, -1),
+		(gt, ":count", 0),
+		
+		(store_random_in_range, ":rand", 0, ":count"),
+		(call_script, "script_pti_get_first_individual", ":party", "script_cf_pti_individual_is_nonwounded"),
+		(try_for_range, ":unused", 0, ":rand"),
+			(call_script, "script_pti_get_next_individual", ":party", "script_cf_pti_individual_is_nonwounded"),
+		(try_end),
+		
+		Individual.get("$pti_current_individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(call_script, "script_pti_kill_individual_in_party", "$pti_current_individual", ":party"),
+		(call_script, "script_pti_restore_party", ":party"),
+		
+		(assign, reg0, ":troop_id"),
+	]),
+	
 	# script_pti_heal_individual
 	("pti_heal_individual",
 	[
