@@ -188,6 +188,12 @@ presentations = [
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
 				(try_end),
 				
+				# Add talk button
+				(str_store_string, s0, "@Talk"),
+				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 435, 125),
+				(assign, "$pti_nps_talk_button", reg1),
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_talk_button", 125, 40),	# Reduce size
+				
 				# Add disband button
 				(str_store_string, s0, "@Disband"),
 				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 585, 125),
@@ -483,6 +489,21 @@ presentations = [
 				(call_script, "script_pti_nps_get_selected_class"),
 				(assign, "$pti_class_to_be_renamed", reg0),
 				(start_presentation, "prsnt_rename_troop_class"),
+			(try_end),
+		]),
+		
+		# Trigger for talking to individuals
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_talk_button"),
+				
+				(call_script, "script_pti_container_get_overlay_mappings", "$pti_nps_selected_stack_container"),
+				(assign, ":troop_mapping", reg4),
+				(troop_get_slot, ":individual_troop", ":troop_mapping", "$pti_nps_selected_individual"),
+				(call_script, "script_setup_troop_meeting", ":individual_troop", -1),
 			(try_end),
 		]),
 		

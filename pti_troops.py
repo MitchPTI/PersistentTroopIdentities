@@ -29,3 +29,5 @@ troops.extend([blank_troop("pti_nps_{}_{}_overlays".format(container, obj)) for 
 for i in xrange(1000):
 	troop = blank_troop("pti_individual_{}".format(i), flags=tf_guarantee_all|tf_no_capture_alive)
 	troops.append(troop)
+
+troops.append(blank_troop("pti_individuals_end"))

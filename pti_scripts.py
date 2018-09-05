@@ -2983,33 +2983,41 @@ new_scripts = [
 		(store_script_param, ":container", 1),
 		
 		(try_begin),
+			(gt, ":container", -1),
 			(eq, ":container", "$pti_nps_upper_left_container"),
 			
 			(assign, reg0, "trp_pti_nps_upper_left_button_overlays"),
 			(assign, reg1, "trp_pti_nps_upper_left_highlight_overlays"),
 			(assign, reg2, "trp_pti_nps_upper_left_text_overlays"),
 			(assign, reg3, "trp_pti_nps_upper_left_image_overlays"),
+			(assign, reg4, "trp_pti_nps_upper_left_troop_overlays"),
 		(else_try),
+			(gt, ":container", -1),
 			(eq, ":container", "$pti_nps_upper_right_container"),
 			
 			(assign, reg0, "trp_pti_nps_upper_right_button_overlays"),
 			(assign, reg1, "trp_pti_nps_upper_right_highlight_overlays"),
 			(assign, reg2, "trp_pti_nps_upper_right_text_overlays"),
 			(assign, reg3, "trp_pti_nps_upper_right_image_overlays"),
+			(assign, reg4, "trp_pti_nps_upper_right_troop_overlays"),
 		(else_try),
+			(gt, ":container", -1),
 			(eq, ":container", "$pti_nps_lower_left_container"),
 			
 			(assign, reg0, "trp_pti_nps_lower_left_button_overlays"),
 			(assign, reg1, "trp_pti_nps_lower_left_highlight_overlays"),
 			(assign, reg2, "trp_pti_nps_lower_left_text_overlays"),
 			(assign, reg3, "trp_pti_nps_lower_left_image_overlays"),
+			(assign, reg4, "trp_pti_nps_lower_left_troop_overlays"),
 		(else_try),
+			(gt, ":container", -1),
 			(eq, ":container", "$pti_nps_lower_right_container"),
 			
 			(assign, reg0, "trp_pti_nps_lower_right_button_overlays"),
 			(assign, reg1, "trp_pti_nps_lower_right_highlight_overlays"),
 			(assign, reg2, "trp_pti_nps_lower_right_text_overlays"),
 			(assign, reg3, "trp_pti_nps_lower_right_image_overlays"),
+			(assign, reg4, "trp_pti_nps_lower_right_troop_overlays"),
 		(else_try),
 			(assign, reg0, ":container"),
 			(display_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF00000),
@@ -3018,6 +3026,7 @@ new_scripts = [
 			(assign, reg1, -1),
 			(assign, reg2, -1),
 			(assign, reg3, -1),
+			(assign, reg4, -1),
 		(try_end),
 	]),
 	
@@ -3034,6 +3043,7 @@ new_scripts = [
 		(assign, ":highlight_mapping", reg1),
 		(assign, ":text_mapping", reg2),
 		(assign, ":image_mapping", reg3),
+		(assign, ":troop_mapping", reg4),
 		
 		(store_mul, ":cur_y", 26, ":num_stacks"),
 		(try_for_range, ":i", 0, ":num_stacks"),
@@ -3078,6 +3088,9 @@ new_scripts = [
 			(call_script, "script_gpu_create_troop_image", ":image_troop", 330, 325, 1000),
 			(overlay_set_display, reg1, 0),
 			(troop_set_slot, ":image_mapping", ":stack_object", reg1),
+			
+			# Presentation troop
+			(troop_set_slot, ":troop_mapping", ":stack_object", ":image_troop"),
 		(try_end),
 		
 		(set_container_overlay, -1),
@@ -3243,8 +3256,7 @@ new_scripts = [
 		
 		(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
 		
-		(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":curr_individual"),
-		(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":curr_individual"),
+		(call_script, "script_pti_set_up_individual_troop", ":curr_individual", "$pti_current_individual_troop"),
 		
 		(assign, ":upgradeable", 0),
 		(try_begin),
@@ -3255,6 +3267,7 @@ new_scripts = [
 		
 		(call_script, "script_pti_individual_get_type_and_name", ":curr_individual"),
 		(str_store_string_reg, s0, s1),
+		(troop_set_name, "$pti_current_individual_troop", s0),
 		
 		(try_begin),
 			Individual.get(":curr_individual", "is_wounded"),

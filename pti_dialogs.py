@@ -48,6 +48,17 @@ from module_constants import *
 # 7) Voice-over (string): sound filename for the voice over. Leave here empty for no voice over
 ####################################################################################################################
 
+new_dialogs = [
+	[anyone, "start",
+		[
+			(store_conversation_troop, "$g_talk_troop"),
+			(is_between, "$g_talk_troop", pti_individual_troops_begin, pti_individual_troops_end),
+			(call_script, "script_dplmc_print_subordinate_says_sir_madame_to_s0"),
+		],
+		"Your orders {s0}?", "regular_member_talk", []
+	],
+]
+
 def get_dialogs(dialogs, state):
 	return [dialog for dialog in dialogs if dialog.state == state]
 
@@ -91,3 +102,11 @@ def merge(dialogs):
 	
 	if not train_troops_thank_dialogs:
 		print "Could not find lord_mission_raise_troops_accepted dialog"
+	
+	start_dialogs = get_dialogs(dialogs, "start")
+	start_dialog_indexes = [i for i, dialog in enumerate(dialogs) if dialog.state == "start"]
+	for index in reversed(start_dialog_indexes):
+		dialogs.remove(index)
+	
+	dialogs.extend(new_dialogs)
+	dialogs.extend(start_dialogs)

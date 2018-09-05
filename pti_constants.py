@@ -139,6 +139,7 @@ Individual.set_attribute_sizes({
 troop_slots = (200, [
 	"nps_slot_troop_stack_overlay"
 	, "slot_troop_individual"
+	, "slot_troop_regular_troop_type"
 ])
 
 agent_slots = (50, [
@@ -186,4 +187,7 @@ faction_naming_regions = OrderedDict([
 ])
 
 pti_nps_containers = ("upper_left", "upper_right", "lower_left", "lower_right")
-pti_nps_objects = ("button", "highlight", "text", "image")
+pti_nps_objects = ("button", "highlight", "text", "image", "troop")
+
+pti_individual_troops_begin = "trp_pti_individual_1"
+pti_individual_troops_end = "trp_pti_individuals_end"

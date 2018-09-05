@@ -67,6 +67,9 @@ class ModObjContainer(object):
 	def extend(self, items):
 		for item in items:
 			self.append(item)
+	
+	def remove(self, item):
+		del self._items[item]
 
 logger = BuildLogger.getLogger(__name__)
 
