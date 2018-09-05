@@ -2789,7 +2789,7 @@ new_scripts = [
 		(str_store_party_name, s2, reg0),
 		(troop_set_name, ":troop_id", "$pti_individual_name_format"),
 		
-		(call_script, "script_pti_troop_copy_stats", ":troop_type", ":troop_id"),
+		(call_script, "script_pti_troop_copy_stats", ":troop_id", ":troop_type"),
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
 		
