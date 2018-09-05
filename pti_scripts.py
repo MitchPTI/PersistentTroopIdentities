@@ -2886,6 +2886,9 @@ new_scripts = [
 		(else_try),
 			(call_script, "script_pti_kill_individual_in_party", ":individual", "p_main_party"),
 		(try_end),
+		
+		(agent_get_troop_id, ":individual_troop_id", ":agent"),
+		(troop_set_slot, ":individual_troop_id", pti_slot_troop_regular_troop_type, ":troop_id"),
 	]),
 	
 	# script_pti_process_battle
@@ -3554,16 +3557,41 @@ new_scripts = [
 	
 ]
 
+def operation_matches(operation, *args):
+	matches = type(operation) == tuple
+	if matches:
+		for i, arg in enumerate(args):
+			matches = len(operation) > i and (arg == "?" or operation[i] == arg)
+			if not matches:
+				break
+	
+	return matches
+
 def merge(scripts):
 	scripts.extend(new_scripts)
 	
+	# Update village recruitment to add individuals
 	try:
 		add_troops_op = [operation for operation in scripts["village_recruit_volunteers_recruit"].operations if operation[0] == party_add_members][0]
+		index = scripts["village_recruit_volunteers_recruit"].operations.index(add_troops_op)
+		volunteer_troop = add_troops_op[2]
+		volunteer_amount = add_troops_op[3]
+		scripts["village_recruit_volunteers_recruit"].operations[index] = (call_script, "script_pti_recruit_troops_from_center", "p_main_party", volunteer_troop, "$current_town", volunteer_amount)
 	except IndexError:
 		raise ValueError("Could not find party_add_members operation in script_village_recruit_volunteers_recruit")
 	
-	index = scripts["village_recruit_volunteers_recruit"].operations.index(add_troops_op)
-	volunteer_troop = add_troops_op[2]
-	volunteer_amount = add_troops_op[3]
-	scripts["village_recruit_volunteers_recruit"].operations[index] = (call_script, "script_pti_recruit_troops_from_center", "p_main_party", volunteer_troop, "$current_town", volunteer_amount)
+	# Ensure wound treatment is applied to individuals on party encounter, to prevent starting a battle with individual healing lagging behind party troops
 	scripts["game_event_party_encounter"].operations.append((call_script, "script_pti_apply_wound_treatment_to_individuals", "p_main_party"))
+	
+	count_casualties_operations = scripts["count_mission_casualties_from_agents"].operations
+	indexes = [i for i, operation in enumerate(count_casualties_operations) if operation_matches(operation, agent_get_troop_id)]
+	for index in reversed(indexes):
+		troop_id = count_casualties_operations[index][1]
+		count_casualties_operations[index+1:index+1] = [
+			(try_begin),
+				(troop_get_slot, reg0, troop_id, pti_slot_troop_regular_troop_type),
+				(gt, reg0, 0),
+				
+				(assign, troop_id, reg0),
+			(try_end),
+		]
