@@ -2888,7 +2888,8 @@ new_scripts = [
 		(try_end),
 		
 		(agent_get_troop_id, ":individual_troop_id", ":agent"),
-		(troop_set_slot, ":individual_troop_id", pti_slot_troop_regular_troop_type, ":troop_id"),
+		Individual.get(":individual", "troop_type"),
+		(troop_set_slot, ":individual_troop_id", pti_slot_troop_regular_troop_type, reg0),
 	]),
 	
 	# script_pti_process_battle
