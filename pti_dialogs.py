@@ -106,7 +106,7 @@ def merge(dialogs):
 	start_dialogs = get_dialogs(dialogs, "start")
 	start_dialog_indexes = [i for i, dialog in enumerate(dialogs) if dialog.state == "start"]
 	for index in reversed(start_dialog_indexes):
-		dialogs.remove(index)
+		del dialogs[index]
 	
 	dialogs.extend(new_dialogs)
 	dialogs.extend(start_dialogs)

@@ -4,72 +4,84 @@ import mod_manager_options as options
 from mod_manager_logging import BuildLogger
 from mod_manager_classes import object_classes
 
+# The ModObjContainer is a collection class for mod objects (e.g. scripts, troops, etc).
+# It stores the data internally within an ordered dictionary and can be treated interchangeably as either a dict (default) or list.
+# When list methods are called, it gets the objects as a list using the dict values method, applies the method to that list and then
+# reconstructs the ordered dictionary, extracting each mod object's ID to be used as the key.
+# Any new objects added as tuples/lists will be automatically converted to the relevant class if applicable.
+# For object types with no ID, the objects will be stored in a list and dict methods will not work.
 class ModObjContainer(object):
 	def __init__(self, obj_type, cls, *args):
 		self._obj_type = obj_type
 		self._obj_cls = cls
 		
-		self._items = collections.OrderedDict() if cls._required_fields[0] == "id" else []
+		self._items = collections.OrderedDict() if cls and cls._required_fields[0] == "id" else []
 		
 		if cls:
 			self.extend([cls(*arg) for arg in args])
 		else:
 			self.extend(args)
 	
-	def __getitem__(self, item):
-		try:
-			return self._items[item]
-		except KeyError:
-			raise AttributeError("There are no {} with an ID of {}".format(self._obj_type, item))
-	
-	def __setitem__(self, item, value):
-		self._items[item] = value
-	
-	def __contains__(self, key):
-		return key in self._items
+	def wrap_list_method(self, method_name):
+		items_list = self._items.values()
+		def method_wrapper(*args, **kwargs):
+			result = getattr(items_list, method_name)(*args, **kwargs)
+			self._items = OrderedDict([(item[0], self._obj_cls(*item) if not isinstance(item, self._obj_cls) else item) 
+						   for item in items_list])
+			return result
+		
+		return method_wrapper
 	
 	def __getattr__(self, attr):
-		return self[attr]
-	
-	def __setattr__(self, attr, value):
-		if not attr.startswith("_"):
-			self[attr] = value
+		if hasattr(self._items, attr):
+			return getattr(self._items, attr)
+		elif hasattr(list, attr) and isinstance(self._items, collections.OrderedDict):
+			value = getattr(self._items.values(), attr)
+			if callable(value):
+				value = self.wrap_list_method(attr)
+			
+			return value
 		else:
-			self.__dict__[attr] = value
+			raise AttributeError("{} has no attribute {}".format(self.__class__.__name__, attr))
+	
+	def __getitem__(self, item):
+		if isinstance(self._items, collections.OrderedDict) and isinstance(item, int):
+			return self._items.values()[item]
+		else:
+			return self._items[item]
+	
+	def __setitem__(self, item, value):
+		if self._obj_cls and not isinstance(item, self._obj_cls):
+			self._items[item] = self._obj_cls(*item)
+		else:
+			self._items[item] = item
+	
+	def __delitem__(self, item):
+		if isinstance(self._items, collections.OrderedDict) and isinstance(item, int):
+			del self._items[self._items.keys()[item]]
+		else:
+			del self._items[item]
+	
+	def __contains__(self, item):
+		return item in self._items
 	
 	def __iter__(self):
 		items = self._items.values() if isinstance(self._items, collections.OrderedDict) else self._items
 		for item in items:
 			yield item
 	
-	def __str__(self):
-		return "\n".join([str(item) for item in self._items.values()])
-	
-	def __repr__(self):
-		return str(self)
-	
-	def append(self, item):
-		if not isinstance(item, self._obj_cls):
-			item = self._obj_cls(*item)
+	def append(self, obj):
+		if self._obj_cls and not isinstance(obj, self._obj_cls):
+			obj = self._obj_cls(*obj)
 		
 		if isinstance(self._items, collections.OrderedDict):
-			try:
-				item_id = item["id"]
-			except Exception:
-				raise ValueError("Tried to append an invalid object to '{}' instance. ".format(self.__class__.__name__) + \
-								 "Valid objects must be tuples or lists that have an ID as their first element. " + \
-								 "Invalid object: {}".format(item))
-			
-			self._items[item_id] = item
+			self._items[obj[0]] = obj
 		else:
-			self._items.append(item)
+			self._items.append(obj)
 	
-	def extend(self, items):
-		for item in items:
-			self.append(item)
-	
-	def remove(self, item):
-		del self._items[item]
+	def extend(self, objects):
+		for obj in objects:
+			self.append(obj)
 
 logger = BuildLogger.getLogger(__name__)
 
