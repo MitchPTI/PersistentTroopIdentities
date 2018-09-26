@@ -2789,6 +2789,8 @@ new_scripts = [
 		(str_store_party_name, s2, reg0),
 		(troop_set_name, ":troop_id", "$pti_individual_name_format"),
 		
+		(troop_set_slot, ":troop_id", pti_slot_troop_regular_troop_type, ":troop_type"),
+		
 		(call_script, "script_pti_troop_copy_stats", ":troop_id", ":troop_type"),
 		(call_script, "script_pti_equip_troop_as_individual", ":troop_id", ":individual"),
 		(call_script, "script_pti_give_troop_individual_face", ":troop_id", ":individual"),
@@ -2886,10 +2888,6 @@ new_scripts = [
 		(else_try),
 			(call_script, "script_pti_kill_individual_in_party", ":individual", "p_main_party"),
 		(try_end),
-		
-		(agent_get_troop_id, ":individual_troop_id", ":agent"),
-		Individual.get(":individual", "troop_type"),
-		(troop_set_slot, ":individual_troop_id", pti_slot_troop_regular_troop_type, reg0),
 	]),
 	
 	# script_pti_process_battle
@@ -3605,6 +3603,10 @@ def merge(scripts):
 			(try_begin),
 				(troop_get_slot, reg0, troop_id, pti_slot_troop_regular_troop_type),
 				(gt, reg0, 0),
+				
+				(str_store_troop_name, s0, troop_id),
+				(str_store_troop_name, s1, reg0),
+				(display_message, "@Replacing {s0} with {s1}"),
 				
 				(assign, troop_id, reg0),
 			(try_end),
