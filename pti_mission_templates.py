@@ -64,7 +64,9 @@ pti_set_up_individuals = (
 		
 		(party_clear, "p_pti_prisoners"),
 		(call_script, "script_pti_party_copy_prisoners", "p_pti_prisoners", "p_main_party"),
+		(call_script, "script_pti_party_copy_heroes", "p_pti_prisoners", "p_main_party"),
 		(party_clear, "p_main_party"),
+		(call_script, "script_pti_party_copy_heroes", "p_main_party", "p_pti_prisoners"),
 		
 		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
 		(assign, ":count", reg0),
