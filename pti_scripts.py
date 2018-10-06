@@ -1675,6 +1675,15 @@ new_scripts = [
 		(eq, reg0, 1),
 	]),
 	
+	# script_cf_pti_individual_xp_lt
+	("cf_pti_individual_xp_lt",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "xp"),
+		(lt, reg0, "$pti_comparison_xp"),
+	]),
+	
 	## INDIVIDUAL FACE SCRIPTS
 	
 	# script_pti_individual_generate_face_keys
@@ -1851,6 +1860,24 @@ new_scripts = [
 		(val_mul, reg0, 6),
 		(val_div, reg0, 1000),
 		(val_add, reg0, 30),
+	]),
+	
+	# script_pti_level_given_xp
+	("pti_level_given_xp",
+	[
+		(store_script_param, ":xp", 1),
+		
+		(assign, ":end_cond", 64),
+		(try_for_range, ":level", 1, ":end_cond"),
+			(call_script, "script_pti_xp_needed_to_reach_level", ":level"),
+			(lt, reg0, ":xp"),
+			
+			(assign, ":return_level", ":level"),
+		(else_try),
+			(assign, ":end_cond", 0),
+		(try_end),
+		
+		(assign, reg0, ":return_level"),
 	]),
 	
 	## MORALE SCRIPTS
@@ -2644,6 +2671,23 @@ new_scripts = [
 		Individual.set(":individual", "is_wounded", 1),
 	]),
 	
+	# script_pti_apply_script_to_party_members_meeting_condition
+	("pti_apply_script_to_party_members_meeting_condition",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":script", 2),
+		(store_script_param, ":condition_script", 3),
+		
+		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		(assign, ":count", reg0),
+		
+		(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+		(try_for_range, ":i", 0, ":count"),
+			(call_script, ":script", "$pti_current_individual"),
+			(call_script, "script_pti_get_next_individual", ":party", ":condition_script"),
+		(try_end),
+	]),
+	
 	# script_pti_apply_script_randomly_to_party_members_meeting_condition
 	("pti_apply_script_randomly_to_party_members_meeting_condition",
 	[
@@ -2738,6 +2782,70 @@ new_scripts = [
 			(assign, reg0, ":difference"),
 			(display_message, "@{reg0} {s0} wounded"),
 		(try_end),
+	]),
+	
+	# script_pti_get_trainer_amount_for_level
+	("pti_get_trainer_amount_for_level",
+	[
+		(store_script_param, ":trainer_level", 1),
+		
+		(try_begin),
+			(eq, ":trainer_level", 0),
+			
+			(assign, reg0, 0),
+		(else_try),
+			(eq, ":trainer_level", 1),
+			
+			(assign, reg0, 4),
+		(else_try),
+			(eq, ":trainer_level", 2),
+			
+			(assign, reg0, 10),
+		(else_try),
+			(eq, ":trainer_level", 3),
+			
+			(assign, reg0, 16),
+		(else_try),
+			(eq, ":trainer_level", 4),
+			
+			(assign, reg0, 23),
+		(else_try),
+			(eq, ":trainer_level", 5),
+			
+			(assign, reg0, 30),
+		(else_try),
+			(eq, ":trainer_level", 6),
+			
+			(assign, reg0, 38),
+		(else_try),
+			(eq, ":trainer_level", 7),
+			
+			(assign, reg0, 46),
+		(else_try),
+			(eq, ":trainer_level", 8),
+			
+			(assign, reg0, 55),
+		(else_try),
+			(eq, ":trainer_level", 9),
+			
+			(assign, reg0, 65),
+		(else_try),
+			(assign, reg0, 80),
+		(try_end),
+	]),
+	
+	# script_pti_individual_add_xp
+	("pti_individual_add_xp",
+	[
+		(store_script_param, ":individual", 1),
+		
+		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		(assign, reg0, "$pti_xp_to_add"),
+		(display_message, "@Adding {reg0} xp to {s0} {s1}"),
+		
+		Individual.get(":individual", "xp"),
+		(val_add, reg0, "$pti_xp_to_add"),
+		Individual.set(":individual", "xp", reg0),
 	]),
 	
 	## PARTY SCRIPTS
@@ -3497,6 +3605,12 @@ new_scripts = [
 			(str_store_troop_name, s1, ":target_troop"),
 			(str_store_string, s10, "@{s10}^^Is to be returned to {s0} upon being trained to the level of {s1}"),
 		(try_end),
+		
+		# XP
+		Individual.get("$pti_nps_selected_individual", "xp"),
+		(str_store_string, s10, "@{s10}^XP: {reg0}"),
+		(call_script, "script_pti_level_given_xp", reg0),
+		(str_store_string, s10, "@{s10}^Level: {reg0}"),
 		
 		# Finish
 		(str_store_string_reg, s0, s10),

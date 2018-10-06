@@ -89,7 +89,29 @@ new_simple_triggers = [
 			
 			# Do stuff here
 		(try_end),
-	])
+	]),
+	
+	(24,
+	[
+		(party_get_num_companion_stacks, ":num_stacks", "p_main_party"),
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":troop_id", "p_main_party", ":stack"),
+			(troop_is_hero, ":troop_id"),
+			
+			(store_skill_level, ":trainer_level", skl_trainer, ":troop_id"),
+			(gt, ":trainer_level", 0),
+			
+			(str_store_troop_name, s0, ":troop_id"),
+			(display_message, "@Applying trainer from {s0}"),
+			
+			(call_script, "script_pti_get_trainer_amount_for_level", ":trainer_level"),
+			(assign, "$pti_xp_to_add", reg0),
+			(store_character_level, ":level", ":troop_id"),
+			(call_script, "script_pti_xp_needed_to_reach_level", ":level"),
+			(assign, "$pti_comparison_xp", reg0),
+			(call_script, "script_pti_apply_script_to_party_members_meeting_condition", "p_main_party", "script_pti_individual_add_xp", "script_cf_pti_individual_xp_lt"),
+		(try_end),
+	]),
 ]
 
 def merge(simple_triggers):
