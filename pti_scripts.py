@@ -3218,7 +3218,7 @@ new_scripts = [
 			
 			# Troop image
 			(set_container_overlay, -1),
-			(call_script, "script_gpu_create_troop_image", ":image_troop", 330, 325, 1000),
+			(call_script, "script_gpu_create_troop_image", ":image_troop", 330, 335, 1000),
 			(overlay_set_display, reg1, 0),
 			(troop_set_slot, ":image_mapping", ":stack_object", reg1),
 			
@@ -3653,11 +3653,11 @@ new_scripts = [
 	[
 		(str_clear, s0),
 		
-		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 290),
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 300),
 		(assign, "$pti_nps_upgrade_button_1", reg1),
 		(overlay_set_display, "$pti_nps_upgrade_button_1", 0),
 		
-		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 240),
+		(call_script, "script_gpu_create_in_game_button_overlay", "str_s0", 500, 250),
 		(assign, "$pti_nps_upgrade_button_2", reg1),
 		(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
 	]),

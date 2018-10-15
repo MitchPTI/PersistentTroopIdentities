@@ -126,9 +126,9 @@ presentations = [
 			
 			# Weekly wages and morale
 			(str_clear, s0),
-			gpu_create_text_overlay(500, 205, flags=tf_center_justify),
+			gpu_create_text_overlay(500, 220, flags=tf_center_justify),
 			(assign, "$pti_nps_weekly_wages", reg1),
-			gpu_create_text_overlay(500, 180, flags=tf_center_justify),
+			gpu_create_text_overlay(500, 195, flags=tf_center_justify),
 			(assign, "$pti_nps_morale", reg1),
 			
 			# Stacks
@@ -190,15 +190,15 @@ presentations = [
 				
 				# Add talk button
 				(str_store_string, s0, "@Talk"),
-				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 435, 125),
+				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 515, 155),
 				(assign, "$pti_nps_talk_button", reg1),
-				(call_script, "script_gpu_overlay_set_size", "$pti_nps_talk_button", 125, 40),	# Reduce size
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_talk_button", 112, 35),	# Reduce size
 				
 				# Add disband button
 				(str_store_string, s0, "@Disband"),
-				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 585, 125),
+				(call_script, "script_gpu_create_game_button_overlay", "str_s0", 515, 112),
 				(assign, "$pti_nps_disband_button", reg1),
-				(call_script, "script_gpu_overlay_set_size", "$pti_nps_disband_button", 125, 40),	# Reduce size
+				(call_script, "script_gpu_overlay_set_size", "$pti_nps_disband_button", 112, 35),	# Reduce size
 			(try_end),
 			
 			# Prisoner stacks
@@ -208,7 +208,7 @@ presentations = [
 			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
 			
 			# Troop class (set at end of presentation to make it exist on top of other overlays, so clicking it isn't blocked)
-			(call_script, "script_gpu_create_combo_label_overlay", 685, 375),
+			(call_script, "script_gpu_create_combo_label_overlay", 685, 385),
 			(assign, "$pti_nps_troop_class_selector", reg1),
 			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_selector", 380, 650),	# Reduce size
 			(try_for_range, ":class", grc_infantry, grc_everyone),
@@ -227,7 +227,7 @@ presentations = [
 			
 			# Troop class rename button
 			(str_store_string, s0, "@Rename"),
-			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 625, 350),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 625, 360),
 			(assign, "$pti_nps_troop_class_rename_button", reg1),
 			(call_script, "script_gpu_overlay_set_size", "$pti_nps_troop_class_rename_button", 80, 20),	# Reduce size
 			(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
