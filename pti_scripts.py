@@ -3570,6 +3570,11 @@ new_scripts = [
 			
 			(overlay_set_display, "$pti_nps_troop_class_selector", 1),
 			(overlay_set_val, "$pti_nps_troop_class_selector", reg0),
+			
+			# Only show the rename button for actual troop classes (i.e. not for "Default")
+			(this_or_next|eq, "$pti_nps_open_agent_screen", 0),
+			(neq, reg0, grc_everyone),
+			
 			(overlay_set_display, "$pti_nps_troop_class_rename_button", 1),
 		(try_end),
 	]),

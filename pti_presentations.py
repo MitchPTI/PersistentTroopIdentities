@@ -469,8 +469,10 @@ presentations = [
 						
 						Individual.set("$pti_nps_selected_individual", "class_overridden", 1),
 						Individual.set("$pti_nps_selected_individual", "class", ":value"),
+						(overlay_set_display, "$pti_nps_troop_class_rename_button", 1),
 					(else_try),
 						Individual.set("$pti_nps_selected_individual", "class_overridden", 0),
+						(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
 					(try_end),
 				(else_try),
 					(troop_set_class, "$pti_selected_troop_id", ":value"),
