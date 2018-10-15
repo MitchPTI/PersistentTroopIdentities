@@ -156,10 +156,10 @@ array_slots = (0, [
 ])
 
 faction_slots = (250, [
-	"slot_faction_boy_names_begin"
-	, "slot_faction_boy_names_end"
-	, "slot_faction_girl_names_begin"
-	, "slot_faction_girl_names_end"
+	"slot_faction_male_names_begin"
+	, "slot_faction_male_names_end"
+	, "slot_faction_female_names_begin"
+	, "slot_faction_female_names_end"
 ])
 
 party_slots = (500, [
@@ -185,6 +185,20 @@ faction_naming_regions = OrderedDict([
 	, ("fac_kingdom_6", ["persian", "arabic", "egyptian"]) # Sarranids
 	, ("default", ["english"])
 ])
+
+gender_neutral_factions = []
+
+def get_start_name(faction, gender):
+	if faction in gender_neutral_factions:
+		return "str_{}_name_1".format(faction)
+	else:
+		return "str_{}_{}_name_1".format(faction, gender)
+
+def get_end_name(faction, gender):
+	if faction in gender_neutral_factions:
+		return "str_{}_names_end".format(faction)
+	else:
+		return "str_{}_{}_names_end".format(faction, gender)
 
 pti_nps_containers = ("upper_left", "upper_right", "lower_left", "lower_right")
 pti_nps_objects = ("button", "highlight", "text", "image", "troop")

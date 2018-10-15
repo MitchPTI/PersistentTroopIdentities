@@ -26,10 +26,10 @@ def set_names_operations(factions):
 	for faction in factions:
 		if faction.startswith("fac_"):
 			operations.extend([
-				(faction_set_slot, faction, pti_slot_faction_boy_names_begin, "str_{}_{}_name_1".format(faction, "boy"))
-				, (faction_set_slot, faction, pti_slot_faction_boy_names_end, "str_{}_{}_names_end".format(faction, "boy"))
-				, (faction_set_slot, faction, pti_slot_faction_girl_names_begin, "str_{}_{}_name_1".format(faction, "girl"))
-				, (faction_set_slot, faction, pti_slot_faction_girl_names_end, "str_{}_{}_names_end".format(faction, "girl"))
+				(faction_set_slot, faction, pti_slot_faction_male_names_begin, get_start_name(faction, "male"))
+				, (faction_set_slot, faction, pti_slot_faction_male_names_end, get_end_name(faction, "male"))
+				, (faction_set_slot, faction, pti_slot_faction_female_names_begin, get_start_name(faction, "female"))
+				, (faction_set_slot, faction, pti_slot_faction_female_names_end, get_end_name(faction, "male"))
 			])
 	
 	return operations
@@ -2506,24 +2506,24 @@ new_scripts = [
 		(try_begin),
 			(eq, ":gender", tf_female),
 			
-			(faction_get_slot, ":names_begin", ":faction", pti_slot_faction_girl_names_begin),
-			(faction_get_slot, ":names_end", ":faction", pti_slot_faction_girl_names_end),
+			(faction_get_slot, ":names_begin", ":faction", pti_slot_faction_female_names_begin),
+			(faction_get_slot, ":names_end", ":faction", pti_slot_faction_female_names_end),
 			
 			(try_begin),
 				(eq, ":names_begin", 0),
 				
-				(assign, ":names_begin", "str_default_girl_name_1"),
-				(assign, ":names_end", "str_default_girl_names_end"),
+				(assign, ":names_begin", "str_default_female_name_1"),
+				(assign, ":names_end", "str_default_female_names_end"),
 			(try_end),
 		(else_try),
-			(faction_get_slot, ":names_begin", ":faction", pti_slot_faction_boy_names_begin),
-			(faction_get_slot, ":names_end", ":faction", pti_slot_faction_boy_names_end),
+			(faction_get_slot, ":names_begin", ":faction", pti_slot_faction_male_names_begin),
+			(faction_get_slot, ":names_end", ":faction", pti_slot_faction_male_names_end),
 			
 			(try_begin),
 				(eq, ":names_begin", 0),
 				
-				(assign, ":names_begin", "str_default_boy_name_1"),
-				(assign, ":names_end", "str_default_boy_names_end"),
+				(assign, ":names_begin", "str_default_male_name_1"),
+				(assign, ":names_end", "str_default_male_names_end"),
 			(try_end),
 		(try_end),
 		

@@ -11,7 +11,7 @@ for filename in [f for f in os.listdir("./names") if os.path.isfile("./names/" +
 		names[(region, gender)] = fh.readlines()
 
 strings = []
-for gender in ("boy", "girl"):
+for gender in ("male", "female"):
 	for faction, regions in faction_naming_regions.iteritems():
 		faction_names = set([])
 		for region in regions:
