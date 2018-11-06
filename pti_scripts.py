@@ -1112,7 +1112,7 @@ new_scripts = [
 	# This script doesn't actually produce any data, it just returns a free array index that can be used
 	# These array indexes point to a particular space in one big global array where data can be put and later retrieved (Individual.get and Individual.set)
 	# The space allocated could be at the end of the array if it is full, or it could be space previously allocated to an individual that has been killed
-	# "$pti_individuals_array_next_free_index" gets updated to the latter in script_pti_individual_agent_process_casualty
+	# "$pti_individuals_array_next_free_index" gets updated to the latter in script_pti_kill_individual_in_party
 	("pti_create_individual",
 	[
 		# Update the size of the individuals array if a new individual must be added at the end
