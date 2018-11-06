@@ -146,7 +146,7 @@ new_scripts = [
 					(val_sub, ":slot", pti_array_slot_max),
 					(call_script, "script_pti_array_get", ":array", ":slot"),
 				(else_try),
-					(display_log_message, "@ERROR: Tried to get array value from next array, but none found", 0xFF0000),
+					(display_log_message, "@ERROR: Tried to get array value from next array, but none found", 0xFF00000),
 					(assign, reg0, -1),
 				(try_end),
 			(else_try),
@@ -154,7 +154,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":array"),
-			(display_log_message, "@ERROR: script_pti_array_get was called without a valid array being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_array_get was called without a valid array being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -188,7 +188,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":array"),
-			(display_log_message, "@ERROR: script_pti_array_set was called without a valid array being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_array_set was called without a valid array being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -208,7 +208,7 @@ new_scripts = [
 			(party_set_slot, ":array", pti_slot_array_size, ":size"),
 		(else_try),
 			(assign, reg0, ":array"),
-			(display_log_message, "@ERROR: script_pti_array_append was called without a valid array being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_array_append was called without a valid array being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -232,7 +232,7 @@ new_scripts = [
 			(call_script, "script_pti_array_set", ":array", ":index_2", ":element_1"),
 		(else_try),
 			(assign, reg0, ":array"),
-			(display_log_message, "@ERROR: script_pti_array_swap was called without a valid array being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_array_swap was called without a valid array being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -269,7 +269,7 @@ new_scripts = [
 			#(display_message, "@Index: {reg3} | Value: {reg0} | Next index: {reg1} | Prev index: {reg2}"),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_node was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -286,7 +286,7 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_get_node", ":list", ":head_index"),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_head_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_head_node was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -304,7 +304,7 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_get_node", ":list", reg2),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_tail_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_tail_node was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -333,7 +333,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_first_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_first_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -362,7 +362,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_last_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_last_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -396,7 +396,7 @@ new_scripts = [
 			(assign, reg0, ":count"),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_count was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_count was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -448,7 +448,7 @@ new_scripts = [
 			(call_script, "script_pti_array_set", ":list", ":index", reg0),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_set_prev was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_prev was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -468,7 +468,7 @@ new_scripts = [
 			(call_script, "script_pti_array_set", ":list", ":index", reg0),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_set_next was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_next was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -488,7 +488,7 @@ new_scripts = [
 			(call_script, "script_pti_array_set", ":list", ":index", reg0),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_set_value was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_set_value was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -531,7 +531,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_insert_before was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_insert_before was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -557,14 +557,14 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_set_prev", ":list", ":next_index", ":new_index"),
 			
 			# Create the new node
-			(val_lshift, ":next_index", pti_list_next_node_bitshift),
-			(val_or, ":value", ":next_index"),
-			(val_lshift, ":index", pti_list_prev_node_bitshift),
-			(val_or, ":value", ":index"),
-			(call_script, "script_pti_array_append", ":list", ":value"),
+			(assign, reg0, ":value"),
+			(call_script, "script_pti_node_set_next", reg0, ":next_index"),
+			(call_script, "script_pti_node_set_prev", reg0, ":index"),
+			(assign, ":new_node", reg0),
+			(call_script, "script_pti_array_append", ":list", ":new_node"),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_insert_after was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_insert_after was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -592,7 +592,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_append was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_append was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -621,7 +621,7 @@ new_scripts = [
 			(call_script, "script_pti_array_set", ":list", ":new_index", reg0),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_copy_node was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_copy_node was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -680,7 +680,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -725,7 +725,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_next was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_next was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -770,7 +770,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_prev was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_swap_with_prev was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -819,7 +819,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_move_before was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_move_before was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -889,11 +889,11 @@ new_scripts = [
 			(else_try),
 				(assign, reg0, ":object"),
 				(assign, reg1, ":list"),
-				(display_log_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF0000),
+				(display_log_message, "@ERROR: Tried to remove {reg0} from list (ID: {reg1}), but {reg0} could not be found in the list", 0xFF00000),
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -915,7 +915,7 @@ new_scripts = [
 			(assign, reg0, reg3),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -938,7 +938,7 @@ new_scripts = [
 			(assign, reg0, reg3),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index_after_index was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_get_nth_index_after_index was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -1093,7 +1093,7 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_merge_sort_r", ":list", ":comparison_script", 0, ":size"),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_merge_sort was called without a valid list being passed (party ID: {reg0})", 0xFF000),
+			(display_log_message, "@ERROR: script_pti_linked_list_merge_sort was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -1420,7 +1420,7 @@ new_scripts = [
 		(else_try),
 			(assign, reg0, ":value"),
 			(assign, reg1, ":bitmask"),
-			(display_log_message, "@ERROR: Tried to add value of {reg0} to attribute for which the maximum value is {reg1}", 0xFF0000),
+			(display_log_message, "@ERROR: Tried to add value of {reg0} to attribute for which the maximum value is {reg1}", 0xFF00000),
 		(try_end),
 	]),
 	
@@ -3153,7 +3153,7 @@ new_scripts = [
 			(assign, reg4, "trp_pti_nps_lower_right_troop_overlays"),
 		(else_try),
 			(assign, reg0, ":container"),
-			(display_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF00000),
+			(display_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF000000),
 			
 			(assign, reg0, -1),
 			(assign, reg1, -1),
