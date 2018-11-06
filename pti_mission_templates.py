@@ -68,16 +68,15 @@ pti_set_up_individuals = (
 		(party_clear, "p_main_party"),
 		(call_script, "script_pti_party_copy_heroes", "p_main_party", "p_pti_prisoners"),
 		
-		(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
+		pti_count_individuals(condition = "script_cf_pti_individual_is_not_wounded"),
 		(assign, ":count", reg0),
-		(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
+		pti_get_first_individual(condition =  "script_cf_pti_individual_is_not_wounded"),
 		(try_for_range, ":unused", 0, ":count"),
 			(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
 			(call_script, "script_pti_set_up_individual_troop", "$pti_current_individual", ":pti_current_individual_troop"),
 			(party_add_members, "p_main_party", ":pti_current_individual_troop", 1),
 			
-			(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_not_wounded"),
-			(assign, "$pti_current_individual", reg0),
+			pti_get_next_individual(condition = "script_cf_pti_individual_is_not_wounded"),
 			(val_add, ":pti_current_individual_troop", 1),
 		(try_end),
   ])

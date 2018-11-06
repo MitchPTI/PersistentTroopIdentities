@@ -136,6 +136,42 @@ Individual.set_attribute_sizes({
 	, "train_troops_quest": 1
 })
 
+def pti_get_first_individual(party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_get_first_individual", party, condition)
+	else:
+		return (call_script, "script_pti_get_first_individual_with_troop_id", party, troop_id, condition)
+
+def pti_get_last_individual(party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_get_last_individual", party, condition)
+	else:
+		return (call_script, "script_pti_get_last_individual_with_troop_id", party, troop_id, condition)
+
+def pti_get_next_individual(party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_get_next_individual", party, condition)
+	else:
+		return (call_script, "script_pti_get_next_individual_with_troop_id", party, troop_id, condition)
+
+def pti_get_prev_individual(party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_get_prev_individual", party, condition)
+	else:
+		return (call_script, "script_pti_get_prev_individual_with_troop_id", party, troop_id, condition)
+
+def pti_count_individuals(party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_count_individuals", party, condition)
+	else:
+		return (call_script, "script_pti_count_individuals_with_troop_id", party, troop_id, condition)
+
+def pti_apply_script_randomly_to_party_members(script, num, party = "p_main_party", troop_id = False, condition = "script_cf_pti_true"):
+	if not troop_id:
+		return (call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", party, script, condition, num)
+	else:
+		return (call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition_with_troop_id", party, script, condition, num, troop_id)
+
 troop_slots = (200, [
 	"nps_slot_troop_stack_overlay"
 	, "slot_troop_individual"

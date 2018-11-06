@@ -161,7 +161,7 @@ presentations = [
 				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 800, 800),	# Reduce font size
 				(call_script, "script_pti_nps_refresh_text"),
 				
-				(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+				pti_count_individuals(troop_id = "$pti_selected_troop_id"),
 				(assign, ":num_individuals", reg0),
 				
 				# Add individual labels
@@ -174,7 +174,7 @@ presentations = [
 				#(display_message, "@{reg0} individuals"),
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_individual_stack_container", reg1),
-				(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+				pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
 				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", STACK_X_OFFSET),
 				
 				# Add upgrade buttons
@@ -367,7 +367,7 @@ presentations = [
 						(is_between, ":milliseconds_since_click", 10, 500),
 						
 						(assign, "$pti_nps_open_agent_screen", 1),
-						(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+						pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
 						(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
 						
 						(start_presentation, "prsnt_new_party_screen"),
@@ -431,7 +431,7 @@ presentations = [
 					
 					(assign, "$pti_selected_troop_id", ":upgrade"),
 				(else_try),
-					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+					pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
 					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
 				(try_end),
 				(start_presentation, "prsnt_new_party_screen"),

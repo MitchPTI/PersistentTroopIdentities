@@ -256,7 +256,6 @@ new_scripts = [
 			
 			(call_script, "script_pti_array_get", ":list", ":index"),
 			(assign, ":node", reg0),
-			(call_script, "script_pti_array_get", ":list", ":index"),
 			(store_and, reg0, ":node", pti_list_node_value_mask),
 			
 			(val_rshift, ":node", pti_list_next_node_bitshift),
@@ -305,64 +304,6 @@ new_scripts = [
 		(else_try),
 			(assign, reg0, ":list"),
 			(display_log_message, "@ERROR: script_pti_linked_list_get_tail_node was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
-		(try_end),
-	]),
-	
-	# script_pti_linked_list_get_first_index_meeting_condition_r
-	("pti_linked_list_get_first_index_meeting_condition_r",
-	[
-		(store_script_param, ":list", 1),
-		(store_script_param, ":condition_script", 2),
-		(store_script_param, ":index", 3),
-		
-		(try_begin),
-			(party_get_template_id, ":template", ":list"),
-			(eq, ":template", "pt_array"),
-			
-			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-			(try_begin),
-				(call_script, ":condition_script", reg0),
-				
-				(assign, reg0, reg3),
-			(else_try),
-				(neg|party_slot_eq, ":list", pti_slot_list_head, reg1),
-				
-				(call_script, "script_pti_linked_list_get_first_index_meeting_condition_r", ":list", ":condition_script", reg1),
-			(else_try),
-				(assign, reg0, -1),
-			(try_end),
-		(else_try),
-			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_first_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
-		(try_end),
-	]),
-	
-	# script_pti_linked_list_get_last_index_meeting_condition_r
-	("pti_linked_list_get_last_index_meeting_condition_r",
-	[
-		(store_script_param, ":list", 1),
-		(store_script_param, ":condition_script", 2),
-		(store_script_param, ":index", 3),
-		
-		(try_begin),
-			(party_get_template_id, ":template", ":list"),
-			(eq, ":template", "pt_array"),
-			
-			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-			(try_begin),
-				(call_script, ":condition_script", reg0),
-				
-				(assign, reg0, reg3),
-			(else_try),
-				(neg|party_slot_eq, ":list", pti_slot_list_head, ":index"),
-				
-				(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", reg2),
-			(else_try),
-				(assign, reg0, -1),
-			(try_end),
-		(else_try),
-			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_get_last_index_meeting_condition_r was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -498,6 +439,7 @@ new_scripts = [
 		(store_script_param, ":list", 1),
 		(store_script_param, ":index", 2),
 		(store_script_param, ":value", 3),
+		(store_script_param, ":reset_head", 4),
 		
 		(try_begin),
 			(party_get_template_id, ":template", ":list"),
@@ -507,7 +449,6 @@ new_scripts = [
 			
 			# Get the neighbour nodes that will be modified to accommodate the new node (in this case current and previous)
 			(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-			(assign, ":next_index", reg1),
 			(assign, ":prev_index", reg2),
 			
 			# Modify the neighbour nodes to point to the new node
@@ -515,15 +456,16 @@ new_scripts = [
 			(call_script, "script_pti_linked_list_set_prev", ":list", ":index", ":new_index"),
 			
 			# Create the new node
-			(val_lshift, ":next_index", pti_list_next_node_bitshift),
-			(val_or, ":value", ":next_index"),
-			(val_lshift, ":prev_index", pti_list_prev_node_bitshift),
-			(val_or, ":value", ":prev_index"),
-			(call_script, "script_pti_array_append", ":list", ":value"),
+			(assign, reg0, ":value"),
+			(call_script, "script_pti_node_set_next", reg0, ":index"),
+			(call_script, "script_pti_node_set_prev", reg0, ":prev_index"),
+			(assign, ":new_node", reg0),
+			(call_script, "script_pti_array_append", ":list", ":new_node"),
 			
-			# If inserting before the head node, make this the new head node
+			# If inserting before the head node and reset_head is selected, make this the new head node
 			(try_begin),
 				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+				(neq, ":reset_head", 0),
 				
 				(party_set_slot, ":list", pti_slot_list_head, ":new_index"),
 				#(assign, reg0, ":new_index"),
@@ -823,20 +765,59 @@ new_scripts = [
 		(try_end),
 	]),
 	
-	# script_pti_linked_list_remove
-	("pti_linked_list_remove",
+	# script_pti_linked_list_remove_index
+	("pti_linked_list_remove_index",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":index", 2),
+		
+		# Connect the neighbour nodes together
+		(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
+		(assign, ":next", reg1),
+		(assign, ":prev", reg2),
+		
+		(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
+		(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
+		
+		# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
+		(party_get_slot, ":last_index", ":list", pti_slot_array_size),
+		(val_sub, ":last_index", 1),
+		(try_begin),
+			(neq, ":last_index", ":index"),
+			
+			(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
+		(try_end),
+		
+		# Delete the (now unused by the linked list) last index and decrement the size of the list
+		(call_script, "script_pti_array_set", ":list", ":last_index", 0),
+		(party_get_slot, ":size", ":list", pti_slot_array_size),
+		(val_sub, ":size", 1),
+		(party_set_slot, ":list", pti_slot_array_size, ":size"),
+		
+		# If the first element is being removed, set the head to point to the next element
+		(try_begin),
+			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			
+			(party_set_slot, ":list", pti_slot_list_head, ":next"),
+		(try_end),
+	]),
+	
+	# script_pti_linked_list_remove_from_start_index
+	("pti_linked_list_remove_from_start_index",
 	[
 		(store_script_param, ":list", 1),
 		(store_script_param, ":object", 2),
+		(store_script_param, ":start_index", 3),
 		
 		(try_begin),
 			(party_get_template_id, ":template", ":list"),
 			(eq, ":template", "pt_array"),
 			
-			(call_script, "script_pti_linked_list_get_head_node", ":list"),
+			(party_get_slot, ":head_index", ":list", pti_slot_list_head),
+			
+			(call_script, "script_pti_linked_list_get_node", ":list", ":start_index"),
 			(assign, ":curr_obj", reg0),
 			(assign, ":next", reg1),
-			(assign, ":prev", reg2),
 			(assign, ":curr_index", reg3),
 			
 			(assign, ":index", -1),
@@ -847,45 +828,21 @@ new_scripts = [
 				(assign, ":index", ":curr_index"),
 				(assign, ":size", 0),
 			(else_try),
+				(neq, ":next", ":head_index"),
+				(neq, ":next", ":start_index"),
+				
 				(call_script, "script_pti_linked_list_get_node", ":list", ":next"),
 				(assign, ":curr_obj", reg0),
 				(assign, ":next", reg1),
-				(assign, ":prev", reg2),
 				(assign, ":curr_index", reg3),
+			(else_try),
+				(assign, ":size", 0),
 			(try_end),
 			
 			(try_begin),
 				(gt, ":index", -1),
 				
-				# Connect the neighbour nodes together
-				(call_script, "script_pti_linked_list_get_node", ":list", ":index"),
-				(assign, ":next", reg1),
-				(assign, ":prev", reg2),
-				
-				(call_script, "script_pti_linked_list_set_next", ":list", ":prev", ":next"),
-				(call_script, "script_pti_linked_list_set_prev", ":list", ":next", ":prev"),
-				
-				# Copy the node held in the last index into this index so that the last index in the array can be deleted in order to save space
-				(party_get_slot, ":last_index", ":list", pti_slot_array_size),
-				(val_sub, ":last_index", 1),
-				(try_begin),
-					(neq, ":last_index", ":index"),
-					
-					(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
-				(try_end),
-				
-				# Delete the (now unused by the linked list) last index and decrement the size of the list
-				(call_script, "script_pti_array_set", ":list", ":last_index", 0),
-				(party_get_slot, ":size", ":list", pti_slot_array_size),
-				(val_sub, ":size", 1),
-				(party_set_slot, ":list", pti_slot_array_size, ":size"),
-				
-				# If the first element is being removed, set the head to point to the next element
-				(try_begin),
-					(party_slot_eq, ":list", pti_slot_list_head, ":index"),
-					
-					(party_set_slot, ":list", pti_slot_list_head, ":next"),
-				(try_end),
+				(call_script, "script_pti_linked_list_remove_index", ":list", ":index"),
 			(else_try),
 				(assign, reg0, ":object"),
 				(assign, reg1, ":list"),
@@ -895,6 +852,16 @@ new_scripts = [
 			(assign, reg0, ":list"),
 			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
+	]),
+	
+	# script_pti_linked_list_remove
+	("pti_linked_list_remove",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":object", 2),
+		
+		(party_get_slot, ":head_index", ":list", pti_slot_list_head),
+		(call_script, "script_pti_linked_list_remove_from_start_index", ":list", ":object", ":head_index"),
 	]),
 	
 	# script_pti_linked_list_get_nth_index
@@ -1097,6 +1064,70 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_linked_list_get_troop_sub_list_head
+	("pti_linked_list_get_troop_sub_list_head",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":troop_id", 2),
+		
+		(assign, ":sub_list_head", -1),
+		
+		(party_get_num_companion_stacks, ":num_stacks", ":list"),
+		(call_script, "script_pti_linked_list_get_head_node", ":list"),
+		(assign, ":next_index", reg1),
+		
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":stack_troop_id", ":list", ":stack"),
+			(eq, ":stack_troop_id", ":troop_id"),
+			
+			(assign, ":sub_list_head", reg0),
+			(assign, ":num_stacks", 0),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":next_index"),
+			(assign, ":next_index", reg1),
+		(try_end),
+		
+		(assign, reg0, ":sub_list_head"),
+	]),
+	
+	# script_pti_linked_list_add_troop_sub_list
+	("pti_linked_list_add_troop_sub_list",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":value", 3),
+		
+		# Construct a new node that will point forwards and backwards to itself, creating essentially a new linked list within the linked list
+		(party_get_slot, ":sub_list_head", ":list", pti_slot_array_size),
+		(val_add, ":sub_list_head", 1),
+		
+		(assign, reg0, ":value"),
+		(call_script, "script_pti_node_set_prev", reg0, ":sub_list_head"),
+		(call_script, "script_pti_node_set_next", reg0, ":sub_list_head"),
+		(assign, ":new_node", reg0),
+		
+		# To the actual linked list, append a node that points to the new sub-list to be created
+		(call_script, "script_pti_linked_list_append", ":list", ":sub_list_head"),
+		
+		# Append the sub-list
+		(call_script, "script_pti_array_append", ":list", ":new_node"),
+		
+		# Add a new troop stack to the list's party. These troop stacks will be used to know the size of the overall linked list and each sub list via stack sizes, rather than the singular pti_slot_array_size, which gives little information for a 2D list.
+		(party_add_members, ":list", ":troop_id", 1),
+		
+		(assign, reg0, ":sub_list_head"),
+	]),
+	
+	# script_pti_linked_list_append_to_sub_list
+	("pti_linked_list_append_to_sub_list",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":sub_list_head", 2),
+		(store_script_param, ":value", 3),
+		
+		(call_script, "script_pti_linked_list_insert_before", ":list", ":sub_list_head", ":value", 0),
+	]),
+	
 	# script_cf_pti_gt
 	("cf_pti_gt",
 	[
@@ -1190,16 +1221,28 @@ new_scripts = [
 		(assign, reg0, ":individual"),
 	]),
 	
-	# script_pti_add_individual_to_party
-	("pti_add_individual_to_party",
+	# script_pti_party_add_individual
+	("pti_party_add_individual",
 	[
-		(store_script_param, ":individual", 1),
-		(store_script_param, ":party", 2),
+		(store_script_param, ":party", 1),
+		(store_script_param, ":individual", 2),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(call_script, "script_pti_linked_list_append", ":list", ":individual"),
 		Individual.get(":individual", "troop_type"),
-		(party_add_members, ":party", reg0, 1),
+		(assign, ":troop_id", reg0),
+		
+		(try_begin),
+			(party_count_members_of_type, ":num_troops", ":list", ":troop_id"),
+			(eq, ":num_troops", 0),
+			
+			(call_script, "script_pti_linked_list_add_troop_sub_list", ":list", ":troop_id", ":individual"),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+			(call_script, "script_pti_linked_list_append_to_sub_list", ":list", reg0, ":individual"),
+			(party_add_members, ":list", ":troop_id", 1),
+		(try_end),
+		
+		(party_add_members, ":party", ":troop_id", 1),
 	]),
 	
 	# script_pti_recruit_troops_from_center
@@ -1214,7 +1257,7 @@ new_scripts = [
 			(call_script, "script_pti_create_individual_of_type", ":troop_id"),
 			(assign, ":individual", reg0),
 			Individual.set(":individual", "home", ":center"),
-			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+			(call_script, "script_pti_party_add_individual", ":dest_party", ":individual"),
 		(try_end),
 	]),
 	
@@ -1253,7 +1296,7 @@ new_scripts = [
 			(assign, ":individual", reg0),
 			Individual.set(":individual", "home", ":center"),
 			Individual.set(":individual", "is_recent_prisoner", 1),
-			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+			(call_script, "script_pti_party_add_individual", ":dest_party", ":individual"),
 		(try_end),
 	]),
 	
@@ -1373,7 +1416,7 @@ new_scripts = [
 			Individual.set(":individual", "home", reg0),
 			Individual.set(":individual", "train_troops_quest", 1),
 			
-			(call_script, "script_pti_add_individual_to_party", ":individual", ":dest_party"),
+			(call_script, "script_pti_party_add_individual", ":dest_party", ":individual"),
 		(try_end),
 	]),
 	
@@ -1426,31 +1469,48 @@ new_scripts = [
 	
 	## INDIVIDUAL ITERATION AND COUNTING SCRIPTS
 	
-	# script_pti_party_get_num_individuals
-	("pti_party_get_num_individuals",
+	# script_pti_get_next_individual_with_troop_id
+	("pti_get_next_individual_with_troop_id",
 	[
 		(store_script_param, ":party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":condition", 3),
+		
+		(assign, "$pti_current_individual", -1),
+		(assign, "$pti_curr_individual_index", "$pti_next_individual_index"),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(party_get_slot, reg0, ":list", pti_slot_array_size),
-	]),
-	
-	# script_pti_get_first_individual
-	("pti_get_first_individual",
-	[
-		(store_script_param, ":party", 1),
-		(store_script_param, ":condition_script", 2),
 		
-		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(party_get_slot, ":head", ":list", pti_slot_list_head),
-		(call_script, "script_pti_linked_list_get_first_index_meeting_condition_r", ":list", ":condition_script", ":head"),
-		(try_begin),
-			(neq, reg0, -1),
-			
-			(call_script, "script_pti_linked_list_get_node", ":list", reg0),
-			(assign, "$pti_current_individual", reg0),
+		(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+		(assign, ":sub_list_head", reg0),
+		
+		(party_count_members_of_type, ":count", ":list", ":troop_id"),
+		(try_for_range, ":unused", 0, ":count"),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_individual_index"),
+			#(display_message, "@Got individual {reg0} from index {reg3}"),
+			(assign, ":individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			
+			(call_script, ":condition", ":individual"),
+			
+			(assign, "$pti_current_individual", ":individual"),
+			(assign, ":count", 0),
+		(else_try),
+			(neq, "$pti_next_individual_index", ":sub_list_head"),
+			
+			(assign, "$pti_curr_individual_index", "$pti_next_individual_index"),
+		(else_try),
+			(assign, ":count", 0),
+		(try_end),
+		
+		# For output, set reg0 to indicate whether or not the end of the stack was reached (useful for script_pti_get_next_individual)
+		(try_begin),
+			(eq, "$pti_next_individual_index", ":sub_list_head"),
+			
+			(assign, reg0, 1),
+		(else_try),
+			(assign, reg0, 0),
 		(try_end),
 	]),
 	
@@ -1458,37 +1518,130 @@ new_scripts = [
 	("pti_get_next_individual",
 	[
 		(store_script_param, ":party", 1),
-		(store_script_param, ":condition_script", 2),
+		(store_script_param, ":condition", 2),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(call_script, "script_pti_linked_list_get_first_index_meeting_condition_r", ":list", ":condition_script", "$pti_next_individual_index"),
-		(try_begin),
-			(neq, reg0, -1),
+		(party_get_num_companion_stacks, ":num_stacks", ":list"),
+		
+		(try_for_range, ":stack", "$pti_curr_troop_stack", ":num_stacks"),
+			(assign, "$pti_curr_troop_stack", ":stack"),
+			(party_stack_get_troop_id, ":troop_id", ":list", ":stack"),
+			(call_script, "script_pti_get_next_individual_with_troop_id", ":party", ":troop_id", ":condition"),
 			
-			(call_script, "script_pti_linked_list_get_node", ":list", reg0),
-			(assign, "$pti_current_individual", reg0),
-			(assign, "$pti_next_individual_index", reg1),
-			(assign, "$pti_prev_individual_index", reg2),
+			(gt, "$pti_current_individual", -1),
+			
+			(assign, ":num_stacks", 0),
+			(eq, reg0, 0),	# Trigger the else block if the end of the stack was reached so that the next call of script_pti_get_next_individual starts from the next troop stack
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_curr_troop_index", reg1),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_next_individual_index", reg0),
+			(val_add, "$pti_curr_troop_stack", 1),
+		(try_end),
+		
+		# If no individual found, set all the global variables to -1
+		(try_begin),
+			(eq, "$pti_current_individual", -1),
+			
+			(assign, "$pti_curr_individual_index", -1),
+			(assign, "$pti_next_individual_index", -1),
+			(assign, "$pti_prev_individual_index", -1),
+			(assign, "$pti_curr_troop_index", -1),
 		(try_end),
 	]),
 	
-	# script_pti_get_last_individual
-	("pti_get_last_individual",
+	# script_pti_get_first_individual_with_troop_id
+	("pti_get_first_individual_with_troop_id",
 	[
 		(store_script_param, ":party", 1),
-		(store_script_param, ":condition_script", 2),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":condition", 3),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(party_get_slot, ":head", ":list", pti_slot_list_head),
-		(call_script, "script_pti_linked_list_get_node", ":list", ":head"),
-		(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", reg2),
-		(try_begin),
-			(neq, reg0, -1),
+		(party_get_num_companion_stacks, ":num_stacks", ":list"),
+		
+		(party_get_slot, "$pti_curr_troop_index", ":list", pti_slot_list_head),
+		
+		# Find the sub-list for the given troop id
+		(assign, ":troop_found", 0),
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":stack_troop_id", ":list", ":stack"),
+			(eq, ":stack_troop_id", ":troop_id"),
 			
-			(call_script, "script_pti_linked_list_get_node", ":list", reg0),
-			(assign, "$pti_current_individual", reg0),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_next_individual_index", reg0),
+			(assign, "$pti_curr_troop_stack", ":stack"),
+			
+			(assign, ":num_stacks", 0),
+			(assign, ":troop_found", 1),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_curr_troop_index", reg1),
+		(try_end),
+		
+		# If sub-list found, get the first individual, otherwise set all global variables to -1
+		(try_begin),
+			(eq, ":troop_found", 1),
+			
+			(call_script, "script_pti_get_next_individual_with_troop_id", ":party", ":troop_id", ":condition"),
+		(else_try),
+			(assign, "$pti_current_individual", -1),
+			(assign, "$pti_curr_individual_index", -1),
+			(assign, "$pti_next_individual_index", -1),
+			(assign, "$pti_prev_individual_index", -1),
+			(assign, "$pti_curr_troop_index", -1),
+		(try_end),
+	]),
+	
+	# script_pti_get_first_individual
+	("pti_get_first_individual",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":condition", 2),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		
+		(call_script, "script_pti_linked_list_get_head_node", ":list"),
+		(assign, "$pti_curr_troop_index", reg3),
+		(assign, "$pti_next_individual_index", reg0),
+		(assign, "$pti_curr_troop_stack", 0),
+		
+		(call_script, "script_pti_get_next_individual", ":party", ":condition"),
+	]),
+	
+	# script_pti_get_prev_individual_with_troop_id
+	("pti_get_prev_individual_with_troop_id",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":condition", 3),
+		
+		(assign, "$pti_current_individual", -1),
+		(assign, "$pti_curr_individual_index", "$pti_prev_individual_index"),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		
+		(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+		(assign, ":sub_list_head", reg0),
+		
+		(party_count_members_of_type, ":count", ":list", ":troop_id"),
+		(try_for_range, ":unused", 0, ":count"),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_individual_index"),
+			(assign, ":individual", reg0),
 			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+			
+			(call_script, ":condition", ":individual"),
+			
+			(assign, "$pti_current_individual", ":individual"),
+			(assign, ":count", 0),
+		(else_try),
+			(neq, "$pti_curr_individual_index", ":sub_list_head"),
+			
+			(assign, "$pti_curr_individual_index", "$pti_prev_individual_index"),
+		(else_try),
+			(assign, ":count", 0),
 		(try_end),
 	]),
 	
@@ -1496,17 +1649,133 @@ new_scripts = [
 	("pti_get_prev_individual",
 	[
 		(store_script_param, ":party", 1),
-		(store_script_param, ":condition_script", 2),
+		(store_script_param, ":condition", 2),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(call_script, "script_pti_linked_list_get_last_index_meeting_condition_r", ":list", ":condition_script", "$pti_prev_individual_index"),
-		(try_begin),
-			(neq, reg0, -1),
+		(party_get_num_companion_stacks, ":num_stacks", ":list"),
+		
+		(assign, ":stacks_begin", 0),
+		(store_add, ":stacks_end", "$pti_curr_troop_stack", 1),
+		(try_for_range_backwards, ":stack", ":stacks_begin", ":stacks_end"),
+			(assign, "$pti_curr_troop_stack", ":stack"),
+			(party_stack_get_troop_id, ":troop_id", ":list", ":stack"),
+			(call_script, "script_pti_get_prev_individual_with_troop_id", ":party", ":troop_id", ":condition"),
 			
+			(gt, "$pti_current_individual", -1),
+			
+			(assign, ":stacks_begin", ":num_stacks"),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_curr_troop_index"),
 			(call_script, "script_pti_linked_list_get_node", ":list", reg0),
-			(assign, "$pti_current_individual", reg0),
-			(assign, "$pti_next_individual_index", reg1),
 			(assign, "$pti_prev_individual_index", reg2),
+		(try_end),
+		
+		# If no individual found, set all the global variables to -1
+		(try_begin),
+			(eq, "$pti_current_individual", -1),
+			
+			(assign, "$pti_curr_individual_index", -1),
+			(assign, "$pti_next_individual_index", -1),
+			(assign, "$pti_prev_individual_index", -1),
+			(assign, "$pti_curr_troop_index", -1),
+		(try_end),
+	]),
+	
+	# script_pti_get_last_individual_with_troop_id
+	("pti_get_last_individual_with_troop_id",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":condition", 3),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(party_get_num_companion_stacks, ":num_stacks", ":list"),
+		
+		(call_script, "script_pti_linked_list_get_tail_node", ":list"),
+		(assign, "$pti_curr_troop_index", reg0),
+		
+		# Find the sub-list for the given troop id
+		(assign, ":troop_found", 0),
+		(try_for_range_backwards, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":stack_troop_id", ":list", ":stack"),
+			(eq, ":stack_troop_id", ":troop_id"),
+			
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(call_script, "script_pti_linked_list_get_node", ":list", reg0),
+			(assign, "$pti_prev_individual_index", reg2),
+			(assign, "$pti_curr_troop_stack", ":stack"),
+			
+			(assign, ":num_stacks", 0),
+			(assign, ":troop_found", 1),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+			(assign, "$pti_curr_troop_index", reg2),
+		(try_end),
+		
+		# If sub-list found, get the last individual, otherwise set all global variables to -1
+		(try_begin),
+			(eq, ":troop_found", 1),
+			
+			(call_script, "script_pti_get_prev_individual_with_troop_id", ":party", ":troop_id", ":condition"),
+		(else_try),
+			(assign, "$pti_current_individual", -1),
+			(assign, "$pti_curr_individual_index", -1),
+			(assign, "$pti_next_individual_index", -1),
+			(assign, "$pti_prev_individual_index", -1),
+			(assign, "$pti_curr_troop_index", -1),
+		(try_end),
+	]),
+	
+	# script_pti_get_last_individual
+	("pti_get_last_individual",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":condition", 2),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		
+		(call_script, "script_pti_linked_list_get_tail_node", ":list"),
+		(assign, "$pti_curr_troop_index", reg0),
+		(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_troop_index"),
+		(call_script, "script_pti_linked_list_get_node", ":list", 0),
+		(assign, "$pti_prev_individual_index", reg2),
+		(assign, "$pti_curr_troop_stack", 0),
+		
+		(call_script, "script_pti_get_prev_individual", ":party", ":condition"),
+	]),
+	
+	# script_pti_count_individuals_with_troop_id
+	("pti_count_individuals_with_troop_id",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":troop_id", 2),
+		(store_script_param, ":condition_script", 3),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(party_count_members_of_type, ":num_troops", ":list", ":troop_id"),
+		
+		(try_begin),
+			(eq, ":condition_script", "script_cf_pti_true"),
+			
+			(assign, reg0, ":num_troops"),
+		(else_try),
+			(assign, ":count", 0),
+			
+			pti_get_first_individual(":party", ":troop_id", ":condition_script"),
+			(assign, ":first_individual", "$pti_current_individual"),
+			(try_for_range, ":unused", 0, ":num_troops"),
+				(gt, "$pti_current_individual", -1),
+				
+				(val_add, ":count", 1),
+				
+				pti_get_next_individual(":party", ":troop_id", ":condition_script"),
+				(neq, "$pti_current_individual", ":first_individual"),
+			(else_try),
+				(assign, ":num_troops", 0),
+			(try_end),
+			
+			(assign, reg0, ":count"),
 		(try_end),
 	]),
 	
@@ -1517,7 +1786,30 @@ new_scripts = [
 		(store_script_param, ":condition_script", 2),
 		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(call_script, "script_pti_linked_list_count", ":list", ":condition_script"),
+		(party_get_num_companions, ":num_troops", ":list"),
+		
+		(try_begin),
+			(eq, ":condition_script", "script_cf_pti_true"),
+			
+			(assign, reg0, ":num_troops"),
+		(else_try),
+			(assign, ":count", 0),
+			
+			pti_get_first_individual(party = ":party", condition = ":condition_script"),
+			(assign, ":first_individual", "$pti_current_individual"),
+			(try_for_range, ":unused", 0, ":num_troops"),
+				(gt, "$pti_current_individual", -1),
+				
+				(val_add, ":count", 1),
+				pti_get_next_individual(party = ":party", condition = ":condition_script"),
+				
+				(neq, "$pti_current_individual", ":first_individual"),
+			(else_try),
+				(assign, ":num_troops", 0),
+			(try_end),
+			
+			(assign, reg0, ":count"),
+		(try_end),
 	]),
 	
 	## INDIVIDUAL CONDITION SCRIPTS
@@ -1532,15 +1824,6 @@ new_scripts = [
 	("cf_pti_true",
 	[
 		(eq, 1, 1),
-	]),
-	
-	# script_cf_pti_individual_is_of_selected_troop
-	("cf_pti_individual_is_of_selected_troop",
-	[
-		(store_script_param, ":individual", 1),
-		
-		Individual.get(":individual", "troop_type"),
-		(eq, reg0, "$pti_selected_troop_id"),
 	]),
 	
 	# script_cf_pti_individual_can_upgrade_to
@@ -1594,15 +1877,6 @@ new_scripts = [
 		(eq, ":upgradeable", 1),
 	]),
 	
-	# script_cf_pti_individual_is_of_selected_troop_and_upgradeable
-	("cf_pti_individual_is_of_selected_troop_and_upgradeable",
-	[
-		(store_script_param, ":individual", 1),
-		
-		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
-		(call_script, "script_cf_pti_individual_is_upgradeable", ":individual"),
-	]),
-	
 	# script_cf_pti_individual_is_wounded
 	("cf_pti_individual_is_wounded",
 	[
@@ -1619,24 +1893,6 @@ new_scripts = [
 		
 		Individual.get(":individual", "is_wounded"),
 		(eq, reg0, 0),
-	]),
-	
-	# script_cf_pti_individual_is_of_selected_troop_and_wounded
-	("cf_pti_individual_is_of_selected_troop_and_wounded",
-	[
-		(store_script_param, ":individual", 1),
-		
-		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
-		(call_script, "script_cf_pti_individual_is_wounded", ":individual"),
-	]),
-	
-	# script_cf_pti_individual_is_of_selected_troop_and_nonwounded
-	("cf_pti_individual_is_of_selected_troop_and_nonwounded",
-	[
-		(store_script_param, ":individual", 1),
-		
-		(call_script, "script_cf_pti_individual_is_of_selected_troop", ":individual"),
-		(call_script, "script_cf_pti_individual_is_nonwounded", ":individual"),
 	]),
 	
 	# script_cf_pti_individual_is_not_wounded
@@ -2575,15 +2831,30 @@ new_scripts = [
 		(party_add_members, ":party", ":upgrade_troop_id", 1),
 	]),
 	
+	# script_pti_remove_individual_from_party
+	("pti_remove_individual_from_party",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":party", 2),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+		(call_script, "script_pti_linked_list_remove_from_start_index", ":list", ":individual", reg0),
+		
+		(party_remove_members, ":party", ":troop_id", 1),
+		(party_remove_members, ":list", ":troop_id", 1),
+	]),
+	
 	# script_pti_kill_individual_in_party
 	("pti_kill_individual_in_party",
 	[
 		(store_script_param, ":individual", 1),
 		(store_script_param, ":party", 2),
 		
-		# Remove the individual from the party
-		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
-		(call_script, "script_pti_linked_list_remove", ":list", ":individual"),
+		(call_script, "script_pti_remove_individual_from_party", ":individual", ":party"),
 		
 		# Clear the individual's data
 		(try_for_range, ":offset", 0, Individual.num_attribute_slots),
@@ -2614,11 +2885,11 @@ new_scripts = [
 		(store_script_param, ":party", 1),
 		(store_script_param, ":condition_script", 2),
 		
-		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		pti_count_individuals(party = ":party", condition = ":condition_script"),
 		(assign, ":count", reg0),
 		
 		(try_for_range, ":unused", 0, ":count"),
-			(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+			pti_get_first_individual(party = ":party", condition = ":condition_script"),
 			(call_script, "script_pti_kill_individual_in_party", "$pti_current_individual", ":party"),
 		(try_end),
 	]),
@@ -2631,16 +2902,16 @@ new_scripts = [
 	[
 		(store_script_param_1, ":party"),
 		
-		(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_nonwounded"),
+		pti_count_individuals(party = ":party", condition = "script_cf_pti_individual_is_nonwounded"),
 		(assign, ":count", reg0),
 		
 		(assign, reg0, -1),
 		(gt, ":count", 0),
 		
 		(store_random_in_range, ":rand", 0, ":count"),
-		(call_script, "script_pti_get_first_individual", ":party", "script_cf_pti_individual_is_nonwounded"),
+		pti_get_first_individual(party = ":party", condition = "script_cf_pti_individual_is_nonwounded"),
 		(try_for_range, ":unused", 0, ":rand"),
-			(call_script, "script_pti_get_next_individual", ":party", "script_cf_pti_individual_is_nonwounded"),
+			pti_get_next_individual(party = ":party", condition = "script_cf_pti_individual_is_nonwounded"),
 		(try_end),
 		
 		Individual.get("$pti_current_individual", "troop_type"),
@@ -2678,28 +2949,29 @@ new_scripts = [
 		(store_script_param, ":script", 2),
 		(store_script_param, ":condition_script", 3),
 		
-		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		pti_count_individuals(party = ":party", condition = ":condition_script"),
 		(assign, ":count", reg0),
 		
-		(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+		pti_get_first_individual(party = ":party", condition = ":condition_script"),
 		(try_for_range, ":i", 0, ":count"),
 			(call_script, ":script", "$pti_current_individual"),
-			(call_script, "script_pti_get_next_individual", ":party", ":condition_script"),
+			pti_get_next_individual(party = ":party", condition = ":condition_script"),
 		(try_end),
 	]),
 	
-	# script_pti_apply_script_randomly_to_party_members_meeting_condition
-	("pti_apply_script_randomly_to_party_members_meeting_condition",
+	# script_pti_apply_script_randomly_to_party_members_meeting_condition_with_troop_id
+	("pti_apply_script_randomly_to_party_members_meeting_condition_with_troop_id",
 	[
 		(store_script_param, ":party", 1),
 		(store_script_param, ":script", 2),
 		(store_script_param, ":condition_script", 3),
 		(store_script_param, ":n", 4),
+		(store_script_param, ":troop_id", 5),
 		
-		(call_script, "script_pti_count_individuals", ":party", ":condition_script"),
+		pti_count_individuals(":party", ":troop_id", ":condition_script"),
 		(assign, ":count", reg0),
 		
-		(call_script, "script_pti_get_first_individual", ":party", ":condition_script"),
+		pti_get_first_individual(":party", ":troop_id", ":condition_script"),
 		(try_for_range, ":i", 0, ":count"),
 			(try_begin),
 				(store_sub, ":remaining_individuals", ":count", ":i"),
@@ -2714,7 +2986,37 @@ new_scripts = [
 				(assign, ":count", 0),	# End the loop when enough have been healed
 			(try_end),
 			
-			(call_script, "script_pti_get_next_individual", ":party", ":condition_script"),
+			pti_get_next_individual(":party", ":troop_id", ":condition_script"),
+		(try_end),
+	]),
+	
+	# script_pti_apply_script_randomly_to_party_members_meeting_condition
+	("pti_apply_script_randomly_to_party_members_meeting_condition",
+	[
+		(store_script_param, ":party", 1),
+		(store_script_param, ":script", 2),
+		(store_script_param, ":condition_script", 3),
+		(store_script_param, ":n", 4),
+		
+		pti_count_individuals(party = ":party", condition = ":condition_script"),
+		(assign, ":count", reg0),
+		
+		pti_get_first_individual(party = ":party", condition = ":condition_script"),
+		(try_for_range, ":i", 0, ":count"),
+			(try_begin),
+				(store_sub, ":remaining_individuals", ":count", ":i"),
+				(store_random_in_range, ":rand", 0, ":remaining_individuals"),
+				(le, ":rand", ":n"),
+				
+				(call_script, ":script", "$pti_current_individual"),
+				(val_sub, ":n", 1),
+				
+				(eq, ":n", 0),
+				
+				(assign, ":count", 0),	# End the loop when enough have been healed
+			(try_end),
+			
+			pti_get_next_individual(party = ":party", condition = ":condition_script"),
 		(try_end),
 	]),
 	
@@ -2726,16 +3028,17 @@ new_scripts = [
 		(party_get_num_companion_stacks, ":num_stacks", ":party"),
 		(try_for_range, ":stack", 0, ":num_stacks"),
 			(party_stack_get_troop_id, ":troop_id", ":party", ":stack"),
+			(neg|troop_is_hero, ":troop_id"),
+			
 			(party_stack_get_num_wounded, ":party_wounded_count", ":party", ":stack"),
 			
-			(assign, "$pti_selected_troop_id", ":troop_id"),
-			(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_of_selected_troop_and_wounded"),
+			pti_count_individuals(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_wounded"),
 			(assign, ":individuals_wounded_count", reg0),
 			
 			(gt, ":individuals_wounded_count", ":party_wounded_count"),
 			
 			(store_sub, ":difference", ":individuals_wounded_count", ":party_wounded_count"),
-			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_heal_individual", "script_cf_pti_individual_is_of_selected_troop_and_wounded", ":difference"),
+			pti_apply_script_randomly_to_party_members("script_pti_heal_individual", ":difference", party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_wounded"),
 		(try_end),
 	]),
 	
@@ -2751,15 +3054,14 @@ new_scripts = [
 			# Apply kills
 			(party_stack_get_size, ":party_count", ":party", ":stack"),
 			
-			(assign, "$pti_selected_troop_id", ":troop_id"),
-			(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_of_selected_troop"),
+			pti_count_individuals(party = ":party", troop_id = ":troop_id"),
 			(assign, ":individuals_count", reg0),
 			
 			(gt, ":individuals_count", ":party_count"),
 			
 			(store_sub, ":difference", ":individuals_count", ":party_count"),
 			(assign, "$pti_selected_party_id", ":party"),
-			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_mark_individual_for_killing", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			pti_apply_script_randomly_to_party_members("script_pti_mark_individual_for_killing", ":difference", party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_nonwounded"),
 			(call_script, "script_pti_kill_individuals_in_party", ":party", "script_cf_pti_individual_is_marked_for_killing"),
 			
 			(str_store_troop_name_by_count, s0, ":troop_id", ":difference"),
@@ -2769,14 +3071,13 @@ new_scripts = [
 			# Apply wounds
 			(party_stack_get_num_wounded, ":party_wounded_count", ":party", ":stack"),
 			
-			(assign, "$pti_selected_troop_id", ":troop_id"),
-			(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_individual_is_of_selected_troop_and_wounded"),
+			pti_count_individuals(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_wounded"),
 			(assign, ":individuals_wounded_count", reg0),
 			
 			(gt, ":party_wounded_count", ":individuals_wounded_count"),
 			
 			(store_sub, ":difference", ":party_wounded_count", ":individuals_wounded_count"),
-			(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", ":party", "script_pti_wound_individual", "script_cf_pti_individual_is_of_selected_troop_and_nonwounded", ":difference"),
+			pti_apply_script_randomly_to_party_members("script_pti_wound_individual", ":difference", party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_nonwounded"),
 			
 			(str_store_troop_name_by_count, s0, ":troop_id", ":difference"),
 			(assign, reg0, ":difference"),
@@ -3052,10 +3353,10 @@ new_scripts = [
 		(call_script, "script_pti_party_copy_heroes", ":party", "p_pti_prisoners"),
 		(party_clear, "p_pti_prisoners"),
 		
-		(call_script, "script_pti_count_individuals", ":party", "script_cf_pti_true"),
+		pti_count_individuals(party = ":party"),
 		(assign, ":count", reg0),
 		
-		(call_script, "script_pti_get_first_individual", ":party", "script_cf_pti_true"),
+		pti_get_first_individual(party = ":party"),
 		(try_for_range, ":unused", 0, ":count"),
 			Individual.get("$pti_current_individual", "troop_type"),
 			(assign, ":troop_id", reg0),
@@ -3068,7 +3369,7 @@ new_scripts = [
 				(party_wound_members, ":party", ":troop_id", 1),
 			(try_end),
 			
-			(call_script, "script_pti_get_next_individual", ":party", "script_cf_pti_true"),
+			pti_get_next_individual(":party"),
 		(try_end),
 	]),
 	
@@ -3280,21 +3581,16 @@ new_scripts = [
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
-			(assign, ":selected_troop_backup", "$pti_selected_troop_id"),
-			(assign, "$pti_selected_troop_id", ":troop_id"),
-			
 			# Get the number of upgrades available (to later determine if + should be added to name)
-			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_of_selected_troop_and_upgradeable"),
+			pti_count_individuals(troop_id = ":troop_id", condition = "script_cf_pti_individual_is_upgradeable"),
 			(assign, ":num_upgradeable", reg0),
 			
 			# Set up display troop as first individual of this troop type if not hero troop
-			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+			pti_get_first_individual(troop_id = ":troop_id"),
 			(assign, ":individual", "$pti_current_individual"),
 			
 			(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":individual"),
 			(call_script, "script_pti_give_troop_individual_face", "$pti_current_individual_troop", ":individual"),
-			
-			(assign, "$pti_selected_troop_id", ":selected_troop_backup"),
 			
 			(str_store_troop_name, s0, ":troop_id"),
 			(try_begin),
@@ -3387,7 +3683,7 @@ new_scripts = [
 	[
 		(assign, ":curr_individual", "$pti_current_individual"),
 		
-		(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+		pti_get_next_individual(troop_id = "$pti_selected_troop_id"),
 		
 		(call_script, "script_pti_set_up_individual_troop", ":curr_individual", "$pti_current_individual_troop"),
 		

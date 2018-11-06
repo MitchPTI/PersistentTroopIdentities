@@ -83,7 +83,7 @@ def merge(dialogs):
 				troop_id = operation[2]
 				size = operation[3]
 				dialog.consequences[i:i+1] = [
-					(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_individual_is_from_train_troops_quest"),
+					pti_count_individuals(condition = "script_cf_pti_individual_is_from_train_troops_quest"),
 					(assign, ":count", reg0),
 					
 					# First remove all individuals flagged as being given to the player by the quest giver
@@ -91,9 +91,8 @@ def merge(dialogs):
 					
 					# If some of those have been lost, provide the difference, taking those at the end of the party list first (so by default, the most recently recruited)
 					(store_sub, ":difference", size, ":count"),
-					(assign, "$pti_selected_troop_id", troop_id),
 					(try_for_range, ":unused", 0, ":difference"),
-						(call_script, "script_pti_get_last_individual", "p_main_party", "script_cf_pti_individual_is_of_selected_troop"),
+						pti_get_last_individual(troop_id = "$pti_selected_troop_id"),
 						(call_script, "script_pti_kill_individual_in_party", "$pti_current_individual", "p_main_party"),
 					(try_end),
 					

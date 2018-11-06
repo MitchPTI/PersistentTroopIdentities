@@ -69,14 +69,14 @@ new_simple_triggers = [
 		(try_begin),
 			(le, "$g_prisoner_recruit_troop_id", 0),
 			
-			(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+			pti_count_individuals(),
 			(assign, ":count", reg0),
 			
-			(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+			pti_get_first_individual(),
 			(try_for_range, ":unused", 0, ":count"),
 				Individual.set("$pti_current_individual", "is_recent_prisoner", 0),
 				
-				(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+				pti_get_next_individual(),
 			(try_end),
 		(try_end),
 	]),
@@ -129,18 +129,18 @@ def merge(simple_triggers):
 					# Randomly "kill" the escaped number of individuals (just removes them from party and game)
 					(assign, reg0, num_escaped),
 					(display_message, "@Randomly choosing {reg0} individuals to be marked for killing"),
-					(call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", "p_main_party", "script_pti_mark_individual_for_killing", "script_cf_pti_individual_is_recent_prisoner", num_escaped),
+					pti_apply_script_randomly_to_party_members("script_pti_mark_individual_for_killing", num_escaped, condition = "script_cf_pti_individual_is_recent_prisoner"),
 					(call_script, "script_pti_kill_individuals_in_party", "p_main_party", "script_cf_pti_individual_is_marked_for_killing"),
 					
 					# Remove the recent prisoner tag from the rest of the individuals, so no more are at risk of running away
-					(call_script, "script_pti_count_individuals", "p_main_party", "script_cf_pti_true"),
+					pti_count_individuals(),
 					(assign, ":count", reg0),
 					
-					(call_script, "script_pti_get_first_individual", "p_main_party", "script_cf_pti_true"),
+					pti_get_first_individual(),
 					(try_for_range, ":unused", 0, ":count"),
 						Individual.set("$pti_current_individual", "is_recent_prisoner", 0),
 						
-						(call_script, "script_pti_get_next_individual", "p_main_party", "script_cf_pti_true"),
+						pti_get_next_individual(),
 					(try_end),
 				]
 	
