@@ -3454,7 +3454,7 @@ new_scripts = [
 			(assign, reg4, "trp_pti_nps_lower_right_troop_overlays"),
 		(else_try),
 			(assign, reg0, ":container"),
-			(display_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF000000),
+			(display_log_message, "@ERROR: Called script_pti_container_get_overlay_mappings without a valid container (parameter passed: {reg0})", 0xFF000000),
 			
 			(assign, reg0, -1),
 			(assign, reg1, -1),
