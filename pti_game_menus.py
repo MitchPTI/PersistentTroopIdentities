@@ -43,11 +43,7 @@ from module_constants import *
 party_screen_option = (
 	"party_screen", [], "Open Party Screen",
 	[
-		(assign, "$pti_nps_open_agent_screen", 0),
-		(assign, "$pti_selected_troop_id", "trp_player"),
-		(assign, "$pti_nps_selected_individual", -1),
-		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
-		(start_presentation, "prsnt_new_party_screen"),
+		(call_script, "script_pti_open_party_screen"),
 	])
 
 quick_start_option = (
@@ -126,7 +122,6 @@ def merge(game_menus):
 		(call_script, "script_pti_apply_casualties_to_individuals", "p_main_party"),
 	])
 	
-	
 	menu_option_ids = [
 		("camp_recruit_prisoners", "camp_recruit_prisoners_accept")
 	]
@@ -142,3 +137,7 @@ def merge(game_menus):
 				print "No party_add_members operations found in game menu {} option {}".format(menu_id, option_id)
 		else:
 			print "Could not find game menu {} option {}".format(menu_id, option_id)
+	
+	for i, operation in enumerate(game_menus["total_victory"].operations):
+		if type(operation) == tuple and (operation[0] == change_screen_exchange_with_party or operation[0] == change_screen_exchange_members):
+			game_menus["total_victory"].operations[i] = pti_open_exchange_screen(*operation)

@@ -75,7 +75,9 @@ presentations = [
 		[
 			# Clear variables
 			(assign, "$pti_nps_troop_stack_container", -1),
+			(assign, "$pti_nps_exchange_troop_stack_container", -1),
 			(assign, "$pti_nps_individual_stack_container", -1),
+			(assign, "$pti_nps_exchange_individual_stack_container", -1),
 			(assign, "$pti_nps_upgrade_button_1", -1),
 			(assign, "$pti_nps_upgrade_button_2", -1),
 			(assign, "$pti_nps_individual_summary", -1),
@@ -95,6 +97,8 @@ presentations = [
 			(assign, "$pti_nps_last_click_milliseconds", 0),
 			(assign, "$pti_current_individual_troop", "trp_pti_individual_1"),
 			(assign, "$pti_nps_open", 1),
+			
+			(assign, "$pti_nps_curr_troop_image", -1),
 			
 			(call_script, "script_pti_restore_party", "p_main_party"),
 			
@@ -131,10 +135,16 @@ presentations = [
 			gpu_create_text_overlay(500, 195, flags=tf_center_justify),
 			(assign, "$pti_nps_morale", reg1),
 			
-			# Stacks
+			# Upgrade buttons
+			(call_script, "script_pti_nps_create_individual_upgrade_buttons"),
+			
+			## SET UP TROOP STACKS
+			
+			# Party member stacks
+			(assign, "$pti_nps_selected_party", "p_main_party"),
 			(try_begin),
-				# Set up troop stacks if not drilled down to see agents
-				(neq, "$pti_nps_open_agent_screen", 1),
+				# Set up troop stacks if not drilled down to see individuals
+				(neq, "$pti_show_individual_members", 1),
 				
 				# Add label for party companion stacks
 				(party_get_num_companion_stacks, ":num_stacks", "p_main_party"),
@@ -148,24 +158,29 @@ presentations = [
 				(assign, "$pti_nps_troop_stack_container", reg1),
 				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", STACK_X_OFFSET),
 				
-				# Add troop image if a troop is selected
+				# Set selected troop
 				(try_begin),
-					(gt, "$pti_selected_troop_id", -1),
+					(eq, "$pti_exchange_troop_selected", 0),
+					(gt, "$pti_nps_selected_troop_id", -1),
 					
-					(call_script, "script_pti_nps_select_stack", "$pti_selected_troop_id", "$pti_nps_troop_stack_container"),
+					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_troop_id", "$pti_nps_troop_stack_container"),
 				(try_end),
 			(else_try),
-				# Individual summary text
-				(call_script, "script_pti_nps_create_upper_left_stack_container"),
-				(assign, "$pti_nps_individual_summary", reg1),
-				(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 800, 800),	# Reduce font size
-				(call_script, "script_pti_nps_refresh_text"),
+				# Individual summary text (only displayed if not exchanging with a party, as it takes up the space where the exchange party's troop stacks are seen)
+				(try_begin),
+					(le, "$pti_exchange_party", 0),
+					
+					(call_script, "script_pti_nps_create_upper_left_stack_container"),
+					(assign, "$pti_nps_individual_summary", reg1),
+					(call_script, "script_gpu_overlay_set_size", "$pti_nps_individual_summary", 800, 800),	# Reduce font size
+					(call_script, "script_pti_nps_refresh_text"),
+				(try_end),
 				
-				pti_count_individuals(troop_id = "$pti_selected_troop_id"),
+				pti_count_individuals(troop_id = "$pti_nps_selected_troop_id"),
 				(assign, ":num_individuals", reg0),
 				
 				# Add individual labels
-				(str_store_troop_name_plural, s0, "$pti_selected_troop_id"),
+				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
 				(assign, reg0, ":num_individuals"),
 				(str_store_string, s0, "@{s0}: {reg0}"),
 				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 715, 800, 262, 26, tf_center_justify),
@@ -174,14 +189,13 @@ presentations = [
 				#(display_message, "@{reg0} individuals"),
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_individual_stack_container", reg1),
-				pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
+				pti_get_first_individual(troop_id = "$pti_nps_selected_troop_id"),
+				(assign, "$pti_nps_selected_stack_troop_id", "$pti_nps_selected_troop_id"),
 				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", STACK_X_OFFSET),
 				
-				# Add upgrade buttons
-				(call_script, "script_pti_nps_create_individual_upgrade_buttons"),
-				
-				# Add individual image if an individual is selected
+				# Set selected individual
 				(try_begin),
+					(eq, "$pti_exchange_troop_selected", 0),
 					(gt, "$pti_nps_selected_individual", -1),
 					
 					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_individual_stack_container"),
@@ -207,6 +221,58 @@ presentations = [
 			(assign, "$pti_nps_prisoner_stack_container", reg1),
 			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
 			
+			# Exchange party member stacks
+			(try_begin),
+				(gt, "$pti_exchange_party", 0),
+				
+				(assign, "$pti_nps_selected_party", "$pti_exchange_party"),
+				(try_begin),
+					# Set up exchange troop stacks if not drilled down to see individuals
+					(neq, "$pti_show_individual_exchange_members", 1),
+					
+					(party_get_num_companion_stacks, ":num_stacks", "$pti_exchange_party"),
+					
+					(call_script, "script_pti_nps_create_upper_left_stack_container"),
+					(assign, "$pti_nps_exchange_troop_stack_container", reg1),
+					(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_exchange_troop_stack_container", ":num_stacks", "script_pti_nps_troop_stack_init", STACK_X_OFFSET),
+					
+					# Set selected troop
+					(try_begin),
+						(eq, "$pti_exchange_troop_selected", 1),
+						(gt, "$pti_nps_selected_exchange_troop_id", -1),
+						
+						(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_exchange_troop_id", "$pti_nps_exchange_troop_stack_container"),
+					(try_end),
+				(else_try),
+					pti_count_individuals(party = "$pti_exchange_party", troop_id = "$pti_nps_selected_exchange_troop_id"),
+					(assign, ":num_individuals", reg0),
+					
+					# Set up agent stacks
+					#(display_message, "@{reg0} individuals"),
+					(call_script, "script_pti_nps_create_upper_left_stack_container"),
+					(assign, "$pti_nps_exchange_individual_stack_container", reg1),
+					pti_get_first_individual(party = "$pti_exchange_party", troop_id = "$pti_nps_selected_exchange_troop_id"),
+					(assign, "$pti_nps_selected_stack_troop_id", "$pti_nps_selected_exchange_troop_id"),
+					(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_exchange_individual_stack_container", ":num_individuals", "script_pti_nps_individual_stack_init", STACK_X_OFFSET),
+					
+					# Set selected individual
+					(try_begin),
+						(eq, "$pti_exchange_troop_selected", 1),
+						(gt, "$pti_nps_selected_individual", -1),
+						
+						(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_exchange_individual_stack_container"),
+					(try_end),
+				(try_end),
+				
+				# Exchange prisoner stacks
+				(party_get_num_prisoner_stacks, ":num_stacks", "$pti_exchange_party"),
+				(call_script, "script_pti_nps_create_lower_left_stack_container"),
+				(assign, "$pti_nps_exchange_prisoner_stack_container", reg1),
+				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_exchange_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
+			(try_end),
+			
+			## OTHER BUTTONS
+			
 			# Troop class (set at end of presentation to make it exist on top of other overlays, so clicking it isn't blocked)
 			(call_script, "script_gpu_create_combo_label_overlay", 685, 385),
 			(assign, "$pti_nps_troop_class_selector", reg1),
@@ -217,7 +283,7 @@ presentations = [
 			(try_end),
 			
 			(try_begin),
-				(eq, "$pti_nps_open_agent_screen", 1),
+				(eq, "$pti_show_individual_members", 1),
 				
 				(str_store_string, s0, "@Default"),
 				(overlay_add_item, "$pti_nps_troop_class_selector", s0),
@@ -234,7 +300,7 @@ presentations = [
 			
 			# Set the troop class
 			(try_begin),
-				(gt, "$pti_selected_troop_id", -1),
+				(gt, "$pti_nps_selected_troop_id", -1),
 				
 				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
@@ -255,11 +321,22 @@ presentations = [
 				(presentation_set_duration, 0),
 			(else_try),
 				(key_clicked, key_back_space),
-				(eq, "$pti_nps_open_agent_screen", 1),
 				
-				(assign, "$pti_nps_open_agent_screen", 0),
-				(assign, "$pti_nps_selected_individual", -1),
-				(start_presentation, "prsnt_new_party_screen"),
+				(try_begin),
+					(eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+					(eq, "$pti_show_individual_members", 1),
+					
+					(assign, "$pti_show_individual_members", 0),
+					(assign, "$pti_nps_selected_individual", -1),
+					(start_presentation, "prsnt_new_party_screen"),
+				(else_try),
+					(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+					(eq, "$pti_show_individual_exchange_members", 1),
+					
+					(assign, "$pti_show_individual_exchange_members", 0),
+					(assign, "$pti_nps_selected_individual", -1),
+					(start_presentation, "prsnt_new_party_screen"),
+				(try_end),
 			(else_try),
 				(this_or_next|key_is_down, key_left_control),
 				(key_is_down, key_right_control),
@@ -351,36 +428,64 @@ presentations = [
 					#(assign, reg0, ":stack_object"),
 					#(assign, reg1, ":container"),
 					#(display_message, "@Selecting object (ID: {reg0}) in container {reg1}"),
-				(try_end),
-				
-				# Run relevant scripts for the given container (e.g. party troops, party individuals, party prisoners, etc)
-				(try_begin),
-					(eq, ":container", "$pti_nps_troop_stack_container"),
+				(else_try),
+					# If stack double-clicked, drill down to individuals
+					(eq, ":container", "$pti_nps_selected_stack_container"),
+					(eq, ":stack_object", "$pti_nps_selected_stack_object"),
 					
-					(assign, ":troop_id", ":stack_object"),
+					(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
+					(is_between, ":milliseconds_since_click", 10, 500),
 					
-					# If the clicked troop has already been selected and was clicked under 500ms ago (i.e. double-clicked), go to agents screen
+					(this_or_next|eq, ":container", "$pti_nps_troop_stack_container"),
+					(eq, ":container", "$pti_nps_exchange_troop_stack_container"),
+					
 					(try_begin),
-						(neg|troop_is_hero, ":troop_id"),
-						(eq, ":troop_id", "$pti_selected_troop_id"),
-						(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
-						(is_between, ":milliseconds_since_click", 10, 500),
+						(eq, ":container", "$pti_nps_troop_stack_container"),
 						
-						(assign, "$pti_nps_open_agent_screen", 1),
-						pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
+						(assign, "$pti_show_individual_members", 1),
+						(assign, "$pti_exchange_troop_selected", 0),
+						pti_get_first_individual(troop_id = "$pti_nps_selected_troop_id"),
 						(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
-						
-						(start_presentation, "prsnt_new_party_screen"),
 					(else_try),
-						(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
+						(eq, ":container", "$pti_nps_exchange_troop_stack_container"),
+						
+						(assign, "$pti_show_individual_exchange_members", 1),
+						(assign, "$pti_exchange_troop_selected", 1),
+						pti_get_first_individual(party = "$pti_exchange_party", troop_id = "$pti_nps_selected_exchange_troop_id"),
+						(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
 					(try_end),
 					
-					(neq, ":troop_id", "$pti_selected_troop_id"),
+					(start_presentation, "prsnt_new_party_screen"),
+				(try_end),
+				
+				(assign, "$pti_nps_last_click_milliseconds", "$pti_nps_milliseconds_running"),
+				
+				(try_begin),
+					(this_or_next|eq, ":container", "$pti_nps_troop_stack_container"),
+					(eq, ":container", "$pti_nps_exchange_troop_stack_container"),
 					
-					(assign, "$pti_selected_troop_id", ":troop_id"),
+					(assign, ":troop_id", ":stack_object"),
+					(assign, ":continue", 0),
+					(try_begin),
+						(eq, ":container", "$pti_nps_troop_stack_container"),
+						(neq, ":troop_id", "$pti_nps_selected_troop_id"),
+						
+						(assign, "$pti_nps_selected_troop_id", ":troop_id"),
+						(assign, ":continue", 1),
+					(else_try),
+						(eq, ":container", "$pti_nps_exchange_troop_stack_container"),
+						(neq, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+						
+						(assign, "$pti_nps_selected_exchange_troop_id", ":troop_id"),
+						(assign, ":continue", 1),
+					(try_end),
+					(eq, ":continue", 1),
+					
+					# Refresh overlays
 					(call_script, "script_pti_nps_refresh_troop_class"),
 				(else_try),
-					(eq, ":container", "$pti_nps_individual_stack_container"),
+					(this_or_next|eq, ":container", "$pti_nps_individual_stack_container"),
+					(eq, ":container", "$pti_nps_exchange_individual_stack_container"),
 					
 					(assign, ":individual", ":stack_object"),
 					(neq, ":individual", "$pti_nps_selected_individual"),
@@ -389,8 +494,11 @@ presentations = [
 					
 					# Refresh overlays
 					(call_script, "script_pti_nps_refresh_troop_class"),
-					(call_script, "script_pti_nps_refresh_text"),
 					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
+					
+					(le, "$pti_exchange_party", 0),
+					
+					(call_script, "script_pti_nps_refresh_text"),
 				(try_end),
 			(try_end),
 		]),
@@ -426,12 +534,12 @@ presentations = [
 				(party_add_members, "p_main_party", ":upgrade", 1),
 				
 				(try_begin),
-					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_selected_troop_id"),
+					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
 					(eq, ":stack_size", 0),
 					
-					(assign, "$pti_selected_troop_id", ":upgrade"),
+					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
 				(else_try),
-					pti_get_first_individual(troop_id = "$pti_selected_troop_id"),
+					pti_get_first_individual(troop_id = "$pti_nps_selected_troop_id"),
 					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
 				(try_end),
 				(start_presentation, "prsnt_new_party_screen"),
@@ -462,7 +570,7 @@ presentations = [
 				(eq, ":overlay", "$pti_nps_troop_class_selector"),
 				
 				(try_begin),
-					(eq, "$pti_nps_open_agent_screen", 1),
+					(eq, "$pti_show_individual_members", 1),
 					
 					(try_begin),
 						(lt, ":value", grc_everyone),
@@ -475,7 +583,7 @@ presentations = [
 						(overlay_set_display, "$pti_nps_troop_class_rename_button", 0),
 					(try_end),
 				(else_try),
-					(troop_set_class, "$pti_selected_troop_id", ":value"),
+					(troop_set_class, "$pti_nps_selected_troop_id", ":value"),
 				(try_end),
 			(try_end),
 		]),

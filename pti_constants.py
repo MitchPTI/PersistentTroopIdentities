@@ -1,4 +1,4 @@
-from header_operations import call_script
+from header_operations import call_script, change_screen_exchange_with_party, change_screen_exchange_members
 from collections import OrderedDict
 from module_info import export_dir
 
@@ -171,6 +171,15 @@ def pti_apply_script_randomly_to_party_members(script, num, party = "p_main_part
 		return (call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition", party, script, condition, num)
 	else:
 		return (call_script, "script_pti_apply_script_randomly_to_party_members_meeting_condition_with_troop_id", party, script, condition, num, troop_id)
+
+def pti_open_exchange_screen(op, *args):
+	def pti_open_exchange_screen_members(exchange_leader = 1, party = "$g_encountered_party"):
+		return (call_script, "script_pti_open_exchange_screen", exchange_leader, party)
+	
+	if op == change_screen_exchange_with_party:
+		return (call_script, "script_pti_open_exchange_screen", 1, args[0])
+	else:
+		return pti_open_exchange_screen_members(*args)
 
 troop_slots = (200, [
 	"nps_slot_troop_stack_overlay"

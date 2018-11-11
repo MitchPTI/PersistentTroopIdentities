@@ -1420,6 +1420,43 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_party_create_individuals_from_members
+	("pti_party_create_individuals_from_members",
+	[
+		(store_script_param, ":party", 1),
+		
+		(try_begin),
+			(party_slot_eq, ":party", pti_slot_party_individuals, 0),
+			
+			(str_store_party_name, s0, ":party"),
+			(call_script, "script_pti_linked_list_init"),
+			(party_set_slot, ":party", pti_slot_party_individuals, reg0),
+			(party_set_name, reg0, "@{s0} Party Individuals Array - You should not be seeing this"),
+		(try_end),
+		
+		(party_get_num_companion_stacks, ":num_stacks", ":party"),
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":troop_id", ":party", ":stack"),
+			(party_stack_get_size, ":size", ":party", ":stack"),
+			(store_faction_of_troop, ":faction", ":troop_id"),
+			
+			(try_for_range, ":unused", 0, ":size"),
+				(try_begin),
+					(is_between, ":faction", npc_kingdoms_begin, npc_kingdoms_end),
+					(call_script, "script_cf_select_random_village_with_faction", ":faction"),
+					(assign, ":center", reg0),
+				(else_try),
+					(store_random_in_range, ":center", villages_begin, villages_end),
+				(try_end),
+				
+				(call_script, "script_pti_create_individual_of_type", ":troop_id"),
+				(assign, ":individual", reg0),
+				Individual.set(":individual", "home", ":center"),
+				(call_script, "script_pti_party_add_individual", ":party", ":individual"),
+			(try_end),
+		(try_end),
+	]),
+	
 	## INDIVIDUAL ATTRIBUTE GETTING AND SETTING
 	
 	# script_pti_individual_get_attribute
@@ -3375,6 +3412,35 @@ new_scripts = [
 	
 	## NEW PARTY SCREEN SCRIPTS ##
 	
+	# script_pti_open_exchange_screen
+	("pti_open_exchange_screen",
+	[
+		(store_script_param, ":exchange_leader", 1),
+		(store_script_param, ":party", 2),
+		
+		(assign, "$pti_exchange_party", ":party"),
+		(assign, "$pti_show_individual_members", 0),
+		(assign, "$pti_show_individual_exchange_members", 0),
+		(assign, "$pti_nps_selected_troop_id", "trp_player"),
+		(assign, "$pti_nps_selected_exchange_troop_id", -1),
+		(assign, "$pti_nps_selected_individual", -1),
+		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
+		(start_presentation, "prsnt_new_party_screen"),
+	]),
+	
+	# script_pti_open_party_screen
+	("pti_open_party_screen",
+	[
+		(assign, "$pti_exchange_party", -1),
+		(assign, "$pti_show_individual_members", 0),
+		(assign, "$pti_show_individual_exchange_members", 0),
+		(assign, "$pti_nps_selected_troop_id", "trp_player"),
+		(assign, "$pti_nps_selected_exchange_troop_id", -1),
+		(assign, "$pti_nps_selected_individual", -1),
+		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
+		(start_presentation, "prsnt_new_party_screen"),
+	]),
+	
 	# script_pti_nps_create_upper_left_stack_container
 	("pti_nps_create_upper_left_stack_container",
 	[
@@ -3575,18 +3641,18 @@ new_scripts = [
 	[
 		(store_script_param, ":stack_no", 1),
 		
-		(party_stack_get_troop_id, ":troop_id", "p_main_party", ":stack_no"),
+		(party_stack_get_troop_id, ":troop_id", "$pti_nps_selected_party", ":stack_no"),
 		(str_store_troop_name, s0, ":troop_id"),
 		
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
 			# Get the number of upgrades available (to later determine if + should be added to name)
-			pti_count_individuals(troop_id = ":troop_id", condition = "script_cf_pti_individual_is_upgradeable"),
+			pti_count_individuals(party = "$pti_nps_selected_party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_upgradeable"),
 			(assign, ":num_upgradeable", reg0),
 			
 			# Set up display troop as first individual of this troop type if not hero troop
-			pti_get_first_individual(troop_id = ":troop_id"),
+			pti_get_first_individual(party = "$pti_nps_selected_party", troop_id = ":troop_id"),
 			(assign, ":individual", "$pti_current_individual"),
 			
 			(call_script, "script_pti_equip_troop_as_individual", "$pti_current_individual_troop", ":individual"),
@@ -3594,8 +3660,8 @@ new_scripts = [
 			
 			(str_store_troop_name, s0, ":troop_id"),
 			(try_begin),
-				(party_stack_get_size, reg0, "p_main_party", ":stack_no"),
-				(party_stack_get_num_wounded, reg1, "p_main_party", ":stack_no"),
+				(party_stack_get_size, reg0, "$pti_nps_selected_party", ":stack_no"),
+				(party_stack_get_num_wounded, reg1, "$pti_nps_selected_party", ":stack_no"),
 				(gt, reg1, 0),
 				
 				(store_sub, reg2, reg0, reg1),
@@ -3628,15 +3694,15 @@ new_scripts = [
 	[
 		(store_script_param, ":stack_no", 1),
 		
-		(party_prisoner_stack_get_troop_id, ":troop_id", "p_main_party", ":stack_no"),
+		(party_prisoner_stack_get_troop_id, ":troop_id", "$pti_nps_selected_party", ":stack_no"),
 		
 		(str_store_troop_name, s0, ":troop_id"),
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
 			(try_begin),
-				(party_stack_get_size, reg0, "p_main_party", ":stack_no"),
-				(party_stack_get_num_wounded, reg1, "p_main_party", ":stack_no"),
+				(party_stack_get_size, reg0, "$pti_nps_selected_party", ":stack_no"),
+				(party_stack_get_num_wounded, reg1, "$pti_nps_selected_party", ":stack_no"),
 				(gt, reg1, 0),
 				
 				(store_sub, reg2, reg0, reg1),
@@ -3656,34 +3722,12 @@ new_scripts = [
 		(assign, reg1, ":troop_id"),
 	]),
 	
-	# script_pti_nps_troop_stack_init
-	("pti_nps_prisoner_troop_stack_init",
-	[
-		(store_script_param, ":stack_no", 1),
-		
-		(party_prisoner_stack_get_troop_id, ":troop_id", "p_main_party", ":stack_no"),
-		(str_store_troop_name, s0, ":troop_id"),
-		
-		(try_begin),
-			(troop_is_hero, ":troop_id"),
-			
-			(store_troop_health, reg0, ":troop_id"),
-			(str_store_string, s0, "@{s0} ({reg0}%)"),
-		(else_try),
-			(party_prisoner_stack_get_size, reg0, "p_main_party", ":stack_no"),
-			(str_store_string, s0, "@{s0} ({reg0})"),
-		(try_end),
-		
-		(assign, reg0, ":troop_id"),
-		(assign, reg1, ":troop_id"),
-	]),
-	
 	# script_pti_nps_individual_stack_init
 	("pti_nps_individual_stack_init",
 	[
 		(assign, ":curr_individual", "$pti_current_individual"),
 		
-		pti_get_next_individual(troop_id = "$pti_selected_troop_id"),
+		pti_get_next_individual(party = "$pti_nps_selected_party", troop_id = "$pti_nps_selected_stack_troop_id"),
 		
 		(call_script, "script_pti_set_up_individual_troop", ":curr_individual", "$pti_current_individual_troop"),
 		
@@ -3731,14 +3775,33 @@ new_scripts = [
 		#(overlay_set_display, ":highlight_button", 1),
 		(overlay_set_alpha, ":highlight_button", 0xFF),
 		
+		# Hide previously shown troop image if applicable
+		(try_begin),
+			(gt, "$pti_nps_curr_troop_image", -1),
+			
+			(overlay_set_display, "$pti_nps_curr_troop_image", 0),
+		(try_end),
+		
 		# Show selected object's image
 		(troop_get_slot, ":troop_image", ":image_mapping", ":stack_object"),
 		(overlay_set_display, ":troop_image", 1),
+		(assign, "$pti_nps_curr_troop_image", ":troop_image"),
 		
 		# Set the title
 		(try_begin),
-			(eq, "$pti_nps_open_agent_screen", 1),
-			(eq, ":container", "$pti_nps_individual_stack_container"),
+			(assign, ":continue", 0),
+			(try_begin),
+				(eq, "$pti_show_individual_members", 1),
+				(eq, ":container", "$pti_nps_individual_stack_container"),
+				
+				(assign, ":continue", 1),
+			(else_try),
+				(eq, "$pti_show_individual_exchange_members", 1),
+				(eq, ":container", "$pti_nps_exchange_individual_stack_container"),
+				
+				(assign, ":continue", 1),
+			(try_end),
+			(eq, ":continue", 1),
 			
 			(call_script, "script_pti_individual_get_type_and_name", ":stack_object"),
 			Individual.get(":stack_object", "home"),
@@ -3754,7 +3817,7 @@ new_scripts = [
 			(this_or_next|eq, ":container", "$pti_nps_individual_stack_container"),
 			(eq, ":container", "$pti_nps_troop_stack_container"),
 			
-			(assign, ":troop_id", "$pti_selected_troop_id"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
 			(try_begin),
 				(eq, ":container", "$pti_nps_troop_stack_container"),
 				
@@ -3834,7 +3897,7 @@ new_scripts = [
 	("pti_nps_get_selected_class",
 	[
 		(try_begin),
-			(eq, "$pti_nps_open_agent_screen", 1),
+			(eq, "$pti_show_individual_members", 1),
 			(gt, "$pti_nps_selected_individual_id", -1),
 			
 			Individual.get("$pti_nps_selected_individual", "class_overridden"),
@@ -3847,9 +3910,9 @@ new_scripts = [
 				(assign, ":class", grc_everyone),
 			(try_end),
 		(else_try),
-			(gt, "$pti_selected_troop_id", 0),
+			(gt, "$pti_nps_selected_troop_id", 0),
 			
-			(troop_get_class, ":class", "$pti_selected_troop_id"),
+			(troop_get_class, ":class", "$pti_nps_selected_troop_id"),
 		(else_try),
 			(assign, ":class", -1),
 		(try_end),
@@ -3868,7 +3931,7 @@ new_scripts = [
 			(overlay_set_val, "$pti_nps_troop_class_selector", reg0),
 			
 			# Only show the rename button for actual troop classes (i.e. not for "Default")
-			(this_or_next|eq, "$pti_nps_open_agent_screen", 0),
+			(this_or_next|eq, "$pti_show_individual_members", 0),
 			(neq, reg0, grc_everyone),
 			
 			(overlay_set_display, "$pti_nps_troop_class_rename_button", 1),
