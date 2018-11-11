@@ -1395,9 +1395,9 @@ new_scripts = [
 		(val_and, reg0, ":bitmask"),
 	]),
 	
-	# script_pti_individual_get_attribute
+	# script_pti_individual_set_attribute
 	# Should only be called from the method Individual.get(individual, attribute) in pti_constants
-	# Given the relevant data transformation values from that method, this script returns the value of an attribute for an individual
+	# Given the relevant data transformation values from that method, this script sets the value of an attribute for an individual
 	("pti_individual_set_attribute",
 	[
 		(store_script_param, ":individual", 1),
