@@ -3140,9 +3140,9 @@ new_scripts = [
 	[
 		(store_script_param, ":individual", 1),
 		
-		(call_script, "script_pti_individual_get_type_and_name", ":individual"),
-		(assign, reg0, "$pti_xp_to_add"),
-		(display_message, "@Adding {reg0} xp to {s0} {s1}"),
+		#(call_script, "script_pti_individual_get_type_and_name", ":individual"),
+		#(assign, reg0, "$pti_xp_to_add"),
+		#(display_message, "@Adding {reg0} xp to {s0} {s1}"),
 		
 		Individual.get(":individual", "xp"),
 		(val_add, reg0, "$pti_xp_to_add"),
@@ -3180,9 +3180,9 @@ new_scripts = [
 		(store_script_param, ":target_party", 1),
 		(store_script_param, ":source_party", 2),
 		
-		(str_store_party_name, s0, ":source_party"),
-		(str_store_party_name, s1, ":target_party"),
-		(display_message, "@Transferring heroes from {s0} to {s1}"),
+		#(str_store_party_name, s0, ":source_party"),
+		#(str_store_party_name, s1, ":target_party"),
+		#(display_message, "@Transferring heroes from {s0} to {s1}"),
 		
 		(party_get_num_companion_stacks, ":num_stacks", ":source_party"),
 		(try_for_range, ":stack_no", 0, ":num_stacks"),
@@ -3192,9 +3192,9 @@ new_scripts = [
 			
 			(party_add_members, ":target_party", ":stack_troop", 1),
 			
-			(str_store_troop_name, s0, ":stack_troop"),
-			(str_store_party_name, s1, ":target_party"),
-			(display_message, "@Transferring {s0} to {s1}"),
+			#(str_store_troop_name, s0, ":stack_troop"),
+			#(str_store_party_name, s1, ":target_party"),
+			#(display_message, "@Transferring {s0} to {s1}"),
 		(try_end),
 	]),
 	
@@ -4045,9 +4045,9 @@ def merge(scripts):
 				(troop_get_slot, reg0, troop_id, pti_slot_troop_regular_troop_type),
 				(gt, reg0, 0),
 				
-				(str_store_troop_name, s0, troop_id),
-				(str_store_troop_name, s1, reg0),
-				(display_message, "@Replacing {s0} with {s1}"),
+				#(str_store_troop_name, s0, troop_id),
+				#(str_store_troop_name, s1, reg0),
+				#(display_message, "@Replacing {s0} with {s1}"),
 				
 				(assign, troop_id, reg0),
 			(try_end),

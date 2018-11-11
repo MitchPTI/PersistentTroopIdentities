@@ -101,8 +101,8 @@ new_simple_triggers = [
 			(store_skill_level, ":trainer_level", skl_trainer, ":troop_id"),
 			(gt, ":trainer_level", 0),
 			
-			(str_store_troop_name, s0, ":troop_id"),
-			(display_message, "@Applying trainer from {s0}"),
+			#(str_store_troop_name, s0, ":troop_id"),
+			#(display_message, "@Applying trainer from {s0}"),
 			
 			(call_script, "script_pti_get_trainer_amount_for_level", ":trainer_level"),
 			(assign, "$pti_xp_to_add", reg0),
@@ -127,8 +127,8 @@ def merge(simple_triggers):
 				num_escaped = operation[3]
 				trigger.operations[i:i+1] = [
 					# Randomly "kill" the escaped number of individuals (just removes them from party and game)
-					(assign, reg0, num_escaped),
-					(display_message, "@Randomly choosing {reg0} individuals to be marked for killing"),
+					#(assign, reg0, num_escaped),
+					#(display_message, "@Randomly choosing {reg0} individuals to be marked for killing"),
 					pti_apply_script_randomly_to_party_members("script_pti_mark_individual_for_killing", num_escaped, condition = "script_cf_pti_individual_is_recent_prisoner"),
 					(call_script, "script_pti_kill_individuals_in_party", "p_main_party", "script_cf_pti_individual_is_marked_for_killing"),
 					
