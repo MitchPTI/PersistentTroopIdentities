@@ -3596,14 +3596,6 @@ new_scripts = [
 		(set_container_overlay, -1),
 	]),
 	
-	# script_cf_pti_troop_is_selected
-	("cf_pti_troop_is_selected",
-	[
-		(store_script_param, ":troop_id", 1),
-		
-		(eq, ":troop_id", "$pti_selected_troop_id"),
-	]),
-	
 	# script_cf_pti_individual_is_selected
 	("cf_pti_individual_is_selected",
 	[
