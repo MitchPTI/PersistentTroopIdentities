@@ -76,7 +76,7 @@ def merge(dialogs):
 		print "Could not find lord_mission_raise_troops_accepted dialog"
 	
 	# Remove individuals from party when handing over trained troops from the train troops quest
-	train_troops_thank_dialogs = get_dialogs(dialogs, "lord_active_mission_2")
+	train_troops_thank_dialogs = [dialog for dialog in get_dialogs(dialogs, "lord_active_mission_2") if (eq, ":lords_quest", "qst_raise_troops") in dialog.conditions]
 	for dialog in train_troops_thank_dialogs:
 		for i, operation in enumerate(dialog.consequences):
 			if type(operation) == tuple and operation[0] == party_remove_members and (operation[1] == "p_main_party" or operation[1] == p_main_party):
@@ -92,7 +92,7 @@ def merge(dialogs):
 					# If some of those have been lost, provide the difference, taking those at the end of the party list first (so by default, the most recently recruited)
 					(store_sub, ":difference", size, ":count"),
 					(try_for_range, ":unused", 0, ":difference"),
-						pti_get_last_individual(troop_id = "$pti_selected_troop_id"),
+						pti_get_last_individual(troop_id = ":quest_target_troop"),
 						(call_script, "script_pti_kill_individual_in_party", "$pti_current_individual", "p_main_party"),
 					(try_end),
 					
