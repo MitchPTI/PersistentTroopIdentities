@@ -3692,19 +3692,8 @@ new_scripts = [
 		(try_begin),
 			(neg|troop_is_hero, ":troop_id"),
 			
-			(try_begin),
-				(party_stack_get_size, reg0, "$pti_nps_selected_party", ":stack_no"),
-				(party_stack_get_num_wounded, reg1, "$pti_nps_selected_party", ":stack_no"),
-				(gt, reg1, 0),
-				
-				(store_sub, reg2, reg0, reg1),
-				(str_store_string, s0, "@{s0} ({reg2}/{reg0})"),
-			(else_try),
-				(str_store_string, s0, "@{s0} ({reg0})"),
-			(try_end),
-			
-			(assign, reg0, ":troop_id"),
-			(assign, reg1, "$pti_current_individual_troop"),
+			(party_prisoner_stack_get_size, reg0, "$pti_nps_selected_party", ":stack_no"),
+			(str_store_string, s0, "@{s0} ({reg0})"),
 		(else_try),
 			(store_troop_health, reg0, ":troop_id"),
 			(str_store_string, s0, "@{s0} ({reg0}%)"),
