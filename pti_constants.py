@@ -23,19 +23,22 @@ def mask(bits):
 
 ## Array/Linked List constants
 pti_list_node_bits = 20
-pti_list_node_value_bits = 63 - pti_list_node_bits * 2	# From available 63 bits, leave room only for the 2 neighbour nodes
+pti_list_node_value_bits = 63 - pti_list_node_bits * 2 - 1	# From available 63 bits, leave room only for the 2 neighbour nodes and 1 bit for the sub-list head flag
 
 pti_array_slot_max = 2 ** pti_list_node_bits
 
 pti_list_next_node_bitshift = pti_list_node_value_bits
 pti_list_prev_node_bitshift = pti_list_next_node_bitshift + pti_list_node_bits
 
+pti_list_sub_list_head_flag_bitshift = pti_list_prev_node_bitshift + pti_list_node_bits
+pti_list_sub_list_head_flag = 1 << pti_list_sub_list_head_flag_bitshift
+
 pti_list_node_mask = mask(pti_list_node_bits)
 pti_list_node_value_mask = mask(pti_list_node_value_bits)
 
 pti_list_next_node_clear_mask = mask(64) ^ (mask(pti_list_node_bits) << pti_list_node_value_bits)
 pti_list_prev_node_clear_mask = mask(64) ^ (mask(pti_list_node_bits) << (pti_list_node_value_bits + pti_list_node_bits))
-pti_list_node_value_clear_mask = mask(64) ^ (mask(pti_list_node_bits) << (pti_list_node_value_bits + pti_list_node_bits))
+pti_list_node_value_clear_mask = mask(64) ^ pti_list_node_value_mask
 
 ## Individual Reference constants
 pti_reference_array_bitshift = 10

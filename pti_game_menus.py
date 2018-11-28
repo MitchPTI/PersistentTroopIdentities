@@ -43,7 +43,7 @@ from module_constants import *
 party_screen_option = (
 	"party_screen", [], "Open Party Screen",
 	[
-		(call_script, "script_pti_open_party_screen"),
+		(call_script, "script_pti_open_party_screen", -1),
 	])
 
 quick_start_option = (

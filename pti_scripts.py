@@ -254,16 +254,20 @@ new_scripts = [
 			(party_get_template_id, ":template", ":list"),
 			(eq, ":template", "pt_array"),
 			
+			# Node value
 			(call_script, "script_pti_array_get", ":list", ":index"),
 			(assign, ":node", reg0),
 			(store_and, reg0, ":node", pti_list_node_value_mask),
 			
+			# Next node index
 			(val_rshift, ":node", pti_list_next_node_bitshift),
 			(store_and, reg1, ":node", pti_list_node_mask),
 			
+			# Prev node index
 			(val_rshift, ":node", pti_list_node_bits),
 			(store_and, reg2, ":node", pti_list_node_mask),
 			
+			# Current node index
 			(assign, reg3, ":index"),
 			#(display_message, "@Index: {reg3} | Value: {reg0} | Next index: {reg1} | Prev index: {reg2}"),
 		(else_try),
@@ -785,21 +789,57 @@ new_scripts = [
 		(try_begin),
 			(neq, ":last_index", ":index"),
 			
+			# First check if the last element is the head of a sub-list and repoint if so
+			(call_script, "script_pti_array_get", ":list", ":last_index"),
+			(val_rshift, reg0, pti_list_sub_list_head_flag_bitshift),
+			(try_begin),
+				(eq, reg0, 1),
+				
+				(party_get_slot, ":curr_index", ":list", pti_slot_list_head),
+				(party_get_num_companion_stacks, ":count", ":list"),
+				(try_for_range, ":stack", 0, ":count"),
+					(call_script, "script_pti_linked_list_get_node", ":list", ":curr_index"),
+					(eq, reg0, ":last_index"),
+					
+					(call_script, "script_pti_linked_list_set_value", ":list", ":curr_index", ":index"),
+					(assign, ":count", 0),
+				(else_try),
+					(assign, ":curr_index", reg1),
+				(try_end),
+			(try_end),
+			
 			(call_script, "script_pti_linked_list_copy_node", ":list", ":last_index", ":index"),
+			#(assign, reg0, ":last_index"),
+			#(assign, reg1, ":index"),
+			#(display_message, "@Copying contents of index {reg0} to index {reg1}"),
+			
+			(eq, ":last_index", ":next"),
+			
+			(assign, ":next", ":index"),
 		(try_end),
 		
 		# Delete the (now unused by the linked list) last index and decrement the size of the list
 		(call_script, "script_pti_array_set", ":list", ":last_index", 0),
+		#(call_script, "script_pti_array_set", ":list", ":index", 0),
 		(party_get_slot, ":size", ":list", pti_slot_array_size),
 		(val_sub, ":size", 1),
 		(party_set_slot, ":list", pti_slot_array_size, ":size"),
+		#(assign, reg0, ":last_index"),
+		#(display_message, "@Deleting contents of index {reg0}"),
 		
 		# If the first element is being removed, set the head to point to the next element
 		(try_begin),
 			(party_slot_eq, ":list", pti_slot_list_head, ":index"),
+			(gt, ":size", 0),
 			
+			#(assign, reg0, ":next"),
+			#(display_message, "@Resetting head to {reg0}"),
 			(party_set_slot, ":list", pti_slot_list_head, ":next"),
 		(try_end),
+		
+		# Return the deleted index and index its contents were moved to
+		(assign, reg0, ":last_index"),
+		(assign, reg1, ":index"),
 	]),
 	
 	# script_pti_linked_list_remove_from_start_index
@@ -843,6 +883,18 @@ new_scripts = [
 				(gt, ":index", -1),
 				
 				(call_script, "script_pti_linked_list_remove_index", ":list", ":index"),
+				
+				# Update next index if it was affected by the removal
+				(try_begin),
+					(eq, reg0, ":next"),
+					
+					(assign, ":next", reg1),
+					#(display_message, "@Updating next index to {reg1}"),
+				(try_end),
+				
+				# Return the removed index, and the index that was after it
+				(assign, reg0, ":index"),
+				(assign, reg1, ":next"),
 			(else_try),
 				(assign, reg0, ":object"),
 				(assign, reg1, ":list"),
@@ -850,7 +902,7 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
-			(display_log_message, "@ERROR: script_pti_linked_list_remove was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
+			(display_log_message, "@ERROR: script_pti_linked_list_remove_from_start_index was called without a valid list being passed (party ID: {reg0})", 0xFF0000),
 		(try_end),
 	]),
 	
@@ -1106,6 +1158,10 @@ new_scripts = [
 		(call_script, "script_pti_node_set_next", reg0, ":sub_list_head"),
 		(assign, ":new_node", reg0),
 		
+		(assign, ":sub_list_head_flag", 1),
+		(val_lshift, ":sub_list_head_flag", pti_list_sub_list_head_flag_bitshift),
+		(val_or, ":new_node", ":sub_list_head_flag"),
+		
 		# To the actual linked list, append a node that points to the new sub-list to be created
 		(call_script, "script_pti_linked_list_append", ":list", ":sub_list_head"),
 		
@@ -1236,10 +1292,12 @@ new_scripts = [
 			(eq, ":num_troops", 0),
 			
 			(call_script, "script_pti_linked_list_add_troop_sub_list", ":list", ":troop_id", ":individual"),
+			#(display_message, "@Added new troop sub-list, with head at {reg0}"),
 		(else_try),
 			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
 			(call_script, "script_pti_linked_list_append_to_sub_list", ":list", reg0, ":individual"),
 			(party_add_members, ":list", ":troop_id", 1),
+			#(display_message, "@Adding individual to existing sub-list"),
 		(try_end),
 		
 		(party_add_members, ":party", ":troop_id", 1),
@@ -2868,21 +2926,90 @@ new_scripts = [
 		(party_add_members, ":party", ":upgrade_troop_id", 1),
 	]),
 	
-	# script_pti_remove_individual_from_party
-	("pti_remove_individual_from_party",
+	# script_pti_party_remove_individual
+	("pti_party_remove_individual",
 	[
-		(store_script_param, ":individual", 1),
-		(store_script_param, ":party", 2),
+		(store_script_param, ":party", 1),
+		(store_script_param, ":individual", 2),
 		
 		Individual.get(":individual", "troop_type"),
 		(assign, ":troop_id", reg0),
 		
+		#pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+		#(assign, ":count", reg0),
+		#(val_sub, ":count", 1),
+		
+		#pti_get_first_individual(party = ":party", troop_id = ":troop_id"),
+		#(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+		#(str_store_string, s10, "@{s1}"),
+		#(try_for_range, ":unused", 0, ":count"),
+		#	pti_get_next_individual(party = ":party", troop_id = ":troop_id"),
+		#	(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+		#	(str_store_string, s10, "@{s10} -> {s1}"),
+		#(try_end),
+		#(display_message, "@Stack before removal: {s10}"),
+		
 		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
 		(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
-		(call_script, "script_pti_linked_list_remove_from_start_index", ":list", ":individual", reg0),
+		(assign, ":sub_list_head", reg0),
+		(assign, ":troop_index", reg3),
+		
+		(call_script, "script_pti_linked_list_remove_from_start_index", ":list", ":individual", ":sub_list_head"),
+		(try_begin),
+			# If the head individual was removed, change the head
+			(eq, reg0, ":sub_list_head"),
+			
+			(try_begin),
+				(party_count_members_of_type, ":count", ":list", ":troop_id"),
+				(gt, ":count", 1),
+				
+				(assign, ":new_head", reg1),
+				(call_script, "script_pti_linked_list_set_value", ":list", ":troop_index", reg1),
+				
+				(call_script, "script_pti_linked_list_get_node", ":list", ":new_head"),
+				#(assign, ":new_head_individual", reg0),
+				#(call_script, "script_pti_individual_get_type_and_name", ":new_head_individual"),
+				#(assign, reg0, ":new_head_individual"),
+				#(assign, reg1, ":new_head"),
+				#(display_message, "@Resetting head to {s0} {s1} ({reg0}) from index {reg1}"),
+			(else_try),
+				# If the head individual was the only one left, remove the troop stack entirely
+				(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+				(assign, ":troop_index", reg3),
+				(call_script, "script_pti_linked_list_remove_index", ":list", ":troop_index"),
+				#(str_store_troop_name, s0, ":troop_id"),
+				#(assign, reg0, ":troop_index"),
+				#(display_message, "@Removing entire {s0} troop stack ({reg0})"),
+			(try_end),
+		(try_end),
 		
 		(party_remove_members, ":party", ":troop_id", 1),
 		(party_remove_members, ":list", ":troop_id", 1),
+		
+		#pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+		#(assign, ":count", reg0),
+		#(val_sub, ":count", 1),
+		
+		#pti_get_first_individual(party = ":party", troop_id = ":troop_id"),
+		#(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+		#(str_store_string, s10, "@{s1}"),
+		#(try_for_range, ":unused", 0, ":count"),
+		#	pti_get_next_individual(party = ":party", troop_id = ":troop_id"),
+		#	(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
+		#	(str_store_string, s10, "@{s10} -> {s1}"),
+		#(try_end),
+		#(display_message, "@Stack after removal: {s10}"),
+	]),
+	
+	# script_pti_move_individual_to_party
+	("pti_move_individual_to_party",
+	[
+		(store_script_param, ":individual", 1),
+		(store_script_param, ":from_party", 2),
+		(store_script_param, ":to_party", 3),
+		
+		(call_script, "script_pti_party_remove_individual", ":from_party", ":individual"),
+		(call_script, "script_pti_party_add_individual", ":to_party", ":individual"),
 	]),
 	
 	# script_pti_kill_individual_in_party
@@ -2891,7 +3018,7 @@ new_scripts = [
 		(store_script_param, ":individual", 1),
 		(store_script_param, ":party", 2),
 		
-		(call_script, "script_pti_remove_individual_from_party", ":individual", ":party"),
+		(call_script, "script_pti_party_remove_individual", ":party", ":individual"),
 		
 		# Clear the individual's data
 		(try_for_range, ":offset", 0, Individual.num_attribute_slots),
@@ -3418,26 +3545,22 @@ new_scripts = [
 		(store_script_param, ":exchange_leader", 1),
 		(store_script_param, ":party", 2),
 		
-		(assign, "$pti_exchange_party", ":party"),
-		(assign, "$pti_show_individual_members", 0),
-		(assign, "$pti_show_individual_exchange_members", 0),
-		(assign, "$pti_nps_selected_troop_id", "trp_player"),
-		(assign, "$pti_nps_selected_exchange_troop_id", -1),
-		(assign, "$pti_nps_selected_individual", -1),
-		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
-		(start_presentation, "prsnt_new_party_screen"),
+		(call_script, "script_pti_open_party_screen", ":party"),
 	]),
 	
 	# script_pti_open_party_screen
 	("pti_open_party_screen",
 	[
-		(assign, "$pti_exchange_party", -1),
+		(store_script_param, "$pti_exchange_party", 1),
+		
 		(assign, "$pti_show_individual_members", 0),
 		(assign, "$pti_show_individual_exchange_members", 0),
 		(assign, "$pti_nps_selected_troop_id", "trp_player"),
 		(assign, "$pti_nps_selected_exchange_troop_id", -1),
 		(assign, "$pti_nps_selected_individual", -1),
 		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
+		(assign, "$pti_nps_selected_stack_container", 0),
+		(assign, "$pti_nps_selected_stack_object", -1),
 		(start_presentation, "prsnt_new_party_screen"),
 	]),
 	
@@ -3633,7 +3756,22 @@ new_scripts = [
 	[
 		(store_script_param, ":stack_no", 1),
 		
-		(party_stack_get_troop_id, ":troop_id", "$pti_nps_selected_party", ":stack_no"),
+		(try_begin),
+			(eq, ":stack_no", 0),
+			(eq, "$pti_nps_selected_party", "p_main_party"),
+			
+			(assign, ":troop_id", "trp_player"),
+		(else_try),
+			(party_get_slot, ":list", "$pti_nps_selected_party", pti_slot_party_individuals),
+			
+			(try_begin),
+				(eq, "$pti_nps_selected_party", "p_main_party"),
+				
+				(val_sub, ":stack_no", 1),
+			(try_end),
+			
+			(party_stack_get_troop_id, ":troop_id", ":list", ":stack_no"),
+		(try_end),
 		(str_store_troop_name, s0, ":troop_id"),
 		
 		(try_begin),
@@ -3652,8 +3790,8 @@ new_scripts = [
 			
 			(str_store_troop_name, s0, ":troop_id"),
 			(try_begin),
-				(party_stack_get_size, reg0, "$pti_nps_selected_party", ":stack_no"),
-				(party_stack_get_num_wounded, reg1, "$pti_nps_selected_party", ":stack_no"),
+				(party_stack_get_size, reg0, ":list", ":stack_no"),
+				(party_stack_get_num_wounded, reg1, ":list", ":stack_no"),
 				(gt, reg1, 0),
 				
 				(store_sub, reg2, reg0, reg1),
@@ -3768,21 +3906,34 @@ new_scripts = [
 		(overlay_set_display, ":troop_image", 1),
 		(assign, "$pti_nps_curr_troop_image", ":troop_image"),
 		
-		# Set the title
+		# Set the title and add talk/disband/give/take buttons if individual selected
 		(try_begin),
 			(assign, ":continue", 0),
 			(try_begin),
 				(eq, "$pti_show_individual_members", 1),
 				(eq, ":container", "$pti_nps_individual_stack_container"),
 				
+				(try_begin),
+					(gt, "$pti_exchange_party", -1),
+					
+					(str_store_string, s0, "@Give"),
+				(else_try),
+					(str_store_string, s0, "@Disband"),
+				(try_end),
+				(overlay_set_text, "$pti_nps_disband_button", s0),
 				(assign, ":continue", 1),
 			(else_try),
 				(eq, "$pti_show_individual_exchange_members", 1),
 				(eq, ":container", "$pti_nps_exchange_individual_stack_container"),
 				
+				(str_store_string, s0, "@Take"),
+				(overlay_set_text, "$pti_nps_disband_button", s0),
 				(assign, ":continue", 1),
 			(try_end),
 			(eq, ":continue", 1),
+			
+			(overlay_set_display, "$pti_nps_talk_button", 1),
+			(overlay_set_display, "$pti_nps_disband_button", 1),
 			
 			(call_script, "script_pti_individual_get_type_and_name", ":stack_object"),
 			Individual.get(":stack_object", "home"),
@@ -3843,6 +3994,10 @@ new_scripts = [
 		# Clear title
 		(str_clear, s0),
 		(overlay_set_text, "$pti_nps_title", "str_s0"),
+		
+		# Hide talk/disband/give/take buttons
+		(overlay_set_display, "$pti_nps_talk_button", 0),
+		(overlay_set_display, "$pti_nps_disband_button", 0),
 		
 		# Clear any individual text
 		(try_begin),
