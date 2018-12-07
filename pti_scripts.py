@@ -3559,6 +3559,7 @@ new_scripts = [
 		(assign, "$pti_nps_selected_exchange_troop_id", -1),
 		(assign, "$pti_nps_selected_individual", -1),
 		(assign, "$pti_nps_selected_prisoner_troop_id", -1),
+		(assign, "$pti_nps_selected_exchange_prisoner_troop_id", -1),
 		(assign, "$pti_nps_selected_stack_container", 0),
 		(assign, "$pti_nps_selected_stack_object", -1),
 		(start_presentation, "prsnt_new_party_screen"),
@@ -3735,20 +3736,20 @@ new_scripts = [
 		(eq, ":troop_id", "$pti_nps_selected_prisoner_troop_id"),
 	]),
 	
-	# script_cf_pti_exhange_troop_is_selected
-	("cf_pti_exhange_troop_is_selected",
+	# script_cf_pti_exchange_troop_is_selected
+	("cf_pti_exchange_troop_is_selected",
 	[
 		(store_script_param, ":troop_id", 1),
 		
-		(eq, ":troop_id", "$pti_nps_selected_exhange_troop_id"),
+		(eq, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
 	]),
 	
-	# script_cf_pti_exhange_prisoner_is_selected
-	("cf_pti_exhange_prisoner_is_selected",
+	# script_cf_pti_exchange_prisoner_is_selected
+	("cf_pti_exchange_prisoner_is_selected",
 	[
 		(store_script_param, ":troop_id", 1),
 		
-		(eq, ":troop_id", "$pti_nps_selected_exhange_prisoner_troop_id"),
+		(eq, ":troop_id", "$pti_nps_selected_exchange_prisoner_troop_id"),
 	]),
 	
 	# script_pti_nps_troop_stack_init
@@ -3906,42 +3907,53 @@ new_scripts = [
 		(overlay_set_display, ":troop_image", 1),
 		(assign, "$pti_nps_curr_troop_image", ":troop_image"),
 		
-		# Set the title and add talk/disband/give/take buttons if individual selected
+		# Determine if there should be a disband, give or take button
+		(try_begin),
+			(gt, "$pti_exchange_party", -1),
+			
+			(try_begin),
+				(this_or_next|eq, ":container", "$pti_nps_upper_left_container"),
+				(eq, ":container", "$pti_nps_lower_left_container"),
+				
+				(str_store_string, s0, "@Take"),
+			(else_try),
+				(str_store_string, s0, "@Give"),
+			(try_end),
+		(else_try),
+			(str_store_string, s0, "@Disband"),
+		(try_end),
+		(overlay_set_text, "$pti_nps_disband_button", s0),
+		
+		# Set the title and add give/take/disband/talk buttons if appropriate
 		(try_begin),
 			(assign, ":continue", 0),
 			(try_begin),
 				(eq, "$pti_show_individual_members", 1),
 				(eq, ":container", "$pti_nps_individual_stack_container"),
 				
-				(try_begin),
-					(gt, "$pti_exchange_party", -1),
-					
-					(str_store_string, s0, "@Give"),
-				(else_try),
-					(str_store_string, s0, "@Disband"),
-				(try_end),
-				(overlay_set_text, "$pti_nps_disband_button", s0),
 				(assign, ":continue", 1),
 			(else_try),
 				(eq, "$pti_show_individual_exchange_members", 1),
 				(eq, ":container", "$pti_nps_exchange_individual_stack_container"),
 				
-				(str_store_string, s0, "@Take"),
-				(overlay_set_text, "$pti_nps_disband_button", s0),
 				(assign, ":continue", 1),
 			(try_end),
 			(eq, ":continue", 1),
-			
-			(overlay_set_display, "$pti_nps_talk_button", 1),
-			(overlay_set_display, "$pti_nps_disband_button", 1),
 			
 			(call_script, "script_pti_individual_get_type_and_name", ":stack_object"),
 			Individual.get(":stack_object", "home"),
 			(str_store_party_name, s2, reg0),
 			(overlay_set_text, "$pti_nps_title", "str_pti_name_format_name_of_home"),
+			
+			(overlay_set_display, "$pti_nps_talk_button", 1),
+			(overlay_set_display, "$pti_nps_disband_button", 1),
 		(else_try),
 			(str_store_troop_name, s0, ":stack_object"),
 			(overlay_set_text, "$pti_nps_title", "str_s0"),
+			
+			(neg|troop_is_hero, ":stack_object"),
+			
+			(overlay_set_display, "$pti_nps_disband_button", 1),
 		(try_end),
 		
 		# Set the weekly wages and morale text (will eventually be done separately for troops and individuals)
@@ -4027,6 +4039,30 @@ new_scripts = [
 			(gt, "$pti_nps_upgrade_button_2", -1),
 			(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
 		(try_end),
+		
+		# Reset the selected stack and container variables
+		(try_begin),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_troop_stack_container"),
+			
+			(assign, "$pti_nps_selected_troop_id", -1),
+		(else_try),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
+			
+			(assign, "$pti_nps_selected_exchange_troop_id", -1),
+		(else_try),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_prisoner_stack_container"),
+			
+			(assign, "$pti_nps_selected_prisoner_troop_id", -1),
+		(else_try),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_prisoner_stack_container"),
+			
+			(assign, "$pti_nps_selected_exchange_prisoner_troop_id", -1),
+		(else_try),
+			(assign, "$pti_nps_selected_individual", -1),
+		(try_end),
+		
+		(assign, "$pti_nps_selected_stack_container", 0),
+		(assign, "$pti_nps_selected_stack_object", -1),
 	]),
 	
 	# script_pti_nps_get_selected_class
@@ -4204,6 +4240,129 @@ new_scripts = [
 			(try_end),
 		(else_try),
 			(overlay_set_display, "$pti_nps_upgrade_button_2", 0),
+		(try_end),
+	]),
+	
+	# script_pti_nps_disband_or_exchange_selected_stack
+	("pti_nps_disband_or_exchange_selected_stack",
+	[
+		(store_script_param, ":key_held", 1),
+		
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":other_party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":other_party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
+		
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_troop_stack_container"),
+			
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(else_try),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
+			
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":individual_is_selected", 1),
+		(try_end),
+		
+		(try_begin),
+			(eq, ":individual_is_selected", 1),
+			
+			(call_script, "script_pti_move_individual_to_party", "$pti_nps_selected_individual", ":party", ":other_party"),
+		(else_try),
+			(assign, ":num", 1),
+			(try_begin),
+				(this_or_next|eq, ":key_held", key_left_control),
+				(eq, ":key_held", key_right_control),
+				
+				pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+				(assign, ":num", reg0),
+			(else_try),
+				(this_or_next|eq, ":key_held", key_left_shift),
+				(eq, ":key_held", key_right_shift),
+				
+				(assign, ":num", 10),
+				pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+				(val_min, ":num", reg0),
+			(try_end),
+			
+			(try_for_range, ":unused", 0, ":num"),
+				pti_get_first_individual(party = ":party", troop_id = ":troop_id"),
+				(call_script, "script_pti_move_individual_to_party", "$pti_current_individual", ":party", ":other_party"),
+			(try_end),
+		(try_end),
+		
+		(try_begin),
+			pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+			(gt, reg0, 0),
+			
+			(try_begin),
+				(eq, ":individual_is_selected", 1),
+				
+				pti_get_first_individual(party = ":party", troop_id = ":troop_id"),
+				(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+			(try_end),
+		(else_try),
+			(try_begin),
+				(eq, ":party", "p_main_party"),
+				
+				(assign, "$pti_show_individual_members", 0),
+			(else_try),
+				(assign, "$pti_show_individual_exchange_members", 0),
+			(try_end),
+			
+			(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_stack_object", "$pti_nps_selected_stack_container"),
+		(try_end),
+	]),
+	
+	# script_pti_nps_release_or_exchange_prisoner_stack
+	("pti_nps_release_or_exchange_prisoner_stack",
+	[
+		(store_script_param, ":key_held", 1),
+		
+		(try_begin),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":other_party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_prisoner_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":other_party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_prisoner_troop_id"),
+		(try_end),
+		
+		(assign, ":num", 1),
+		(try_begin),
+			(this_or_next|eq, ":key_held", key_left_control),
+			(eq, ":key_held", key_right_control),
+			
+			(party_count_prisoners_of_type, ":num", ":party", ":troop_id"),
+		(else_try),
+			(this_or_next|eq, ":key_held", key_left_shift),
+			(eq, ":key_held", key_right_shift),
+			
+			(party_count_prisoners_of_type, ":num", ":party", ":troop_id"),
+			(val_min, ":num", 10),
+		(try_end),
+		
+		(party_remove_prisoners, ":party", ":troop_id", ":num"),
+		(party_add_prisoners, ":other_party", ":troop_id", ":num"),
+		
+		(try_begin),
+			(party_count_prisoners_of_type, ":num", ":party", ":troop_id"),
+			(eq, ":num", 0),
+			
+			(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_stack_object", "$pti_nps_selected_stack_container"),
 		(try_end),
 	]),
 	

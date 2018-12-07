@@ -223,6 +223,14 @@ presentations = [
 			(assign, "$pti_nps_prisoner_stack_container", reg1),
 			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
 			
+			# Set selected prisoner stack
+			(try_begin),
+				(eq, "$pti_exchange_troop_selected", 0),
+				(gt, "$pti_nps_selected_prisoner_troop_id", -1),
+				
+				(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_prisoner_troop_id", "$pti_nps_prisoner_stack_container"),
+			(try_end),
+			
 			# Exchange party member stacks
 			(try_begin),
 				(gt, "$pti_exchange_party", 0),
@@ -271,6 +279,14 @@ presentations = [
 				(call_script, "script_pti_nps_create_lower_left_stack_container"),
 				(assign, "$pti_nps_exchange_prisoner_stack_container", reg1),
 				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_exchange_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
+				
+				# Set selected prisoner stack
+				(try_begin),
+					(eq, "$pti_exchange_troop_selected", 1),
+					(gt, "$pti_nps_selected_exchange_prisoner_troop_id", -1),
+					
+					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_exchange_prisoner_troop_id", "$pti_nps_exchange_prisoner_stack_container"),
+				(try_end),
 			(try_end),
 			
 			## OTHER BUTTONS
@@ -444,15 +460,12 @@ presentations = [
 					(call_script, "script_pti_nps_select_stack", ":stack_object", ":container"),
 					(try_begin),
 						(gt, "$pti_nps_selected_stack_container", 0),
+						(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
 						(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
-						(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
+						(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_prisoner_stack_container"),
 						
 						(assign, "$pti_exchange_troop_selected", 1),
 					(else_try),
-						(gt, "$pti_nps_selected_stack_container", 0),
-						(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
-						(eq, "$pti_nps_selected_stack_container", "$pti_nps_troop_stack_container"),
-						
 						(assign, "$pti_exchange_troop_selected", 0),
 					(try_end),
 					
@@ -493,7 +506,9 @@ presentations = [
 				
 				(try_begin),
 					(this_or_next|eq, ":container", "$pti_nps_troop_stack_container"),
-					(eq, ":container", "$pti_nps_exchange_troop_stack_container"),
+					(this_or_next|eq, ":container", "$pti_nps_exchange_troop_stack_container"),
+					(this_or_next|eq, ":container", "$pti_nps_prisoner_stack_container"),
+					(eq, ":container", "$pti_nps_exchange_prisoner_stack_container"),
 					
 					(assign, ":troop_id", ":stack_object"),
 					(assign, ":continue", 0),
@@ -509,6 +524,16 @@ presentations = [
 						
 						(assign, "$pti_nps_selected_exchange_troop_id", ":troop_id"),
 						(assign, ":continue", 1),
+					(else_try),
+						(eq, ":container", "$pti_nps_prisoner_stack_container"),
+						(neq, ":troop_id", "$pti_nps_selected_prisoner_troop_id"),
+						
+						(assign, "$pti_nps_selected_prisoner_troop_id", ":troop_id"),
+					(else_try),
+						(eq, ":container", "$pti_nps_exchange_prisoner_stack_container"),
+						(neq, ":troop_id", "$pti_nps_selected_exchange_prisoner_troop_id"),
+						
+						(assign, "$pti_nps_selected_exchange_prisoner_troop_id", ":troop_id"),
 					(try_end),
 					(eq, ":continue", 1),
 					
@@ -656,50 +681,27 @@ presentations = [
 			(try_begin),
 				(eq, ":overlay", "$pti_nps_disband_button"),
 				
-				(assign, ":party", "p_main_party"),
-				(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+				(assign, ":key_held", -1),
 				(try_begin),
-					(le, "$pti_exchange_party", 0),
+					(this_or_next|key_is_down, key_left_control),
+					(key_is_down, key_right_control),
 					
-					(call_script, "script_pti_kill_individual_in_party", "$pti_nps_selected_individual", "p_main_party"),
+					(assign, ":key_held", key_left_control),
 				(else_try),
-					(eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+					(this_or_next|key_is_down, key_left_shift),
+					(key_is_down, key_right_shift),
 					
-					(call_script, "script_pti_move_individual_to_party", "$pti_nps_selected_individual", "p_main_party", "$pti_exchange_party"),
-				(else_try),
-					(call_script, "script_pti_move_individual_to_party", "$pti_nps_selected_individual", "$pti_exchange_party", "p_main_party"),
-					(assign, ":party", "$pti_exchange_party"),
-					(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+					(assign, ":key_held", key_left_shift),
 				(try_end),
 				
 				(try_begin),
-					pti_count_individuals(party = ":party", troop_id = ":troop_id"),
-					(gt, reg0, 0),
+					(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+					(eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_right_container"),
 					
-					pti_get_first_individual(party = ":party", troop_id = ":troop_id"),
-					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+					(call_script, "script_pti_nps_disband_or_exchange_selected_stack", ":key_held"),
 				(else_try),
-					(try_begin),
-						(eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
-						(eq, "$pti_show_individual_members", 1),
-						
-						(assign, "$pti_show_individual_members", 0),
-						(assign, "$pti_nps_selected_individual", -1),
-						(assign, "$pti_nps_selected_stack_container", -1),
-						(assign, "$pti_nps_selected_stack_object", -1),
-					(else_try),
-						(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
-						(eq, "$pti_show_individual_exchange_members", 1),
-						
-						(assign, "$pti_show_individual_exchange_members", 0),
-						(assign, "$pti_nps_selected_individual", -1),
-						(assign, "$pti_nps_selected_stack_container", -1),
-						(assign, "$pti_nps_selected_stack_object", -1),
-					(try_end),
+					(call_script, "script_pti_nps_release_or_exchange_prisoner_stack", ":key_held"),
 				(try_end),
-				
-				(assign, reg0, "$pti_nps_selected_individual"),
-				(display_message, "@New selection: {reg0}"),
 				
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
