@@ -668,8 +668,9 @@ presentations = [
 				
 				(call_script, "script_pti_container_get_overlay_mappings", "$pti_nps_selected_stack_container"),
 				(assign, ":troop_mapping", reg4),
-				(troop_get_slot, ":individual_troop", ":troop_mapping", "$pti_nps_selected_individual"),
-				(call_script, "script_setup_troop_meeting", ":individual_troop", -1),
+				(troop_get_slot, "$pti_individual_meeting_troop", ":troop_mapping", "$pti_nps_selected_individual"),
+				(assign, "$pti_talk_finished", 0),
+				(jump_to_menu, "mnu_pti_talk_to_individual"),
 			(try_end),
 		]),
 		

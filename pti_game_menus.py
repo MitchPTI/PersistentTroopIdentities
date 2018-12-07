@@ -85,6 +85,23 @@ quick_start_option = (
 		(jump_to_menu, "mnu_start_phase_2"),
 	])
 
+new_menus = [
+	("pti_talk_to_individual", 0,
+	"You shouldn't be reading this...",
+	"none",
+	[
+		(try_begin),
+			(neq, "$pti_talk_finished", 1),
+			
+			(assign, "$pti_talk_finished", 1),
+			(call_script, "script_setup_troop_meeting", "$pti_individual_meeting_troop", -1),
+		(else_try),
+			(change_screen_map),
+		(try_end),
+	],
+	[])
+]
+
 def get_option_index(menu, id):
 	index = -1
 	for i, option in enumerate(menu.options):
@@ -104,6 +121,7 @@ def get_menu_option(menus, menu_id, option_id):
 	return option
 
 def merge(game_menus):
+	game_menus.extend(new_menus)
 	game_menus["camp"].options.append(party_screen_option)
 	
 	game_menus["start_game_0"].options.append(quick_start_option)
