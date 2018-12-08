@@ -3645,6 +3645,16 @@ new_scripts = [
 	[
 		(store_script_param, "$pti_exchange_party", 1),
 		
+		(try_begin),
+			(gt, "$pti_exchange_party", -1),
+			(neg|party_slot_ge, "$pti_exchange_party", pti_slot_party_individuals, 1),
+			
+			(str_store_party_name, s0, "$pti_exchange_party"),
+			(call_script, "script_pti_linked_list_init"),
+			(party_set_slot, "$pti_exchange_party", pti_slot_party_individuals, reg0),
+			(party_set_name, reg0, "@{s0} Party Individuals Array - You should not be seeing this"),
+		(try_end),
+		
 		(assign, "$pti_show_individual_members", 0),
 		(assign, "$pti_show_individual_exchange_members", 0),
 		(assign, "$pti_nps_selected_troop_id", "trp_player"),

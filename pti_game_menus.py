@@ -99,7 +99,7 @@ new_menus = [
 			(change_screen_map),
 		(try_end),
 	],
-	[])
+	[]),
 ]
 
 def get_option_index(menu, id):
@@ -156,6 +156,7 @@ def merge(game_menus):
 		else:
 			print "Could not find game menu {} option {}".format(menu_id, option_id)
 	
-	for i, operation in enumerate(game_menus["total_victory"].operations):
-		if type(operation) == tuple and (operation[0] == change_screen_exchange_with_party or operation[0] == change_screen_exchange_members):
-			game_menus["total_victory"].operations[i] = pti_open_exchange_screen(*operation)
+	for operations_set in (game_menus["total_victory"].operations, get_menu_option(game_menus, "town", "castle_station_troops").consequences):
+		for i, operation in enumerate(operations_set):
+			if type(operation) == tuple and (operation[0] == change_screen_exchange_with_party or operation[0] == change_screen_exchange_members):
+				operations_set[i] = pti_open_exchange_screen(*operation)
