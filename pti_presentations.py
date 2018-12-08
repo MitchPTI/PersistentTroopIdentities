@@ -117,17 +117,6 @@ presentations = [
 			gpu_create_text_overlay(500, 665, flags=tf_center_justify),
 			(assign, "$pti_nps_title", reg1),
 			
-			# Stack movement buttons
-			(str_store_string, s0, "@Move Up"),
-			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 615),
-			(assign, "$pti_nps_move_up_button", reg1),
-			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
-			
-			(str_store_string, s0, "@Move Down"),
-			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 575),
-			(assign, "$pti_nps_move_down_button", reg1),
-			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
-			
 			# Weekly wages and morale
 			(str_clear, s0),
 			gpu_create_text_overlay(500, 220, flags=tf_center_justify),
@@ -322,6 +311,17 @@ presentations = [
 				
 				(call_script, "script_pti_nps_refresh_troop_class"),
 			(try_end),
+			
+			# Stack movement buttons
+			(str_store_string, s0, "@Move Up"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 615),
+			(assign, "$pti_nps_move_up_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
+			
+			(str_store_string, s0, "@Move Down"),
+			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 575),
+			(assign, "$pti_nps_move_down_button", reg1),
+			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
 			
 			(presentation_set_duration, 999999),
 		]),
@@ -702,6 +702,41 @@ presentations = [
 					(call_script, "script_pti_nps_disband_or_exchange_selected_stack", ":key_held"),
 				(else_try),
 					(call_script, "script_pti_nps_release_or_exchange_prisoner_stack", ":key_held"),
+				(try_end),
+				
+				(start_presentation, "prsnt_new_party_screen"),
+			(try_end),
+		]),
+		
+		# Trigger for moving stacks up or down
+		(ti_on_presentation_event_state_change,
+		[
+			(store_trigger_param_1, ":overlay"),
+			
+			(try_begin),
+				(eq, ":overlay", "$pti_nps_move_up_button"),
+				
+				(try_begin),
+					(this_or_next|key_is_down, key_left_control),
+					(key_is_down, key_right_control),
+					
+					(call_script, "script_pti_nps_move_selected_stack_to_top"),
+				(else_try),
+					(call_script, "script_pti_nps_move_selected_stack_up"),
+				(try_end),
+				
+				
+				(start_presentation, "prsnt_new_party_screen"),
+			(else_try),
+				(eq, ":overlay", "$pti_nps_move_down_button"),
+				
+				(try_begin),
+					(this_or_next|key_is_down, key_left_control),
+					(key_is_down, key_right_control),
+					
+					(call_script, "script_pti_nps_move_selected_stack_to_bottom"),
+				(else_try),
+					(call_script, "script_pti_nps_move_selected_stack_down"),
 				(try_end),
 				
 				(start_presentation, "prsnt_new_party_screen"),

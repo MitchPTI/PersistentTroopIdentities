@@ -660,14 +660,11 @@ new_scripts = [
 				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
 				
 				(party_set_slot, ":list", pti_slot_list_head, ":next_index"),
-				#(assign, reg0, ":next_index"),
-				#(display_message, "@Setting head to index {reg0}"),
 			(else_try),
-				(party_slot_eq, ":list", pti_slot_list_head, ":next_index"),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", ":index"),
 				
-				(party_set_slot, ":list", pti_slot_list_head, ":index"),
-				#(assign, reg0, ":index"),
-				#(display_message, "@Setting head to index {reg0}"),
+				(call_script, "script_pti_linked_list_get_troop_node_pointing_to_sub_list_head", ":list", ":index"),
+				(call_script, "script_pti_linked_list_repoint_sub_list_head", ":list", reg3, ":next_index"),
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
@@ -702,17 +699,14 @@ new_scripts = [
 			
 			# If swapping the head node, set the other node as the new head node
 			(try_begin),
-				(party_slot_eq, ":list", pti_slot_list_head, ":index"),
-				
-				(party_set_slot, ":list", pti_slot_list_head, ":prev_index"),
-				#(assign, reg0, ":prev_index"),
-				#(display_message, "@Setting head to index {reg0}"),
-			(else_try),
 				(party_slot_eq, ":list", pti_slot_list_head, ":prev_index"),
 				
 				(party_set_slot, ":list", pti_slot_list_head, ":index"),
-				#(assign, reg0, ":index"),
-				#(display_message, "@Setting head to index {reg0}"),
+			(else_try),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", ":prev_index"),
+				
+				(call_script, "script_pti_linked_list_get_troop_node_pointing_to_sub_list_head", ":list", ":prev_index"),
+				(call_script, "script_pti_linked_list_repoint_sub_list_head", ":list", reg3, ":index"),
 			(try_end),
 		(else_try),
 			(assign, reg0, ":list"),
@@ -759,8 +753,6 @@ new_scripts = [
 					(party_slot_eq, ":list", pti_slot_list_head, ":dest_index"),
 					
 					(party_set_slot, ":list", pti_slot_list_head, ":index"),
-					#(assign, reg0, ":index"),
-					#(display_message, "@Setting head to index {reg0}"),
 				(try_end),
 			(try_end),
 		(else_try),
@@ -1140,6 +1132,59 @@ new_scripts = [
 		(try_end),
 		
 		(assign, reg0, ":sub_list_head"),
+	]),
+	
+	# script_cf_pti_linked_list_node_is_sub_list_head
+	("cf_pti_linked_list_node_is_sub_list_head",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":index", 2),
+		
+		(call_script, "script_pti_array_get", ":list", ":index"),
+		(val_rshift, reg0, pti_list_sub_list_head_flag_bitshift),
+		(eq, reg0, 1),
+	]),
+	
+	# script_pti_linked_list_get_troop_node_pointing_to_sub_list_head
+	("pti_linked_list_get_troop_node_pointing_to_sub_list_head",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":sub_list_head", 2),
+		
+		(party_get_slot, ":curr_index", ":list", pti_slot_list_head),
+		(party_get_num_companion_stacks, ":count", ":list"),
+		(try_for_range, ":stack", 0, ":count"),
+			(call_script, "script_pti_linked_list_get_node", ":list", ":curr_index"),
+			(eq, reg0, ":sub_list_head"),
+			
+			(assign, ":count", 0),
+		(else_try),
+			(assign, ":curr_index", reg1),
+		(try_end),
+	]),
+	
+	# script_pti_linked_list_repoint_sub_list_head
+	("pti_linked_list_repoint_sub_list_head",
+	[
+		(store_script_param, ":list", 1),
+		(store_script_param, ":troop_index", 2),
+		(store_script_param, ":new_head", 3),
+		
+		(assign, ":flag", 1),
+		(val_lshift, ":flag", pti_list_sub_list_head_flag_bitshift),
+		
+		(call_script, "script_pti_linked_list_get_node", ":list", ":troop_index"),
+		(assign, ":sub_list_head", reg0),
+		
+		(call_script, "script_pti_array_get", ":list", ":sub_list_head"),
+		(val_sub, reg0, ":flag"),
+		(call_script, "script_pti_array_set", ":list", ":sub_list_head", reg0),
+		
+		(call_script, "script_pti_array_get", ":list", ":new_head"),
+		(val_add, reg0, ":flag"),
+		(call_script, "script_pti_array_set", ":list", ":new_head", reg0),
+		
+		(call_script, "script_pti_linked_list_set_value", ":list", ":troop_index", ":new_head"),
 	]),
 	
 	# script_pti_linked_list_add_troop_sub_list
@@ -3537,6 +3582,39 @@ new_scripts = [
 		(try_end),
 	]),
 	
+	# script_pti_party_restore_list_troops
+	("pti_party_restore_list_troops",
+	[
+		(store_script_param, ":party", 1),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		
+		pti_count_individuals(":party"),
+		(assign, ":count", reg0),
+		
+		(party_clear, "p_pti_prisoners"),
+		pti_get_first_individual(":party"),
+		(try_for_range, ":unused", 0, ":count"),
+			Individual.get("$pti_current_individual", "troop_type"),
+			(assign, ":troop_id", reg0),
+			(party_add_members, "p_pti_prisoners", ":troop_id", 1),
+			
+			pti_get_next_individual(":party"),
+		(try_end),
+		
+		(party_clear, ":list"),
+		(party_get_num_companion_stacks, ":num_stacks", "p_pti_prisoners"),
+		(try_for_range, ":stack", 0, ":num_stacks"),
+			(party_stack_get_troop_id, ":troop_id", "p_pti_prisoners", ":stack"),
+			(party_stack_get_size, ":size", "p_pti_prisoners", ":stack"),
+			
+			#(str_store_troop_name_by_count, s0, ":troop_id", ":size"),
+			#(assign, reg0, ":size"),
+			#(display_message, "@Adding {reg0} {s0}"),
+			(party_add_members, ":list", ":troop_id", ":size"),
+		(try_end),
+	]),
+	
 	## NEW PARTY SCREEN SCRIPTS ##
 	
 	# script_pti_open_exchange_screen
@@ -4263,14 +4341,9 @@ new_scripts = [
 		
 		(assign, ":individual_is_selected", 0),
 		(try_begin),
-			(eq, "$pti_nps_selected_stack_container", "$pti_nps_troop_stack_container"),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
 			
-			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
-		(else_try),
-			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
-			
-			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
-		(else_try),
 			(assign, ":individual_is_selected", 1),
 		(try_end),
 		
@@ -4363,6 +4436,226 @@ new_scripts = [
 			(eq, ":num", 0),
 			
 			(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_stack_object", "$pti_nps_selected_stack_container"),
+		(try_end),
+	]),
+	
+	# script_pti_nps_move_selected_stack_up
+	("pti_nps_move_selected_stack_up",
+	[
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
+		
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+			
+			(assign, ":individual_is_selected", 1),
+		(try_end),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(try_begin),
+			(eq, ":individual_is_selected", 1),
+			
+			pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_selected"),
+			
+			(try_begin),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", "$pti_curr_individual_index"),
+				
+				(call_script, "script_pti_linked_list_get_troop_node_pointing_to_sub_list_head", ":list", "$pti_curr_individual_index"),
+				(call_script, "script_pti_linked_list_repoint_sub_list_head", ":list", reg3, "$pti_next_individual_index"),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_prev", ":list", "$pti_curr_individual_index"),
+			(try_end),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+			(assign, ":troop_index", reg3),
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, ":troop_index"),
+				
+				#(party_set_slot, ":list", pti_slot_list_head, reg1),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_prev", ":list", ":troop_index"),
+			(try_end),
+			
+			(call_script, "script_pti_party_restore_list_troops", ":party"),
+		(try_end),
+	]),
+	
+	# script_pti_nps_move_selected_stack_down
+	("pti_nps_move_selected_stack_down",
+	[
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
+		
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+			
+			(assign, ":individual_is_selected", 1),
+		(try_end),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(try_begin),
+			(eq, ":individual_is_selected", 1),
+			
+			pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_selected"),
+			
+			(try_begin),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", "$pti_next_individual_index"),
+				
+				(call_script, "script_pti_linked_list_get_troop_node_pointing_to_sub_list_head", ":list", "$pti_next_individual_index"),
+				(call_script, "script_pti_linked_list_repoint_sub_list_head", ":list", reg3, "$pti_curr_individual_index"),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", "$pti_curr_individual_index"),
+			(try_end),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+			(assign, ":troop_index", reg3),
+			(try_begin),
+				(party_slot_eq, ":list", pti_slot_list_head, reg1),
+				
+				#(party_set_slot, ":list", pti_slot_list_head, ":troop_index"),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", ":troop_index"),
+			(try_end),
+			
+			(call_script, "script_pti_party_restore_list_troops", ":party"),
+		(try_end),
+	]),
+	
+	# script_pti_nps_move_selected_stack_to_top
+	("pti_nps_move_selected_stack_to_top",
+	[
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
+		
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+			
+			(assign, ":individual_is_selected", 1),
+		(try_end),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(try_begin),
+			(eq, ":individual_is_selected", 1),
+			
+			pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_selected"),
+			
+			pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+			(assign, ":count", reg0),
+			
+			(try_for_range, ":unused", 0, ":count"),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", "$pti_curr_individual_index"),
+				
+				(assign, ":count", 0),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_prev", ":list", "$pti_curr_individual_index"),
+			(try_end),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+			(assign, ":troop_index", reg3),
+			
+			(party_get_num_companion_stacks, ":count", ":list"),
+			(try_for_range, ":unused", 0, ":count"),
+				(party_slot_eq, ":list", pti_slot_list_head, ":troop_index"),
+				
+				(assign, ":count", 0),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_prev", ":list", ":troop_index"),
+			(try_end),
+			
+			(call_script, "script_pti_party_restore_list_troops", ":party"),
+		(try_end),
+	]),
+	
+	# script_pti_nps_move_selected_stack_to_bottom
+	("pti_nps_move_selected_stack_to_bottom",
+	[
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
+		
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+			
+			(assign, ":individual_is_selected", 1),
+		(try_end),
+		
+		(party_get_slot, ":list", ":party", pti_slot_party_individuals),
+		(try_begin),
+			(eq, ":individual_is_selected", 1),
+			
+			pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_selected"),
+			
+			pti_count_individuals(party = ":party", troop_id = ":troop_id"),
+			(assign, ":count", reg0),
+			
+			(assign, ":next_index", "$pti_next_individual_index"),
+			(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_individual_index"),
+			(assign, ":next_index", reg1),
+			(try_for_range, ":unused", 0, ":count"),
+				(call_script, "script_cf_pti_linked_list_node_is_sub_list_head", ":list", ":next_index"),
+				
+				(assign, ":count", 0),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", "$pti_curr_individual_index"),
+				(call_script, "script_pti_linked_list_get_node", ":list", "$pti_curr_individual_index"),
+				(assign, ":next_index", reg1),
+			(try_end),
+		(else_try),
+			(call_script, "script_pti_linked_list_get_troop_sub_list_head", ":list", ":troop_id"),
+			(assign, ":troop_index", reg3),
+			(assign, ":next_index", reg1),
+			
+			(party_get_num_companion_stacks, ":count", ":list"),
+			(try_for_range, ":unused", 0, ":count"),
+				(party_slot_eq, ":list", pti_slot_list_head, ":next_index"),
+				
+				(assign, ":count", 0),
+			(else_try),
+				(call_script, "script_pti_linked_list_swap_with_next", ":list", ":troop_index"),
+				(call_script, "script_pti_linked_list_get_node", ":list", ":troop_index"),
+				(assign, ":next_index", reg1),
+			(try_end),
+			
+			(call_script, "script_pti_party_restore_list_troops", ":party"),
 		(try_end),
 	]),
 	
