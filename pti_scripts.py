@@ -4397,7 +4397,13 @@ new_scripts = [
 		(try_begin),
 			(eq, ":individual_is_selected", 1),
 			
-			(call_script, "script_pti_move_individual_to_party", "$pti_nps_selected_individual", ":party", ":other_party"),
+			(try_begin),
+				(gt, ":other_party", -1),
+				
+				(call_script, "script_pti_move_individual_to_party", "$pti_nps_selected_individual", ":party", ":other_party"),
+			(else_try),
+				(call_script, "script_pti_party_remove_individual", ":party", "$pti_nps_selected_individual"),
+			(try_end),
 		(else_try),
 			(assign, ":num", 1),
 			(try_begin),
@@ -4436,11 +4442,14 @@ new_scripts = [
 				(eq, ":party", "p_main_party"),
 				
 				(assign, "$pti_show_individual_members", 0),
+				(assign, "$pti_nps_selected_troop_id", -1),
 			(else_try),
 				(assign, "$pti_show_individual_exchange_members", 0),
+				(assign, "$pti_nps_selected_exchange_troop_id", -1),
 			(try_end),
 			
 			(call_script, "script_pti_nps_unselect_stack", "$pti_nps_selected_stack_object", "$pti_nps_selected_stack_container"),
+			(assign, "$pti_nps_selected_individual", -1),
 		(try_end),
 	]),
 	
