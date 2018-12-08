@@ -480,6 +480,8 @@ presentations = [
 					(eq, ":container", "$pti_nps_selected_stack_container"),
 					(eq, ":stack_object", "$pti_nps_selected_stack_object"),
 					
+					(neg|troop_is_hero, "$pti_nps_selected_stack_object"),
+					
 					(store_sub, ":milliseconds_since_click", "$pti_nps_milliseconds_running", "$pti_nps_last_click_milliseconds"),
 					(is_between, ":milliseconds_since_click", 10, 500),
 					
@@ -744,11 +746,20 @@ presentations = [
 			(try_begin),
 				(eq, ":overlay", "$pti_nps_talk_button"),
 				
-				(call_script, "script_pti_container_get_overlay_mappings", "$pti_nps_selected_stack_container"),
-				(assign, ":troop_mapping", reg4),
-				(troop_get_slot, "$pti_individual_meeting_troop", ":troop_mapping", "$pti_nps_selected_individual"),
-				(assign, "$pti_talk_finished", 0),
-				(jump_to_menu, "mnu_pti_talk_to_individual"),
+				(try_begin),
+					(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+					(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+					
+					(call_script, "script_pti_container_get_overlay_mappings", "$pti_nps_selected_stack_container"),
+					(assign, ":troop_mapping", reg4),
+					(troop_get_slot, "$pti_individual_meeting_troop", ":troop_mapping", "$pti_nps_selected_individual"),
+					(assign, "$pti_talk_finished", 0),
+					(jump_to_menu, "mnu_pti_talk_to_individual"),
+				(else_try),
+					(assign, "$pti_individual_meeting_troop", "$pti_nps_selected_stack_object"),
+					(assign, "$pti_talk_finished", 0),
+					(jump_to_menu, "mnu_pti_talk_to_individual"),
+				(try_end),
 			(try_end),
 		]),
 		

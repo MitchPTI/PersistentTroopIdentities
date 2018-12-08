@@ -57,6 +57,15 @@ new_dialogs = [
 		],
 		"Your orders {s0}?", "regular_member_talk", []
 	],
+	
+	[anyone, "start",
+		[
+			(store_conversation_troop, "$g_talk_troop"),
+			(main_party_has_troop, "$g_talk_troop"),
+			(is_between, "$g_talk_troop", companions_begin, companions_end),
+		],
+		"Yes, captain?", "member_talk", []
+	],
 ]
 
 def get_dialogs(dialogs, state):

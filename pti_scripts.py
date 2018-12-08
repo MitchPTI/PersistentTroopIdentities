@@ -3573,10 +3573,8 @@ new_scripts = [
 		
 		# Clear party, but retain prisoners
 		(call_script, "script_pti_party_copy_prisoners", "p_pti_prisoners", ":party"),
-		(call_script, "script_pti_party_copy_heroes", "p_pti_prisoners", ":party"),
 		(party_clear, ":party"),
 		(call_script, "script_pti_party_copy_prisoners", ":party", "p_pti_prisoners"),
-		(call_script, "script_pti_party_copy_heroes", ":party", "p_pti_prisoners"),
 		(party_clear, "p_pti_prisoners"),
 		
 		pti_count_individuals(party = ":party"),
@@ -4049,6 +4047,8 @@ new_scripts = [
 			(neg|troop_is_hero, ":stack_object"),
 			
 			(overlay_set_display, "$pti_nps_disband_button", 1),
+		(else_try),
+			(overlay_set_display, "$pti_nps_talk_button", 1),
 		(try_end),
 		
 		# Set the weekly wages and morale text (will eventually be done separately for troops and individuals)
@@ -4731,6 +4731,21 @@ def merge(scripts):
 	
 	# Ensure wound treatment is applied to individuals on party encounter, to prevent starting a battle with individual healing lagging behind party troops
 	scripts["game_event_party_encounter"].operations.append((call_script, "script_pti_apply_wound_treatment_to_individuals", "p_main_party"))
+	
+	# Incorporate recruited companions into individuals
+	scripts["recruit_troop_as_companion"].operations.extend([
+		(call_script, "script_pti_create_individual_of_type", ":troop_no"),
+		(call_script, "script_pti_party_add_individual", "p_main_party", reg0),
+	])
+	
+	# Override default party screen by hijacking the game_get_total_wage script
+	scripts["game_get_total_wage"].operations.extend([
+		(try_begin),
+			(neq, "$pti_use_game_get_total_wage", 1),	# If you actually need to use the script, set this temporarily to 1 to not have the party screen pop up
+			
+			(call_script, "script_pti_open_party_screen", -1),
+		(try_end),
+	])
 	
 	count_casualties_operations = scripts["count_mission_casualties_from_agents"].operations
 	indexes = [i for i, operation in enumerate(count_casualties_operations) if operation_matches(operation, agent_get_troop_id)]
