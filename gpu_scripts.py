@@ -32,6 +32,17 @@ scripts = [
 		(overlay_set_size, ":overlay", pos1),
 	]),
 	
+	("gpu_overlay_set_position",
+	[
+		(store_script_param, ":overlay", 1),
+		(store_script_param, ":pos_x", 2),
+		(store_script_param, ":pos_y", 3),
+		
+		(position_set_x, pos1, ":pos_x"),
+		(position_set_y, pos1, ":pos_y"),
+		(overlay_set_position, ":overlay", pos1),
+	]),
+	
 	("gpu_create_scrollable_container",
 	[
 		(store_script_param, ":pos_x", 1),

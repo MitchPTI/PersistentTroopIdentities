@@ -155,7 +155,7 @@ presentations = [
 				(assign, reg1, reg0),
 				(party_get_num_companions, reg0, "p_main_party"),
 				(str_store_string, s0, "@Company: {reg0} / {reg1}"),
-				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 710, 1000, 262, 26, tf_center_justify),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 712, 900, 262, 26, tf_center_justify),
 				
 				(call_script, "script_pti_nps_create_upper_right_stack_container"),
 				(assign, "$pti_nps_troop_stack_container", reg1),
@@ -183,11 +183,11 @@ presentations = [
 				pti_count_individuals(troop_id = "$pti_nps_selected_troop_id"),
 				(assign, ":num_individuals", reg0),
 				
-				# Add individual labels
+				# Add individuals label
 				(str_store_troop_name_plural, s0, "$pti_nps_selected_troop_id"),
 				(assign, reg0, ":num_individuals"),
 				(str_store_string, s0, "@{s0}: {reg0}"),
-				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 715, 800, 262, 26, tf_center_justify),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 714, 800, 262, 26, tf_center_justify),
 				
 				# Set up agent stacks
 				#(display_message, "@{reg0} individuals"),
@@ -213,6 +213,13 @@ presentations = [
 			(assign, "$pti_nps_prisoner_stack_container", reg1),
 			(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
 			
+			# Add prisoners label
+			(call_script, "script_game_get_party_prisoner_limit", "p_main_party"),
+			(assign, reg1, reg0),
+			(party_get_num_prisoners, reg0, "p_main_party"),
+			(str_store_string, s0, "@Prisoners: {reg0} / {reg1}"),
+			(call_script, "script_gpu_create_text_overlay", "str_s0", 825, 260, 900, 262, 26, tf_center_justify),
+			
 			# Set selected prisoner stack
 			(try_begin),
 				(eq, "$pti_exchange_troop_selected", 0),
@@ -229,6 +236,19 @@ presentations = [
 				(try_begin),
 					# Set up exchange troop stacks if not drilled down to see individuals
 					(neq, "$pti_show_individual_exchange_members", 1),
+					
+					# Add label for exchange party companion stacks
+					(party_get_num_companion_stacks, ":num_stacks", "$pti_exchange_party"),
+					(party_get_num_companions, reg0, "$pti_exchange_party"),
+					(try_begin),
+						(eq, "$pti_exchange_party", "p_temp_party"),
+						
+						(str_store_string, s0, "@Rescued Prisoners: {reg0}"),
+					(else_try),
+						(str_store_party_name, s0, "$pti_exchange_party"),
+						(str_store_string, s0, "@{s0}: {reg0}"),
+					(try_end),
+					(call_script, "script_gpu_create_text_overlay", "str_s0", 170, 712, 900, 262, 26, tf_center_justify),
 					
 					(party_get_num_companion_stacks, ":num_stacks", "$pti_exchange_party"),
 					
@@ -247,6 +267,12 @@ presentations = [
 				(else_try),
 					pti_count_individuals(party = "$pti_exchange_party", troop_id = "$pti_nps_selected_exchange_troop_id"),
 					(assign, ":num_individuals", reg0),
+					
+					# Add individuals label
+					(str_store_troop_name_plural, s0, "$pti_nps_selected_exchange_troop_id"),
+					(assign, reg0, ":num_individuals"),
+					(str_store_string, s0, "@{s0}: {reg0}"),
+					(call_script, "script_gpu_create_text_overlay", "str_s0", 170, 713, 800, 262, 26, tf_center_justify),
 					
 					# Set up agent stacks
 					#(display_message, "@{reg0} individuals"),
@@ -271,6 +297,11 @@ presentations = [
 				(call_script, "script_pti_nps_create_lower_left_stack_container"),
 				(assign, "$pti_nps_exchange_prisoner_stack_container", reg1),
 				(call_script, "script_pti_nps_add_stacks_to_container", "$pti_nps_exchange_prisoner_stack_container", ":num_stacks", "script_pti_nps_prisoner_stack_init", STACK_X_OFFSET),
+				
+				# Add prisoners label
+				(party_get_num_prisoners, reg0, "$pti_exchange_party"),
+				(str_store_string, s0, "@Prisoners: {reg0}"),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 170, 260, 900, 262, 26, tf_center_justify),
 				
 				# Set selected prisoner stack
 				(try_begin),
@@ -325,6 +356,25 @@ presentations = [
 			(call_script, "script_gpu_create_game_button_overlay", "str_s0", 615, 575),
 			(assign, "$pti_nps_move_down_button", reg1),
 			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
+			
+			# Press Esc to exit message
+			(str_store_string, s0, "@Press Esc to exit"),
+			(call_script, "script_gpu_create_text_overlay", "str_s0", 500, 30, 1000, 200, 30, tf_center_justify),
+			(overlay_set_color, reg1, 0xEEDD88),
+			(overlay_set_alpha, reg1, 0xBBBBBB),
+			
+			# Party morale, money and wages
+			(assign, "$pti_use_game_get_total_wage", 1),
+			(call_script, "script_game_get_total_wage"),
+			(assign, ":wage", reg0),
+			(assign, "$pti_use_game_get_total_wage", 0),
+			(party_get_morale, ":morale", "p_main_party"),
+			(call_script, "script_pti_print_morale_description_to_s0", ":morale"),
+			(store_troop_gold, reg0, "trp_player"),
+			(assign, reg1, ":wage"),
+			(str_store_string, s0, "@Morale: {s0}^Money: {reg0} denars^Weekly cost: {reg1} denars"),
+			(call_script, "script_gpu_create_text_overlay", "str_s0", 680, 15, 1100, 300, 30, tf_left_align),
+			(overlay_set_color, reg1, 0xEEDD88),
 			
 			(presentation_set_duration, 999999),
 		]),
@@ -384,20 +434,16 @@ presentations = [
 					(start_presentation, "prsnt_new_party_screen"),
 				(try_end),
 			(else_try),
-				(key_clicked, key_e),
+				(this_or_next|key_is_down, key_left_control),
+				(key_is_down, key_right_control),
+				(key_clicked, key_h),
 				
-				(display_message, "@Exchange individuals:"),
-				pti_count_individuals(party = "$pti_exchange_party"),
-				(assign, ":count", reg0),
-				
-				pti_get_first_individual(party = "$pti_exchange_party"),
-				(try_for_range, ":stack", 0, ":count"),
-					(call_script, "script_pti_individual_get_type_and_name", "$pti_current_individual"),
-					(assign, reg0, "$pti_current_individual"),
-					(assign, reg1, "$pti_curr_individual_index"),
-					(display_message, "@{s0} {s1} ({reg0}) from index {reg1}"),
+				(try_begin),
+					(gt, "$pti_nps_selected_individual", -1),
 					
-					pti_get_next_individual(party = "$pti_exchange_party"),
+					Individual.set("$pti_nps_selected_individual", "is_wounded", 0),
+					(call_script, "script_pti_restore_party", "p_main_party"),
+					(start_presentation, "prsnt_new_party_screen"),
 				(try_end),
 			(try_end),
 		]),

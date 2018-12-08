@@ -2295,42 +2295,41 @@ new_scripts = [
 	
 	## MORALE SCRIPTS
 	
-	# script_pti_troop_print_morale_description_to_s0
-	("pti_troop_print_morale_description_to_s0",
+	# script_pti_print_morale_description_to_s0
+	("pti_print_morale_description_to_s0",
 	[
-		(store_script_param, ":troop_id", 1),
+		(store_script_param, ":morale", 1),
 		
-		(call_script, "script_game_get_morale_of_troops_from_faction", ":troop_id"),
 		(try_begin),
-			(lt, reg0, 10),
+			(lt, ":morale", 10),
 
 			(str_store_string, s0, "@Terrible"),
 		(else_try),
-			(lt, reg0, 20),
+			(lt, ":morale", 20),
 
 			(str_store_string, s0, "@Very Low"),
 		(else_try),
-			(lt, reg0, 30),
+			(lt, ":morale", 30),
 
 			(str_store_string, s0, "@Low"),
 		(else_try),
-			(lt, reg0, 40),
+			(lt, ":morale", 40),
 
 			(str_store_string, s0, "@Below Average"),
 		(else_try),
-			(lt, reg0, 60),
+			(lt, ":morale", 60),
 
 			(str_store_string, s0, "@Average"),
 		(else_try),
-			(lt, reg0, 70),
+			(lt, ":morale", 70),
 
 			(str_store_string, s0, "@Above Average"),
 		(else_try),
-			(lt, reg0, 80),
+			(lt, ":morale", 80),
 
 			(str_store_string, s0, "@High"),
 		(else_try),
-			(lt, reg0, 90),
+			(lt, ":morale", 90),
 
 			(str_store_string, s0, "@Very High"),
 		(else_try),
@@ -4065,12 +4064,15 @@ new_scripts = [
 			
 			(gt, ":troop_id", 0),
 			
+			(assign, "$pti_use_game_get_total_wage", 1),
 			(call_script, "script_game_get_troop_wage", ":troop_id"),
-			(store_sub, reg1, reg0, 1),	
+			(store_sub, reg1, reg0, 1),
+			(assign, "$pti_use_game_get_total_wage", 0),
 			(str_store_string, s0, "@Weekly wage: {reg0} {reg1?denars:denar}"),
 			(overlay_set_text, "$pti_nps_weekly_wages", "str_s0"),
 			
-			(call_script, "script_pti_troop_print_morale_description_to_s0", ":troop_id"),
+			(call_script, "script_game_get_morale_of_troops_from_faction", ":troop_id"),
+			(call_script, "script_pti_print_morale_description_to_s0", reg0),
 			(str_store_string, s0, "@Morale: {s0}"),
 			(overlay_set_text, "$pti_nps_morale", "str_s0"),
 		(try_end),
@@ -4165,7 +4167,7 @@ new_scripts = [
 	[
 		(try_begin),
 			(eq, "$pti_show_individual_members", 1),
-			(gt, "$pti_nps_selected_individual_id", -1),
+			(gt, "$pti_nps_selected_individual", -1),
 			
 			Individual.get("$pti_nps_selected_individual", "class_overridden"),
 			(try_begin),
