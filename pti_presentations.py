@@ -167,6 +167,7 @@ presentations = [
 					(gt, "$pti_nps_selected_troop_id", -1),
 					
 					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_troop_id", "$pti_nps_troop_stack_container"),
+					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 				(try_end),
 			(else_try),
 				# Individual summary text (only displayed if not exchanging with a party, as it takes up the space where the exchange party's troop stacks are seen)
@@ -202,7 +203,7 @@ presentations = [
 					(gt, "$pti_nps_selected_individual", -1),
 					
 					(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_individual_stack_container"),
-					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
+					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 				(try_end),
 			(try_end),
 			
@@ -241,6 +242,7 @@ presentations = [
 						(gt, "$pti_nps_selected_exchange_troop_id", -1),
 						
 						(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_exchange_troop_id", "$pti_nps_exchange_troop_stack_container"),
+						(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 					(try_end),
 				(else_try),
 					pti_count_individuals(party = "$pti_exchange_party", troop_id = "$pti_nps_selected_exchange_troop_id"),
@@ -260,6 +262,7 @@ presentations = [
 						(gt, "$pti_nps_selected_individual", -1),
 						
 						(call_script, "script_pti_nps_select_stack", "$pti_nps_selected_individual", "$pti_nps_exchange_individual_stack_container"),
+						(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 					(try_end),
 				(try_end),
 				
@@ -539,6 +542,7 @@ presentations = [
 					
 					# Refresh overlays
 					(call_script, "script_pti_nps_refresh_troop_class"),
+					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 				(else_try),
 					(this_or_next|eq, ":container", "$pti_nps_individual_stack_container"),
 					(eq, ":container", "$pti_nps_exchange_individual_stack_container"),
@@ -550,7 +554,7 @@ presentations = [
 					
 					# Refresh overlays
 					(call_script, "script_pti_nps_refresh_troop_class"),
-					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons", "$pti_nps_selected_individual"),
+					(call_script, "script_pti_nps_refresh_individual_upgrade_buttons"),
 					
 					(le, "$pti_exchange_party", 0),
 					
@@ -566,13 +570,57 @@ presentations = [
 			#(store_trigger_param_2, ":value"),
 			
 			(try_begin),
-				(gt, "$pti_nps_selected_individual", -1),
-				
 				(this_or_next|eq, ":overlay", "$pti_nps_upgrade_button_1"),
 				(eq, ":overlay", "$pti_nps_upgrade_button_2"),
 				
-				Individual.get("$pti_nps_selected_individual", "troop_type"),
-				(assign, ":troop_id", reg0),
+				(assign, ":num_to_upgrade", 1),
+				(try_begin),
+					(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+					(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+					
+					(assign, ":individual_is_selected", 1),
+					(assign, ":individual", "$pti_nps_selected_individual"),
+					
+					Individual.get("$pti_nps_selected_individual", "troop_type"),
+					(assign, ":troop_id", reg0),
+					
+					(assign, ":party", "p_main_party"),
+					(try_begin),
+						(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+						
+						(assign, ":party", "$pti_exchange_party"),
+					(try_end),
+				(else_try),
+					(assign, ":individual_is_selected", 0),
+					(try_begin),
+						(eq, ":overlay", "$pti_nps_upgrade_button_1"),					
+						
+						(assign, ":condition_script", "script_cf_pti_individual_is_upgradeable_through_path_1"),
+					(else_try),
+						(assign, ":condition_script", "script_cf_pti_individual_is_upgradeable_through_path_2"),
+					(try_end),
+					
+					(assign, ":party", "p_main_party"),
+					(try_begin),
+						(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_troop_stack_container"),
+						
+						(assign, ":party", "$pti_exchange_party"),
+					(try_end),
+					
+					(assign, ":troop_id", "$pti_nps_selected_stack_object"),
+					
+					(try_begin),
+						(this_or_next|key_is_down, key_left_control),
+						(key_is_down, key_right_control),
+						
+						pti_count_individuals(party = ":party", troop_id = ":troop_id", condition = ":condition_script"),
+						(assign, ":num_to_upgrade", reg0),
+					(try_end),
+					
+					pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = ":condition_script"),
+					(assign, ":individual", "$pti_current_individual"),
+				(try_end),
+				
 				(try_begin),
 					(eq, ":overlay", "$pti_nps_upgrade_button_1"),					
 					
@@ -581,23 +629,53 @@ presentations = [
 					(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
 				(try_end),
 				
-				(call_script, "script_cf_pti_individual_can_upgrade_to", "$pti_nps_selected_individual", ":upgrade"),
-				
-				Individual.set("$pti_nps_selected_individual", "troop_type", ":upgrade"),
-				(call_script, "script_pti_individual_generate_base_equipment", "$pti_nps_selected_individual"),
-				
-				(party_remove_members, "p_main_party", ":troop_id", 1),
-				(party_add_members, "p_main_party", ":upgrade", 1),
+				(try_for_range, ":unused", 0, ":num_to_upgrade"),
+					(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+					
+					(call_script, "script_pti_party_remove_individual", ":party", ":individual"),
+					
+					Individual.set(":individual", "troop_type", ":upgrade"),
+					(call_script, "script_pti_individual_generate_base_equipment", ":individual"),
+					
+					(call_script, "script_pti_party_add_individual", ":party", ":individual"),
+					
+					(try_begin),
+						(eq, ":individual_is_selected", 1),
+						
+						(try_begin),
+							(party_count_members_of_type, ":stack_size", ":party", ":troop_id"),
+							(eq, ":stack_size", 0),
+							
+							(assign, ":troop_id", ":upgrade"),
+						(try_end),
+					(else_try),
+						pti_get_first_individual(party = ":party", troop_id = ":troop_id", condition = ":condition_script"),
+						(assign, ":individual", "$pti_current_individual"),
+					(try_end),
+				(try_end),
 				
 				(try_begin),
-					(party_count_members_of_type, ":stack_size", "p_main_party", "$pti_nps_selected_troop_id"),
+					(eq, ":individual_is_selected", 1),
+					
+					(try_begin),
+						(party_count_members_of_type, ":stack_size", ":party", ":troop_id"),
+						(eq, ":stack_size", 0),
+						
+						(assign, ":troop_id", ":upgrade"),
+					(try_end),
+				(else_try),
+					(party_count_members_of_type, ":stack_size", ":party", ":troop_id"),
 					(eq, ":stack_size", 0),
 					
-					(assign, "$pti_nps_selected_troop_id", ":upgrade"),
-				(else_try),
-					pti_get_first_individual(troop_id = "$pti_nps_selected_troop_id"),
-					(assign, "$pti_nps_selected_individual", "$pti_current_individual"),
+					(try_begin),
+						(eq, ":party", "p_main_party"),
+						
+						(assign, "$pti_nps_selected_troop_id", ":upgrade"),
+					(else_try),
+						(assign, "$pti_nps_selected_exchange_troop_id", ":upgrade"),
+					(try_end),
 				(try_end),
+				
 				(start_presentation, "prsnt_new_party_screen"),
 			(try_end),
 		]),

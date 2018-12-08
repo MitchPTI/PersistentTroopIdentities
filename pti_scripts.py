@@ -1987,31 +1987,48 @@ new_scripts = [
 		(ge, reg0, ":upgrade_xp"),
 	]),
 	
-	# script_cf_pti_individual_is_upgradeable
-	("cf_pti_individual_is_upgradeable",
+	# script_cf_pti_individual_is_upgradeable_through_path_1
+	("cf_pti_individual_is_upgradeable_through_path_1",
 	[
 		(store_script_param, ":individual", 1),
 		
 		Individual.get(":individual", "troop_type"),
 		(assign, ":troop_id", reg0),
 		
+		(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
+		(gt, ":upgrade", 0),
+		
+		(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+	]),
+	
+	# script_cf_pti_individual_is_upgradeable_through_path_2
+	("cf_pti_individual_is_upgradeable_through_path_2",
+	[
+		(store_script_param, ":individual", 1),
+		
+		Individual.get(":individual", "troop_type"),
+		(assign, ":troop_id", reg0),
+		
+		(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
+		(gt, ":upgrade", 0),
+		
+		(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+	]),
+	
+	# script_cf_pti_individual_is_upgradeable
+	("cf_pti_individual_is_upgradeable",
+	[
+		(store_script_param, ":individual", 1),
+		
 		(assign, ":upgradeable", 0),
 		(try_begin),
-			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
-			(gt, ":upgrade", 0),
+			(call_script, "script_cf_pti_individual_is_upgradeable_through_path_1", ":individual"),
 			
-			(try_begin),
-				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
-				
-				(assign, ":upgradeable", 1),
-			(else_try),
-				(troop_get_upgrade_troop, ":upgrade", ":troop_id", 1),
-				(gt, ":upgrade", 0),
-				
-				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
-				
-				(assign, ":upgradeable", 1),
-			(try_end),
+			(assign, ":upgradeable", 1),
+		(else_try),
+			(call_script, "script_cf_pti_individual_is_upgradeable_through_path_2", ":individual"),
+			
+			(assign, ":upgradeable", 1),
 		(try_end),
 		
 		(eq, ":upgradeable", 1),
@@ -4274,10 +4291,24 @@ new_scripts = [
 	# script_pti_nps_refresh_individual_upgrade_buttons
 	("pti_nps_refresh_individual_upgrade_buttons",
 	[
-		(store_script_param, ":individual", 1),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_upper_left_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_lower_left_container"),
+			
+			(assign, ":party", "$pti_exchange_party"),
+			(assign, ":troop_id", "$pti_nps_selected_exchange_troop_id"),
+		(else_try),
+			(assign, ":party", "p_main_party"),
+			(assign, ":troop_id", "$pti_nps_selected_troop_id"),
+		(try_end),
 		
-		Individual.get(":individual", "troop_type"),
-		(assign, ":troop_id", reg0),
+		(assign, ":individual_is_selected", 0),
+		(try_begin),
+			(this_or_next|eq, "$pti_nps_selected_stack_container", "$pti_nps_individual_stack_container"),
+			(eq, "$pti_nps_selected_stack_container", "$pti_nps_exchange_individual_stack_container"),
+			
+			(assign, ":individual_is_selected", 1),
+		(try_end),
 		
 		(try_begin),
 			(troop_get_upgrade_troop, ":upgrade", ":troop_id", 0),
@@ -4289,7 +4320,14 @@ new_scripts = [
 			(str_store_string, s0, "@Upgrade to {s0}"),
 			(overlay_set_text, "$pti_nps_upgrade_button_1", "str_s0"),
 			(try_begin),
-				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+				(eq, ":individual_is_selected", 1),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", "$pti_nps_selected_individual", ":upgrade"),
+				
+				(overlay_set_alpha, "$pti_nps_upgrade_button_1", 0xFF),
+			(else_try),
+				(eq, ":individual_is_selected", 0),
+				pti_count_individuals(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_upgradeable_through_path_1"),
+				(gt, reg0, 0),
 				
 				(overlay_set_alpha, "$pti_nps_upgrade_button_1", 0xFF),
 			(else_try),
@@ -4310,7 +4348,14 @@ new_scripts = [
 			(str_store_string, s0, "@Upgrade to {s0}"),
 			(overlay_set_text, "$pti_nps_upgrade_button_2", "str_s0"),
 			(try_begin),
-				(call_script, "script_cf_pti_individual_can_upgrade_to", ":individual", ":upgrade"),
+				(eq, ":individual_is_selected", 1),
+				(call_script, "script_cf_pti_individual_can_upgrade_to", "$pti_nps_selected_individual", ":upgrade"),
+				
+				(overlay_set_alpha, "$pti_nps_upgrade_button_2", 0xFF),
+			(else_try),
+				(eq, ":individual_is_selected", 0),
+				pti_count_individuals(party = ":party", troop_id = ":troop_id", condition = "script_cf_pti_individual_is_upgradeable_through_path_2"),
+				(gt, reg0, 0),
 				
 				(overlay_set_alpha, "$pti_nps_upgrade_button_2", 0xFF),
 			(else_try),
