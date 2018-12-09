@@ -357,9 +357,22 @@ presentations = [
 			(assign, "$pti_nps_move_down_button", reg1),
 			(call_script, "script_gpu_overlay_set_size", reg1, 100, 30),
 			
-			# Press Esc to exit message
+			# Press Esc to exit and backspace to return to troop stacks messages
+			(assign, ":esc_y", 30),
+			(try_begin),
+				(this_or_next|eq, "$pti_show_individual_members", 1),
+				(eq, "$pti_show_individual_exchange_members", 1),
+				
+				(str_store_string, s0, "@Press Backspace to return to troop stacks"),
+				(call_script, "script_gpu_create_text_overlay", "str_s0", 500, 45, 800, 200, 30, tf_center_justify),
+				(overlay_set_color, reg1, 0xEEDD88),
+				(overlay_set_alpha, reg1, 0xBBBBBB),
+				
+				(assign, ":esc_y", 15),
+			(try_end),
+			
 			(str_store_string, s0, "@Press Esc to exit"),
-			(call_script, "script_gpu_create_text_overlay", "str_s0", 500, 30, 1000, 200, 30, tf_center_justify),
+			(call_script, "script_gpu_create_text_overlay", "str_s0", 500, ":esc_y", 1000, 200, 30, tf_center_justify),
 			(overlay_set_color, reg1, 0xEEDD88),
 			(overlay_set_alpha, reg1, 0xBBBBBB),
 			
