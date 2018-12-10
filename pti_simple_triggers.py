@@ -145,3 +145,6 @@ def merge(simple_triggers):
 				]
 	
 	simple_triggers.extend(new_simple_triggers)
+
+import mod_manager
+modmerge = mod_manager.generate_modmerge("simple_triggers", merge)

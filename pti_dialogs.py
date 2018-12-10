@@ -118,3 +118,6 @@ def merge(dialogs):
 	
 	dialogs.extend(new_dialogs)
 	dialogs.extend(start_dialogs)
+
+import mod_manager
+modmerge = mod_manager.generate_modmerge("dialogs", merge)

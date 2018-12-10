@@ -160,3 +160,6 @@ def merge(game_menus):
 		for i, operation in enumerate(operations_set):
 			if type(operation) == tuple and (operation[0] == change_screen_exchange_with_party or operation[0] == change_screen_exchange_members):
 				operations_set[i] = pti_open_exchange_screen(*operation)
+
+import mod_manager
+modmerge = mod_manager.generate_modmerge("game_menus", merge)

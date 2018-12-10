@@ -4784,3 +4784,6 @@ def merge(scripts):
 				(assign, troop_id, reg0),
 			(try_end),
 		]
+
+import mod_manager
+modmerge = mod_manager.generate_modmerge("scripts", merge)

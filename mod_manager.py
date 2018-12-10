@@ -85,6 +85,23 @@ class ModObjContainer(object):
 
 logger = BuildLogger.getLogger(__name__)
 
+def generate_modmerge(obj_type, merge_f):
+	def modmerge(var_set):
+		try:
+			obj_tuples = var_set[obj_type]
+		except KeyError:
+			errstring = "Variable set does not contain expected variable: \"%s\"." % obj_type
+			raise ValueError(errstring)
+		
+		objects = ModObjContainer(obj_type, object_classes[obj_type], *obj_tuples)
+		module = sys.modules[__name__]
+		merge_f(objects)
+		
+		del var_set[obj_type][:]
+		var_set[obj_type].extend([tuple(object) for object in objects])
+	
+	return modmerge
+
 def merge(obj_type, objects):
 	logger.debug("Creating {} container from module_{}".format(obj_type, obj_type))
 	objects = ModObjContainer(obj_type, object_classes[obj_type], *objects)

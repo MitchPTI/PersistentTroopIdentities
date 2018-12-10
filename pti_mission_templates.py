@@ -202,3 +202,6 @@ def merge(mission_templates):
 			, pti_process_casualty
 			, pti_process_kill
 		])
+
+import mod_manager
+modmerge = mod_manager.generate_modmerge("mission_templates", merge)
