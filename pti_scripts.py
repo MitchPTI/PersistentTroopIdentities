@@ -4483,17 +4483,25 @@ new_scripts = [
 		(assign, ":num", 1),
 		(try_begin),
 			(this_or_next|eq, ":key_held", key_left_control),
-			(eq, ":key_held", key_right_control),
-			
-			(party_count_prisoners_of_type, ":num", ":party", ":troop_id"),
-		(else_try),
+			(this_or_next|eq, ":key_held", key_right_control),
 			(this_or_next|eq, ":key_held", key_left_shift),
 			(eq, ":key_held", key_right_shift),
 			
 			(party_count_prisoners_of_type, ":num", ":party", ":troop_id"),
+			
+			(call_script, "script_game_get_party_prisoner_limit", ":other_party"),
+			(assign, ":limit", reg0),
+			(party_get_num_prisoners, ":num_prisoners", ":other_party"),
+			(val_sub, ":limit", ":num_prisoners"),
+			(val_min, ":num", ":limit"),
+		(else_try),
+			(neq, ":key_held", key_left_control),
+			(neq, ":key_held", key_right_control),
+			
 			(val_min, ":num", 10),
 		(try_end),
 		
+		(try_begin),
 		(party_remove_prisoners, ":party", ":troop_id", ":num"),
 		(party_add_prisoners, ":other_party", ":troop_id", ":num"),
 		
