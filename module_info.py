@@ -6,4 +6,4 @@
 
 #export_dir = "test/"
 #export_dir = "C:/Program Files/Mount&Blade/Modules/Native/"
-export_dir = "C:/Program Files (x86)/Mount&Blade Warband/Modules/Persistent Troop Identities v2"
+export_dir = "C:/Program Files (x86)/Mount&Blade Warband/Modules/Persistent Troop Identities"
